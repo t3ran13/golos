@@ -3,6 +3,7 @@
 #include <golos/chain/custom_operation_interpreter.hpp>
 #include <golos/chain/steem_objects.hpp>
 #include <golos/chain/block_summary_object.hpp>
+#include <golos/chain/general_vote_object.hpp>
 
 #ifndef IS_LOW_MEM
 
@@ -1007,7 +1008,7 @@ namespace golos {
                     FC_ASSERT(voter.witnesses_voted_for <
                               STEEMIT_MAX_ACCOUNT_WITNESS_VOTES, "Account has voted for too many witnesses."); // TODO: Remove after hardfork 2
 
-                    _db.create<witness_vote_object>([&](witness_vote_object &v) {
+                    _db.create< vote_object<witness_object> >([&](vote_object<witness_object> &v) {
                         v.witness = witness.id;
                         v.account = voter.id;
                     });
@@ -1020,7 +1021,7 @@ namespace golos {
 
                 } else {
 
-                    _db.create<witness_vote_object>([&](witness_vote_object &v) {
+                    _db.create< vote_object<witness_object> >([&](vote_object<witness_object> &v) {
                         v.witness = witness.id;
                         v.account = voter.id;
                     });
@@ -1078,7 +1079,7 @@ namespace golos {
       auto itr = comment_vote_idx.find( std::make_tuple( comment.id, voter.id ) );
 
       if( itr == comment_vote_idx.end() )
-         _db.create< comment_vote_object >( [&]( comment_vote_object& cvo )
+         _db.create< vote_object<comment_object> >( [&]( vote_object<comment_object>& cvo )
          {
             cvo.voter = voter.id;
             cvo.comment = comment.id;
@@ -1086,7 +1087,7 @@ namespace golos {
             cvo.last_update = _db.head_block_time();
          });
       else
-         _db.modify( *itr, [&]( comment_vote_object& cvo )
+         _db.modify( *itr, [&]( vote_object<comment_object>& cvo )
          {
             cvo.vote_percent = o.weight;
             cvo.last_update = _db.head_block_time();
@@ -1276,7 +1277,7 @@ namespace golos {
        *  Since W(R_0) = 0, c.total_vote_weight is also bounded above by B and will always fit in a 64 bit integer.
        *
       **/
-                    _db.create<comment_vote_object>([&](comment_vote_object &cv) {
+                    _db.create< vote_object<comment_object> >([&](vote_object<comment_object> &cv) {
                         cv.voter = voter.id;
                         cv.comment = comment.id;
                         cv.rshares = rshares;
@@ -1462,7 +1463,7 @@ namespace golos {
                         c.total_vote_weight -= itr->weight;
                     });
 
-                    _db.modify(*itr, [&](comment_vote_object &cv) {
+                    _db.modify(*itr, [&](vote_object<comment_object> &cv) {
                         cv.rshares = rshares;
                         cv.vote_percent = o.weight;
                         cv.last_update = _db.head_block_time();

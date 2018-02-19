@@ -91,9 +91,9 @@ namespace golos {
 
         class comment_object;
 
-        class comment_vote_object;
+        // class comment_vote_object;
 
-        class witness_vote_object;
+        // class witness_vote_object;
 
         class limit_order_object;
 

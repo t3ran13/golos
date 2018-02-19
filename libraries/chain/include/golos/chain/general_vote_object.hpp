@@ -123,8 +123,10 @@ comment_vote_index;
 // TODO: FIGURE OUT HOW TO CORRECTLY REFLECT VOTE_OBJECTS
 FC_REFLECT( (golos::chain::vote_interface), (id)(voter))
 
-FC_REFLECT_DERIVED( (golos::chain::vote_object <comment_object>), 
-    	(comment)(weight)(rshares)(vote_percent)(last_update)(num_changes)
+FC_REFLECT_DERIVED( (golos::chain::vote_object <comment_object>), ((vote_interface<comment_object>)),
+    	(id)(voter)(comment)(weight)(rshares)(vote_percent)(last_update)(num_changes)
 )
+CHAINBASE_SET_INDEX_TYPE(golos::chain::vote_object <comment_object>, golos::chain::comment_vote_index)
 
-FC_REFLECT((golos::chain::vote_object <witness_object>), (witness))
+FC_REFLECT((golos::chain::vote_object <witness_object>), ((golos::chain::vote_interface <witness_object>)), (id)(voter)(witness))
+CHAINBASE_SET_INDEX_TYPE(golos::chain::vote_object <witness_object>, golos::chain::witness_vote_index)

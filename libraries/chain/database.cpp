@@ -19,7 +19,7 @@
 #include <golos/chain/transaction_object.hpp>
 #include <golos/chain/shared_db_merkle.hpp>
 #include <golos/chain/operation_notification.hpp>
-
+#include <golos/chain/general_vote_object.hpp>
 #include <fc/smart_ref_impl.hpp>
 
 #include <fc/container/deque.hpp>
@@ -2153,7 +2153,7 @@ namespace golos {
                     if (!has_hardfork(STEEMIT_HARDFORK_0_12__177) ||
                         calculate_discussion_payout_time(comment) !=
                         fc::time_point_sec::maximum()) {
-                        modify(cur_vote, [&](comment_vote_object &cvo) {
+                        modify(cur_vote, [&](vote_object<comment_object> &cvo) {
                             cvo.num_changes = -1;
                         });
                     } else {

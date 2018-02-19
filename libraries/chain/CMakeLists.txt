@@ -54,6 +54,8 @@ if(BUILD_SHARED_LIBRARIES)
             include/golos/chain/steem_objects.hpp
             include/golos/chain/transaction_object.hpp
             include/golos/chain/witness_objects.hpp
+            include/golos/chain/general_vote_object.hpp
+
 
             ${hardfork_hpp_file}
             "${CMAKE_CURRENT_BINARY_DIR}/include/steemit/chain/hardfork.hpp"
