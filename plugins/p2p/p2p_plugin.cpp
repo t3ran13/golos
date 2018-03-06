@@ -9,6 +9,8 @@
 
 #include <boost/range/algorithm/reverse.hpp>
 #include <boost/range/adaptor/reversed.hpp>
+#include <boost/asio.hpp>
+#include <thread>
 
 using std::string;
 using std::vector;
@@ -85,7 +87,7 @@ namespace golos {
 
 
                     fc::optional<fc::ip::endpoint> endpoint;
-                    vector<fc::ip::endpoint> seeds;
+                    vector<boost::asio::ip::tcp::endpoint> seeds;
                     string user_agent;
                     uint32_t max_connections = 0;
                     bool force_validate = false;
@@ -95,7 +97,7 @@ namespace golos {
 
                     chain::plugin &chain;
 
-                    fc::thread p2p_thread;
+                    std::thread p2p_thread;
                 };
 
                 ////////////////////////////// Begin node_delegate Implementation //////////////////////////////

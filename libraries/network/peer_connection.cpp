@@ -1,40 +1,10 @@
-/*
- * Copyright (c) 2015 Cryptonomex, Inc., and contributors.
- *
- * The MIT License
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
 #include <golos/network/peer_connection.hpp>
-
-#include <fc/thread/thread.hpp>
 
 #ifdef DEFAULT_LOGGER
 # undef DEFAULT_LOGGER
 #endif
 #define DEFAULT_LOGGER "p2p"
 
-#ifndef NDEBUG
-# define VERIFY_CORRECT_THREAD() assert(_thread->is_current())
-#else
-# define VERIFY_CORRECT_THREAD() do {} while (0)
-#endif
 
 namespace golos {
     namespace network {
@@ -84,7 +54,7 @@ namespace golos {
                 last_known_fork_block_number(0),
                 firewall_check_state(nullptr)
 #ifndef NDEBUG
-                , _thread(&fc::thread::current()),
+                , _thread(&std::thread::current()),
                 _send_message_queue_tasks_running(0)
 #endif
         {
@@ -104,17 +74,7 @@ namespace golos {
         }
 
         void peer_connection::destroy() {
-            VERIFY_CORRECT_THREAD();
-
-#if 0 // this gets too verbose
-#ifndef NDEBUG
-            struct scope_logger {
-              fc::optional<fc::ip::endpoint> endpoint;
-              scope_logger(const fc::optional<fc::ip::endpoint>& endpoint) : endpoint(endpoint) { dlog("entering peer_connection::destroy() for peer ${endpoint}", ("endpoint", endpoint)); }
-              ~scope_logger() { dlog("leaving peer_connection::destroy() for peer ${endpoint}", ("endpoint", endpoint)); }
-            } send_message_scope_logger(get_remote_endpoint());
-#endif
-#endif
+            //VERIFY_CORRECT_THREAD();
 
             try {
                 dlog("calling close_connection()");
@@ -157,17 +117,17 @@ namespace golos {
         }
 
         peer_connection::~peer_connection() {
-            VERIFY_CORRECT_THREAD();
+            //VERIFY_CORRECT_THREAD();
             destroy();
         }
 
         fc::tcp_socket &peer_connection::get_socket() {
-            VERIFY_CORRECT_THREAD();
+            //VERIFY_CORRECT_THREAD();
             return _message_connection.get_socket();
         }
 
         void peer_connection::accept_connection() {
-            VERIFY_CORRECT_THREAD();
+            //VERIFY_CORRECT_THREAD();
 
             struct scope_logger {
                 scope_logger() {
@@ -206,7 +166,7 @@ namespace golos {
         }
 
         void peer_connection::connect_to(const fc::ip::endpoint &remote_endpoint, fc::optional<fc::ip::endpoint> local_endpoint) {
-            VERIFY_CORRECT_THREAD();
+            //VERIFY_CORRECT_THREAD();
             try {
                 assert(our_state == our_connection_state::disconnected &&
                        their_state == their_connection_state::disconnected);
@@ -242,18 +202,18 @@ namespace golos {
         } // connect_to()
 
         void peer_connection::on_message(message_oriented_connection *originating_connection, const message &received_message) {
-            VERIFY_CORRECT_THREAD();
+            //VERIFY_CORRECT_THREAD();
             _node->on_message(this, received_message);
         }
 
         void peer_connection::on_connection_closed(message_oriented_connection *originating_connection) {
-            VERIFY_CORRECT_THREAD();
+            //VERIFY_CORRECT_THREAD();
             negotiation_status = connection_negotiation_status::closed;
             _node->on_connection_closed(this);
         }
 
         void peer_connection::send_queued_messages_task() {
-            VERIFY_CORRECT_THREAD();
+            //VERIFY_CORRECT_THREAD();
 #ifndef NDEBUG
             struct counter {
                 unsigned &_send_message_queue_tasks_counter;
@@ -308,7 +268,7 @@ namespace golos {
         }
 
         void peer_connection::send_queueable_message(std::unique_ptr<queued_message> &&message_to_send) {
-            VERIFY_CORRECT_THREAD();
+            //VERIFY_CORRECT_THREAD();
             _total_queued_messages_size += message_to_send->get_size_in_queue();
             _queued_messages.emplace(std::move(message_to_send));
             if (_total_queued_messages_size >
@@ -338,7 +298,7 @@ namespace golos {
         }
 
         void peer_connection::send_message(const message &message_to_send, size_t message_send_time_field_offset) {
-            VERIFY_CORRECT_THREAD();
+            //VERIFY_CORRECT_THREAD();
             //dlog("peer_connection::send_message() enqueueing message of type ${type} for peer ${endpoint}",
             //     ("type", message_to_send.msg_type)("endpoint", get_remote_endpoint()));
             std::unique_ptr<queued_message> message_to_enqueue(new real_queued_message(message_to_send, message_send_time_field_offset));
@@ -346,7 +306,7 @@ namespace golos {
         }
 
         void peer_connection::send_item(const item_id &item_to_send) {
-            VERIFY_CORRECT_THREAD();
+            //VERIFY_CORRECT_THREAD();
             //dlog("peer_connection::send_item() enqueueing message of type ${type} for peer ${endpoint}",
             //     ("type", item_to_send.item_type)("endpoint", get_remote_endpoint()));
             std::unique_ptr<queued_message> message_to_enqueue(new virtual_queued_message(item_to_send));
@@ -354,7 +314,7 @@ namespace golos {
         }
 
         void peer_connection::close_connection() {
-            VERIFY_CORRECT_THREAD();
+            //VERIFY_CORRECT_THREAD();
             negotiation_status = connection_negotiation_status::closing;
             if (connection_terminated_time != fc::time_point::min()) {
                 connection_terminated_time = fc::time_point::now();
@@ -363,70 +323,70 @@ namespace golos {
         }
 
         void peer_connection::destroy_connection() {
-            VERIFY_CORRECT_THREAD();
+            //VERIFY_CORRECT_THREAD();
             negotiation_status = connection_negotiation_status::closing;
             destroy();
         }
 
         uint64_t peer_connection::get_total_bytes_sent() const {
-            VERIFY_CORRECT_THREAD();
+            //VERIFY_CORRECT_THREAD();
             return _message_connection.get_total_bytes_sent();
         }
 
         uint64_t peer_connection::get_total_bytes_received() const {
-            VERIFY_CORRECT_THREAD();
+            //VERIFY_CORRECT_THREAD();
             return _message_connection.get_total_bytes_received();
         }
 
         fc::time_point peer_connection::get_last_message_sent_time() const {
-            VERIFY_CORRECT_THREAD();
+            //VERIFY_CORRECT_THREAD();
             return _message_connection.get_last_message_sent_time();
         }
 
         fc::time_point peer_connection::get_last_message_received_time() const {
-            VERIFY_CORRECT_THREAD();
+            //VERIFY_CORRECT_THREAD();
             return _message_connection.get_last_message_received_time();
         }
 
         fc::optional<fc::ip::endpoint> peer_connection::get_remote_endpoint() {
-            VERIFY_CORRECT_THREAD();
+            //VERIFY_CORRECT_THREAD();
             return _remote_endpoint;
         }
 
         fc::ip::endpoint peer_connection::get_local_endpoint() {
-            VERIFY_CORRECT_THREAD();
+            //VERIFY_CORRECT_THREAD();
             return _message_connection.get_socket().local_endpoint();
         }
 
         void peer_connection::set_remote_endpoint(fc::optional<fc::ip::endpoint> new_remote_endpoint) {
-            VERIFY_CORRECT_THREAD();
+            //VERIFY_CORRECT_THREAD();
             _remote_endpoint = new_remote_endpoint;
         }
 
         bool peer_connection::busy() {
-            VERIFY_CORRECT_THREAD();
+            //VERIFY_CORRECT_THREAD();
             return !items_requested_from_peer.empty() ||
                    !sync_items_requested_from_peer.empty() ||
                    item_ids_requested_from_peer;
         }
 
         bool peer_connection::idle() {
-            VERIFY_CORRECT_THREAD();
+            //VERIFY_CORRECT_THREAD();
             return !busy();
         }
 
         bool peer_connection::is_transaction_fetching_inhibited() const {
-            VERIFY_CORRECT_THREAD();
+            //VERIFY_CORRECT_THREAD();
             return transaction_fetching_inhibited_until > fc::time_point::now();
         }
 
         fc::sha512 peer_connection::get_shared_secret() const {
-            VERIFY_CORRECT_THREAD();
+            //VERIFY_CORRECT_THREAD();
             return _message_connection.get_shared_secret();
         }
 
         void peer_connection::clear_old_inventory() {
-            VERIFY_CORRECT_THREAD();
+            //VERIFY_CORRECT_THREAD();
             fc::time_point_sec oldest_inventory_to_keep(fc::time_point::now() -
                                                         fc::minutes(GRAPHENE_NET_MAX_INVENTORY_SIZE_IN_MINUTES));
 
@@ -449,14 +409,14 @@ namespace golos {
 
         // we have a higher limit for blocks than transactions so we will still fetch blocks even when transactions are throttled
         bool peer_connection::is_inventory_advertised_to_us_list_full_for_transactions() const {
-            VERIFY_CORRECT_THREAD();
+            //VERIFY_CORRECT_THREAD();
             return inventory_peer_advertised_to_us.size() >
                    GRAPHENE_NET_MAX_INVENTORY_SIZE_IN_MINUTES *
                    GRAPHENE_NET_MAX_TRX_PER_SECOND * 60;
         }
 
         bool peer_connection::is_inventory_advertised_to_us_list_full() const {
-            VERIFY_CORRECT_THREAD();
+            //VERIFY_CORRECT_THREAD();
             // allow the total inventory size to be the maximum number of transactions we'll store in the inventory (above)
             // plus the maximum number of blocks that would be generated in GRAPHENE_NET_MAX_INVENTORY_SIZE_IN_MINUTES (plus one,
             // to give us some wiggle room)

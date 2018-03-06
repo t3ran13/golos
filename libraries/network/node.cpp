@@ -1,26 +1,3 @@
-/*
- * Copyright (c) 2015 Cryptonomex, Inc., and contributors.
- *
- * The MIT License
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
 #include <sstream>
 #include <iomanip>
 #include <deque>
@@ -50,10 +27,6 @@
 #include <boost/accumulators/statistics/max.hpp>
 #include <boost/accumulators/statistics/sum.hpp>
 
-#include <fc/thread/thread.hpp>
-#include <fc/thread/non_preemptable_scope_check.hpp>
-#include <fc/thread/mutex.hpp>
-#include <fc/thread/scoped_lock.hpp>
 #include <fc/io/json.hpp>
 #include <fc/io/enum_type.hpp>
 #include <fc/crypto/rand.hpp>
@@ -66,6 +39,7 @@
 #include <golos/network/exceptions.hpp>
 
 #include <fc/git_revision.hpp>
+#include <thread>
 
 //#define ENABLE_DEBUG_ULOGS
 
@@ -74,27 +48,6 @@
 #endif
 #define DEFAULT_LOGGER "p2p"
 
-#define P2P_IN_DEDICATED_THREAD 1
-
-#define INVOCATION_COUNTER(name) \
-    static unsigned total_ ## name ## _counter = 0; \
-    static unsigned active_ ## name ## _counter = 0; \
-    struct name ## _invocation_logger { \
-      unsigned *total; \
-      unsigned *active; \
-      name ## _invocation_logger(unsigned *total, unsigned *active) : \
-        total(total), active(active) \
-      { \
-        ++*total; \
-        ++*active; \
-        dlog("NEWDEBUG: Entering " #name ", now ${total} total calls, ${active} active calls", ("total", *total)("active", *active)); \
-      } \
-      ~name ## _invocation_logger() \
-      { \
-        --*active; \
-        dlog("NEWDEBUG: Leaving " #name ", now ${total} total calls, ${active} active calls", ("total", *total)("active", *active)); \
-      } \
-    } invocation_logger(&total_ ## name ## _counter, &active_ ## name ## _counter)
 
 //log these messages even at warn level when operating on the test network
 #ifdef GRAPHENE_TEST_NETWORK
@@ -279,7 +232,7 @@ namespace golos {
                     : public node_delegate {
             private:
                 node_delegate *_node_delegate;
-                fc::thread *_thread;
+                std::thread *_thread;
 
                 typedef boost::accumulators::accumulator_set<int64_t, boost::accumulators::stats<boost::accumulators::tag::min,
                         boost::accumulators::tag::rolling_mean,
@@ -381,7 +334,7 @@ namespace golos {
                 };
 
             public:
-                statistics_gathering_node_delegate_wrapper(node_delegate *delegate, fc::thread *thread_for_delegate_calls);
+                statistics_gathering_node_delegate_wrapper(node_delegate *delegate, std::thread *thread_for_delegate_calls);
 
                 fc::variant_object get_call_statistics();
 
@@ -423,9 +376,7 @@ namespace golos {
 
             class node_impl : public peer_connection_delegate {
             public:
-#ifdef P2P_IN_DEDICATED_THREAD
-                std::shared_ptr<fc::thread> _thread;
-#endif // P2P_IN_DEDICATED_THREAD
+                std::shared_ptr<std::thread> _thread;
                 std::unique_ptr<statistics_gathering_node_delegate_wrapper> _delegate;
 
 #define NODE_CONFIGURATION_FILENAME      "node_config.json"
@@ -769,7 +720,7 @@ namespace golos {
                         const fc::oexception &additional_data = fc::oexception());
 
                 // methods implementing node's public interface
-                void set_node_delegate(node_delegate *del, fc::thread *thread_for_delegate_calls);
+                void set_node_delegate(node_delegate *del, std::thread *thread_for_delegate_calls);
 
                 void load_configuration(const fc::path &configuration_directory);
 
@@ -840,10 +791,9 @@ namespace golos {
             ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
             void node_impl_deleter::operator()(node_impl *impl_to_delete) {
-#ifdef P2P_IN_DEDICATED_THREAD
-                std::weak_ptr<fc::thread> weak_thread;
+                std::weak_ptr<std::thread> weak_thread;
                 if (impl_to_delete) {
-                    std::shared_ptr<fc::thread> impl_thread(impl_to_delete->_thread);
+                    std::shared_ptr<std::thread> impl_thread(impl_to_delete->_thread);
                     weak_thread = impl_thread;
                     impl_thread->async([impl_to_delete]() { delete impl_to_delete; }, "delete node_impl").wait();
                     dlog("deleting the p2p thread");
@@ -852,24 +802,15 @@ namespace golos {
                     dlog("done deleting the p2p thread");
                 else
                     dlog("failed to delete the p2p thread, we must be leaking a smart pointer somewhere");
-#else // P2P_IN_DEDICATED_THREAD
-                delete impl_to_delete;
-#endif // P2P_IN_DEDICATED_THREAD
+
             }
 
-#ifdef P2P_IN_DEDICATED_THREAD
-# define VERIFY_CORRECT_THREAD() assert(_thread->is_current())
-#else
-# define VERIFY_CORRECT_THREAD() do {} while (0)
-#endif
 
 #define MAXIMUM_NUMBER_OF_BLOCKS_TO_HANDLE_AT_ONE_TIME 200
 #define MAXIMUM_NUMBER_OF_BLOCKS_TO_PREFETCH (10 * MAXIMUM_NUMBER_OF_BLOCKS_TO_HANDLE_AT_ONE_TIME)
 
             node_impl::node_impl(const std::string &user_agent) :
-#ifdef P2P_IN_DEDICATED_THREAD
-                    _thread(std::make_shared<fc::thread>("p2p")),
-#endif // P2P_IN_DEDICATED_THREAD
+                    _thread(std::make_shared<std::thread>("p2p")),
                     _delegate(nullptr),
                     _is_firewalled(firewalled_state::unknown),
                     _potential_peer_database_updated(false),
@@ -905,7 +846,6 @@ namespace golos {
             }
 
             node_impl::~node_impl() {
-                VERIFY_CORRECT_THREAD();
                 ilog("cleaning up node");
                 _node_is_shutting_down = true;
 
@@ -931,7 +871,6 @@ namespace golos {
             }
 
             void node_impl::save_node_configuration() {
-                VERIFY_CORRECT_THREAD();
                 if (fc::exists(_node_configuration_directory)) {
                     fc::path configuration_file_name(
                             _node_configuration_directory /
@@ -950,7 +889,6 @@ namespace golos {
             }
 
             void node_impl::p2p_network_connect_loop() {
-                VERIFY_CORRECT_THREAD();
                 while (!_p2p_network_connect_loop_done.canceled()) {
                     try {
                         dlog("Starting an iteration of p2p_network_connect_loop().");
@@ -1012,30 +950,9 @@ namespace golos {
 
                         // if we broke out of the while loop, that means either we have connected to enough nodes, or
                         // we don't have any good candidates to connect to right now.
-#if 0
-                                                                                                                                                try
-          {
-            _retrigger_connect_loop_promise = fc::promise<void>::ptr( new fc::promise<void>("golos::network::retrigger_connect_loop") );
-            if( is_wanting_new_connections() || !_add_once_node_list.empty() )
-            {
-              if( is_wanting_new_connections() )
-                dlog( "Still want to connect to more nodes, but I don't have any good candidates.  Trying again in 15 seconds" );
-              else
-                dlog( "I still have some \"add once\" nodes to connect to.  Trying again in 15 seconds" );
-              _retrigger_connect_loop_promise->wait_until( fc::time_point::now() + fc::seconds(GRAPHENE_PEER_DATABASE_RETRY_DELAY ) );
-            }
-            else
-            {
-              dlog( "I don't need any more connections, waiting forever until something changes" );
-              _retrigger_connect_loop_promise->wait();
-            }
-          }
-          catch ( fc::timeout_exception& ) //intentionally not logged
-          {
-          }  // catch
-#else
+
                         fc::usleep(fc::seconds(10));
-#endif
+
                     }
                     catch (const fc::canceled_exception &) {
                         throw;
@@ -1047,7 +964,6 @@ namespace golos {
             }
 
             void node_impl::trigger_p2p_network_connect_loop() {
-                VERIFY_CORRECT_THREAD();
                 dlog("Triggering connect loop now");
                 _potential_peer_database_updated = true;
                 //if( _retrigger_connect_loop_promise )
@@ -1055,7 +971,6 @@ namespace golos {
             }
 
             bool node_impl::have_already_received_sync_item(const item_hash_t &item_hash) {
-                VERIFY_CORRECT_THREAD();
                 return std::find_if(_received_sync_items.begin(), _received_sync_items.end(),
                         [&item_hash](const golos::network::block_message &message) {
                             return message.block_id == item_hash;
@@ -1067,7 +982,6 @@ namespace golos {
             }
 
             void node_impl::request_sync_item_from_peer(const peer_connection_ptr &peer, const item_hash_t &item_to_request) {
-                VERIFY_CORRECT_THREAD();
                 dlog("requesting item ${item_hash} from peer ${endpoint}", ("item_hash", item_to_request)("endpoint", peer->get_remote_endpoint()));
                 item_id item_id_to_request(golos::network::block_message_type, item_to_request);
                 _active_sync_requests.insert(active_sync_requests_map::value_type(item_to_request, fc::time_point::now()));
@@ -1079,7 +993,6 @@ namespace golos {
             }
 
             void node_impl::request_sync_items_from_peer(const peer_connection_ptr &peer, const std::vector<item_hash_t> &items_to_request) {
-                VERIFY_CORRECT_THREAD();
                 dlog("requesting ${item_count} item(s) ${items_to_request} from peer ${endpoint}",
                         ("item_count", items_to_request.size())("items_to_request", items_to_request)("endpoint", peer->get_remote_endpoint()));
                 for (const item_hash_t &item_to_request : items_to_request) {
@@ -1091,7 +1004,6 @@ namespace golos {
             }
 
             void node_impl::fetch_sync_items_loop() {
-                VERIFY_CORRECT_THREAD();
                 while (!_fetch_sync_items_loop_done.canceled()) {
                     _sync_items_to_fetch_updated = false;
                     dlog("beginning another iteration of the sync items loop");
@@ -1100,7 +1012,7 @@ namespace golos {
                         std::map<peer_connection_ptr, std::vector<item_hash_t>> sync_item_requests_to_send;
 
                         {
-                            ASSERT_TASK_NOT_PREEMPTED();
+                            //ASSERT_TASK_NOT_PREEMPTED();
                             std::set<item_hash_t> sync_items_to_request;
 
                             // for each idle peer that we're syncing with
@@ -1156,7 +1068,6 @@ namespace golos {
             }
 
             void node_impl::trigger_fetch_sync_items_loop() {
-                VERIFY_CORRECT_THREAD();
                 dlog("Triggering fetch sync items loop now");
                 _sync_items_to_fetch_updated = true;
                 if (_retrigger_fetch_sync_items_loop_promise) {
@@ -1175,7 +1086,6 @@ namespace golos {
             }
 
             void node_impl::fetch_items_loop() {
-                VERIFY_CORRECT_THREAD();
                 while (!_fetch_item_loop_done.canceled()) {
                     _items_to_fetch_updated = false;
                     dlog("beginning an iteration of fetch items (${count} items to fetch)",
@@ -1316,7 +1226,6 @@ namespace golos {
             }
 
             void node_impl::trigger_fetch_items_loop() {
-                VERIFY_CORRECT_THREAD();
                 _items_to_fetch_updated = true;
                 if (_retrigger_fetch_item_loop_promise) {
                     _retrigger_fetch_item_loop_promise->set_value();
@@ -1324,7 +1233,6 @@ namespace golos {
             }
 
             void node_impl::advertise_inventory_loop() {
-                VERIFY_CORRECT_THREAD();
                 while (!_advertise_inventory_loop_done.canceled()) {
                     dlog("beginning an iteration of advertise inventory");
                     // swap inventory into local variable, clearing the node's copy
@@ -1391,14 +1299,12 @@ namespace golos {
             }
 
             void node_impl::trigger_advertise_inventory_loop() {
-                VERIFY_CORRECT_THREAD();
                 if (_retrigger_advertise_inventory_loop_promise) {
                     _retrigger_advertise_inventory_loop_promise->set_value();
                 }
             }
 
             void node_impl::terminate_inactive_connections_loop() {
-                VERIFY_CORRECT_THREAD();
                 std::list<peer_connection_ptr> peers_to_disconnect_gently;
                 std::list<peer_connection_ptr> peers_to_disconnect_forcibly;
                 std::list<peer_connection_ptr> peers_to_send_keep_alive;
@@ -1416,7 +1322,7 @@ namespace golos {
                     // As usual, the first step is to walk through all our peers and figure out which
                     // peers need action (disconneting, sending keepalives, etc), then we walk through
                     // those lists yielding at our leisure later.
-                    ASSERT_TASK_NOT_PREEMPTED();
+                    //ASSERT_TASK_NOT_PREEMPTED();
 
                     uint32_t handshaking_timeout = _peer_inactivity_timeout;
                     fc::time_point handshaking_disconnect_threshold =
@@ -1621,7 +1527,6 @@ namespace golos {
             }
 
             void node_impl::fetch_updated_peer_lists_loop() {
-                VERIFY_CORRECT_THREAD();
 
                 std::list<peer_connection_ptr> original_active_peers(_active_connections.begin(), _active_connections.end());
                 for (const peer_connection_ptr &active_peer : original_active_peers) {
@@ -1654,7 +1559,6 @@ namespace golos {
             }
 
             void node_impl::update_bandwidth_data(uint32_t bytes_read_this_second, uint32_t bytes_written_this_second) {
-                VERIFY_CORRECT_THREAD();
                 _average_network_read_speed_seconds.push_back(bytes_read_this_second);
                 _average_network_write_speed_seconds.push_back(bytes_written_this_second);
                 ++_average_network_usage_second_counter;
@@ -1684,7 +1588,6 @@ namespace golos {
             }
 
             void node_impl::bandwidth_monitor_loop() {
-                VERIFY_CORRECT_THREAD();
                 fc::time_point_sec current_time = fc::time_point::now();
 
                 if (_bandwidth_monitor_last_update_time ==
@@ -1713,7 +1616,6 @@ namespace golos {
             }
 
             void node_impl::dump_node_status_task() {
-                VERIFY_CORRECT_THREAD();
                 dump_node_status();
                 if (!_node_is_shutting_down &&
                     !_dump_node_status_task_done.canceled()) {
@@ -1724,7 +1626,7 @@ namespace golos {
             }
 
             void node_impl::delayed_peer_deletion_task() {
-                VERIFY_CORRECT_THREAD();
+
 #ifdef USE_PEERS_TO_DELETE_MUTEX
                                                                                                                                         fc::scoped_lock<fc::mutex> lock(_peers_to_delete_mutex);
       dlog("in delayed_peer_deletion_task with ${count} in queue", ("count", _peers_to_delete.size()));
@@ -1741,7 +1643,6 @@ namespace golos {
             }
 
             void node_impl::schedule_peer_for_deletion(const peer_connection_ptr &peer_to_delete) {
-                VERIFY_CORRECT_THREAD();
 
                 assert(_handshaking_connections.find(peer_to_delete) ==
                        _handshaking_connections.end());
@@ -1786,21 +1687,18 @@ namespace golos {
             }
 
             bool node_impl::is_accepting_new_connections() {
-                VERIFY_CORRECT_THREAD();
                 return !_p2p_network_connect_loop_done.canceled() &&
                        get_number_of_connections() <=
                        _maximum_number_of_connections;
             }
 
             bool node_impl::is_wanting_new_connections() {
-                VERIFY_CORRECT_THREAD();
                 return !_p2p_network_connect_loop_done.canceled() &&
                        get_number_of_connections() <
                        _desired_number_of_connections;
             }
 
             uint32_t node_impl::get_number_of_connections() {
-                VERIFY_CORRECT_THREAD();
                 return (uint32_t)(_handshaking_connections.size() +
                                   _active_connections.size());
             }
@@ -1820,7 +1718,6 @@ namespace golos {
             }
 
             bool node_impl::is_already_connected_to_id(const node_id_t &node_id) {
-                VERIFY_CORRECT_THREAD();
                 if (node_id == _node_id) {
                     dlog("is_already_connected_to_id returning true because the peer is us");
                     return true;
@@ -1842,7 +1739,6 @@ namespace golos {
 
             // merge addresses received from a peer into our database
             bool node_impl::merge_address_info_with_potential_peer_database(const std::vector<address_info> addresses) {
-                VERIFY_CORRECT_THREAD();
                 bool new_information_received = false;
                 for (const address_info &address : addresses) {
                     if (address.firewalled ==
@@ -1860,7 +1756,6 @@ namespace golos {
             }
 
             void node_impl::display_current_connections() {
-                VERIFY_CORRECT_THREAD();
                 dlog("Currently have ${current} of [${desired}/${max}] connections",
                         ("current", get_number_of_connections())
                                 ("desired", _desired_number_of_connections)
@@ -1882,7 +1777,6 @@ namespace golos {
             }
 
             void node_impl::on_message(peer_connection *originating_peer, const message &received_message) {
-                VERIFY_CORRECT_THREAD();
                 message_hash_type message_hash = received_message.id();
                 dlog("handling message ${type} ${hash} size ${size} from peer ${endpoint}",
                         ("type", golos::network::core_message_type_enum(received_message.msg_type))("hash", message_hash)
@@ -1959,7 +1853,6 @@ namespace golos {
 
 
             fc::variant_object node_impl::generate_hello_user_data() {
-                VERIFY_CORRECT_THREAD();
                 // for the time being, shoehorn a bunch of properties into the user_data variant object,
                 // which lets us add and remove fields without changing the protocol.  Once we
                 // settle on what we really want in there, we'll likely promote them to first
@@ -1995,7 +1888,6 @@ namespace golos {
             }
 
             void node_impl::parse_hello_user_data_for_peer(peer_connection *originating_peer, const fc::variant_object &user_data) {
-                VERIFY_CORRECT_THREAD();
                 // try to parse data out of the user_agent string
                 if (user_data.contains("graphene_git_revision_sha")) {
                     originating_peer->graphene_git_revision_sha = user_data["graphene_git_revision_sha"].as_string();
@@ -2027,7 +1919,6 @@ namespace golos {
             }
 
             void node_impl::on_hello_message(peer_connection *originating_peer, const hello_message &hello_message_received) {
-                VERIFY_CORRECT_THREAD();
                 // this already_connected check must come before we fill in peer data below
                 node_id_t peer_node_id = hello_message_received.node_public_key;
                 try {
@@ -2230,7 +2121,6 @@ namespace golos {
             }
 
             void node_impl::on_connection_accepted_message(peer_connection *originating_peer, const connection_accepted_message &connection_accepted_message_received) {
-                VERIFY_CORRECT_THREAD();
                 dlog("Received a connection_accepted in response to my \"hello\" from ${peer}", ("peer", originating_peer->get_remote_endpoint()));
                 originating_peer->negotiation_status = peer_connection::connection_negotiation_status::peer_connection_accepted;
                 originating_peer->our_state = peer_connection::our_connection_state::connection_accepted;
@@ -2249,7 +2139,6 @@ namespace golos {
             }
 
             void node_impl::on_connection_rejected_message(peer_connection *originating_peer, const connection_rejected_message &connection_rejected_message_received) {
-                VERIFY_CORRECT_THREAD();
                 if (originating_peer->our_state ==
                     peer_connection::our_connection_state::just_connected) {
                     ilog("Received a rejection from ${peer} in response to my \"hello\", reason: \"${reason}\"",
@@ -2280,7 +2169,6 @@ namespace golos {
             }
 
             void node_impl::on_address_request_message(peer_connection *originating_peer, const address_request_message &address_request_message_received) {
-                VERIFY_CORRECT_THREAD();
                 dlog("Received an address request message");
 
                 address_message reply;
@@ -2305,7 +2193,6 @@ namespace golos {
             }
 
             void node_impl::on_address_message(peer_connection *originating_peer, const address_message &address_message_received) {
-                VERIFY_CORRECT_THREAD();
                 dlog("Received an address message containing ${size} addresses", ("size", address_message_received.addresses.size()));
                 for (const address_info &address : address_message_received.addresses) {
                     dlog("    ${endpoint} last seen ${time}", ("endpoint", address.remote_endpoint)("time", address.last_seen_time));
@@ -2351,7 +2238,6 @@ namespace golos {
 
             void node_impl::on_fetch_blockchain_item_ids_message(peer_connection *originating_peer,
                     const fetch_blockchain_item_ids_message &fetch_blockchain_item_ids_message_received) {
-                VERIFY_CORRECT_THREAD();
                 item_id peers_last_item_seen = item_id(fetch_blockchain_item_ids_message_received.item_type, item_hash_t());
                 if (fetch_blockchain_item_ids_message_received.blockchain_synopsis.empty()) {
                     dlog("sync: received a request for item ids starting at the beginning of the chain from peer ${peer_endpoint} (full request: ${synopsis})",
@@ -2455,7 +2341,6 @@ namespace golos {
             }
 
             uint32_t node_impl::calculate_unsynced_block_count_from_all_peers() {
-                VERIFY_CORRECT_THREAD();
                 uint32_t max_number_of_unfetched_items = 0;
                 for (const peer_connection_ptr &peer : _active_connections) {
                     uint32_t this_peer_number_of_unfetched_items =
@@ -2472,7 +2357,6 @@ namespace golos {
             // If the peer is syncing with us, it is a synopsis of our active blockchain plus the
             //    blocks the peer has already told us it has
             std::vector<item_hash_t> node_impl::create_blockchain_synopsis_for_peer(const peer_connection *peer) {
-                VERIFY_CORRECT_THREAD();
                 item_hash_t reference_point = peer->last_block_delegate_has_seen;
 
                 // when we call _delegate->get_blockchain_synopsis(), we may yield and there's a
@@ -2525,7 +2409,6 @@ namespace golos {
             }
 
             void node_impl::fetch_next_batch_of_item_ids_from_peer(peer_connection *peer, bool reset_fork_tracking_data_for_peer /* = false */ ) {
-                VERIFY_CORRECT_THREAD();
                 if (reset_fork_tracking_data_for_peer) {
                     peer->last_block_delegate_has_seen = item_hash_t();
                     peer->last_block_time_delegate_has_seen = _delegate->get_block_time(item_hash_t());
@@ -2555,7 +2438,6 @@ namespace golos {
 
             void node_impl::on_blockchain_item_ids_inventory_message(peer_connection *originating_peer,
                     const blockchain_item_ids_inventory_message &blockchain_item_ids_inventory_message_received) {
-                VERIFY_CORRECT_THREAD();
                 // ignore unless we asked for the data
                 if (originating_peer->item_ids_requested_from_peer) {
                     // verify that the peer's the block ids the peer sent is a valid response to our request;
@@ -2828,7 +2710,6 @@ namespace golos {
             }
 
             void node_impl::on_fetch_items_message(peer_connection *originating_peer, const fetch_items_message &fetch_items_message_received) {
-                VERIFY_CORRECT_THREAD();
                 dlog("received items request for ids ${ids} of type ${type} from peer ${endpoint}",
                         ("ids", fetch_items_message_received.items_to_fetch)
                                 ("type", fetch_items_message_received.item_type)
@@ -2892,7 +2773,6 @@ namespace golos {
             }
 
             void node_impl::on_item_not_available_message(peer_connection *originating_peer, const item_not_available_message &item_not_available_message_received) {
-                VERIFY_CORRECT_THREAD();
                 const item_id &requested_item = item_not_available_message_received.requested_item;
                 auto regular_item_iter = originating_peer->items_requested_from_peer.find(requested_item);
                 if (regular_item_iter !=
@@ -2928,7 +2808,6 @@ namespace golos {
             }
 
             void node_impl::on_item_ids_inventory_message(peer_connection *originating_peer, const item_ids_inventory_message &item_ids_inventory_message_received) {
-                VERIFY_CORRECT_THREAD();
 
                 // expire old inventory so we'll be making decisions our about whether to fetch blocks below based only on recent inventory
                 originating_peer->clear_old_inventory();
@@ -3003,7 +2882,6 @@ namespace golos {
             }
 
             void node_impl::on_closing_connection_message(peer_connection *originating_peer, const closing_connection_message &closing_connection_message_received) {
-                VERIFY_CORRECT_THREAD();
                 originating_peer->they_have_requested_close = true;
 
                 if (closing_connection_message_received.closing_due_to_error) {
@@ -3034,7 +2912,6 @@ namespace golos {
             }
 
             void node_impl::on_connection_closed(peer_connection *originating_peer) {
-                VERIFY_CORRECT_THREAD();
                 peer_connection_ptr originating_peer_ptr = originating_peer->shared_from_this();
                 _rate_limiter.remove_tcp_socket(&originating_peer->get_socket());
 
@@ -3177,7 +3054,7 @@ namespace golos {
                             ("count", _total_number_of_unfetched_items));
                     bool is_fork_block = is_hard_fork_block(block_message_to_send.block.block_num());
                     for (const peer_connection_ptr &peer : _active_connections) {
-                        ASSERT_TASK_NOT_PREEMPTED(); // don't yield while iterating over _active_connections
+                        //ASSERT_TASK_NOT_PREEMPTED(); // don't yield while iterating over _active_connections
                         bool disconnecting_this_peer = false;
                         if (is_fork_block) {
                             // we just pushed a hard fork block.  Find out if this peer is running a client
@@ -3246,7 +3123,7 @@ namespace golos {
                 } else {
                     // invalid message received
                     for (const peer_connection_ptr &peer : _active_connections) {
-                        ASSERT_TASK_NOT_PREEMPTED(); // don't yield while iterating over _active_connections
+                        //ASSERT_TASK_NOT_PREEMPTED(); // don't yield while iterating over _active_connections
 
                         if (peer->ids_of_items_being_processed.find(block_message_to_send.block_id) !=
                             peer->ids_of_items_being_processed.end()) {
@@ -3290,7 +3167,6 @@ namespace golos {
             }
 
             void node_impl::process_backlog_of_sync_blocks() {
-                VERIFY_CORRECT_THREAD();
                 // garbage-collect the list of async tasks here for lack of a better place
                 for (auto calls_iter = _handle_message_calls_in_progress.begin();
                      calls_iter != _handle_message_calls_in_progress.end();) {
@@ -3345,7 +3221,7 @@ namespace golos {
                         // find out if this block is the next block on the active chain or one of the forks
                         bool potential_first_block = false;
                         for (const peer_connection_ptr &peer : _active_connections) {
-                            ASSERT_TASK_NOT_PREEMPTED(); // don't yield while iterating over _active_connections
+                            //ASSERT_TASK_NOT_PREEMPTED(); // don't yield while iterating over _active_connections
                             if (!peer->ids_of_items_to_get.empty() &&
                                 peer->ids_of_items_to_get.front() ==
                                 received_block_iter->block_id) {
@@ -3411,7 +3287,6 @@ namespace golos {
 
             void node_impl::process_block_during_sync(peer_connection *originating_peer,
                     const golos::network::block_message &block_message_to_process, const message_hash_type &message_hash) {
-                VERIFY_CORRECT_THREAD();
                 dlog("received a sync block from peer ${endpoint}", ("endpoint", originating_peer->get_remote_endpoint()));
 
                 // add it to the front of _received_sync_items, then process _received_sync_items to try to
@@ -3489,7 +3364,7 @@ namespace golos {
                     fc::time_point_sec block_time = block_message_to_process.block.timestamp;
 
                     for (const peer_connection_ptr &peer : _active_connections) {
-                        ASSERT_TASK_NOT_PREEMPTED(); // don't yield while iterating over _active_connections
+                        //ASSERT_TASK_NOT_PREEMPTED(); // don't yield while iterating over _active_connections
 
                         auto iter = peer->inventory_peer_advertised_to_us.find(block_message_item_id);
                         if (iter !=
@@ -3578,7 +3453,6 @@ namespace golos {
             void node_impl::process_block_message(peer_connection *originating_peer,
                     const message &message_to_process,
                     const message_hash_type &message_hash) {
-                VERIFY_CORRECT_THREAD();
                 // find out whether we requested this item while we were synchronizing or during normal operation
                 // (it's possible that we request an item during normal operation and then get kicked into sync
                 // mode before we receive and process the item.  In that case, we should process the item as a normal
@@ -3633,7 +3507,6 @@ namespace golos {
 
             void node_impl::on_current_time_request_message(peer_connection *originating_peer,
                     const current_time_request_message &current_time_request_message_received) {
-                VERIFY_CORRECT_THREAD();
                 fc::time_point request_received_time(fc::time_point::now());
                 current_time_reply_message reply(current_time_request_message_received.request_sent_time,
                         request_received_time);
@@ -3642,7 +3515,6 @@ namespace golos {
 
             void node_impl::on_current_time_reply_message(peer_connection *originating_peer,
                     const current_time_reply_message &current_time_reply_message_received) {
-                VERIFY_CORRECT_THREAD();
                 fc::time_point reply_received_time = fc::time_point::now();
                 originating_peer->clock_offset = fc::microseconds(
                         ((current_time_reply_message_received.request_received_time -
@@ -3693,7 +3565,7 @@ namespace golos {
 
             void node_impl::on_check_firewall_message(peer_connection *originating_peer,
                     const check_firewall_message &check_firewall_message_received) {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
 
                 if (check_firewall_message_received.node_id == node_id_t() &&
                     check_firewall_message_received.endpoint_to_check ==
@@ -3742,7 +3614,7 @@ namespace golos {
 
             void node_impl::on_check_firewall_reply_message(peer_connection *originating_peer,
                     const check_firewall_reply_message &check_firewall_reply_message_received) {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
 
                 if (originating_peer->firewall_check_state &&
                     originating_peer->firewall_check_state->requesting_peer !=
@@ -3812,7 +3684,7 @@ namespace golos {
 
             void node_impl::on_get_current_connections_request_message(peer_connection *originating_peer,
                     const get_current_connections_request_message &get_current_connections_request_message_received) {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 get_current_connections_reply_message reply;
 
                 if (!_average_network_read_speed_minutes.empty()) {
@@ -3847,7 +3719,7 @@ namespace golos {
 
                 fc::time_point now = fc::time_point::now();
                 for (const peer_connection_ptr &peer : _active_connections) {
-                    ASSERT_TASK_NOT_PREEMPTED(); // don't yield while iterating over _active_connections
+                    //ASSERT_TASK_NOT_PREEMPTED(); // don't yield while iterating over _active_connections
 
                     current_connection_data data_for_this_peer;
                     data_for_this_peer.connection_duration =
@@ -3894,7 +3766,7 @@ namespace golos {
 
             void node_impl::on_get_current_connections_reply_message(peer_connection *originating_peer,
                     const get_current_connections_reply_message &get_current_connections_reply_message_received) {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
             }
 
 
@@ -3905,7 +3777,7 @@ namespace golos {
             // related to requesting and rebroadcasting the message.
             void node_impl::process_ordinary_message(peer_connection *originating_peer,
                     const message &message_to_process, const message_hash_type &message_hash) {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 fc::time_point message_receive_time = fc::time_point::now();
 
                 // only process it if we asked for it
@@ -3955,7 +3827,7 @@ namespace golos {
             }
 
             void node_impl::start_synchronizing_with_peer(const peer_connection_ptr &peer) {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 peer->ids_of_items_to_get.clear();
                 peer->number_of_unfetched_item_ids = 0;
                 peer->we_need_sync_items_from_peer = true;
@@ -3972,7 +3844,7 @@ namespace golos {
             }
 
             void node_impl::new_peer_just_added(const peer_connection_ptr &peer) {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 peer->send_message(current_time_request_message(),
                         offsetof(current_time_request_message, request_sent_time));
                 start_synchronizing_with_peer(peer);
@@ -3984,7 +3856,7 @@ namespace golos {
             }
 
             void node_impl::close() {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
 
                 try {
                     _potential_peer_db.close();
@@ -4223,13 +4095,13 @@ namespace golos {
             } // node_impl::close()
 
             void node_impl::accept_connection_task(peer_connection_ptr new_peer) {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 new_peer->accept_connection(); // this blocks until the secure connection is fully negotiated
                 send_hello_message(new_peer);
             }
 
             void node_impl::accept_loop() {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 while (!_accept_loop_complete.canceled()) {
                     peer_connection_ptr new_peer(peer_connection::make_shared(this));
 
@@ -4259,7 +4131,7 @@ namespace golos {
             } // accept_loop()
 
             void node_impl::send_hello_message(const peer_connection_ptr &peer) {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 peer->negotiation_status = peer_connection::connection_negotiation_status::hello_sent;
 
                 fc::sha256::encoder shared_secret_encoder;
@@ -4302,7 +4174,7 @@ namespace golos {
 
             void node_impl::connect_to_task(peer_connection_ptr new_peer,
                     const fc::ip::endpoint &remote_endpoint) {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
 
                 if (!new_peer->performing_firewall_check()) {
                     // create or find the database entry for the new peer
@@ -4408,8 +4280,8 @@ namespace golos {
             }
 
             // methods implementing node's public interface
-            void node_impl::set_node_delegate(node_delegate *del, fc::thread *thread_for_delegate_calls) {
-                VERIFY_CORRECT_THREAD();
+            void node_impl::set_node_delegate(node_delegate *del, std::thread *thread_for_delegate_calls) {
+                //VERIFY_CORRECT_THREAD();
                 _delegate.reset();
                 if (del) {
                     _delegate.reset(new statistics_gathering_node_delegate_wrapper(del, thread_for_delegate_calls));
@@ -4417,7 +4289,7 @@ namespace golos {
             }
 
             void node_impl::load_configuration(const fc::path &configuration_directory) {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 _node_configuration_directory = configuration_directory;
                 fc::path configuration_file_name(_node_configuration_directory /
                                                  NODE_CONFIGURATION_FILENAME);
@@ -4488,7 +4360,7 @@ namespace golos {
             }
 
             void node_impl::listen_to_p2p_network() {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 if (!_node_configuration.accept_incoming_connections) {
                     wlog("accept_incoming_connections is false, p2p network will not accept any incoming connections");
                     return;
@@ -4578,7 +4450,7 @@ namespace golos {
             }
 
             void node_impl::connect_to_p2p_network() {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 assert(_node_public_key != fc::ecc::public_key_data());
 
                 assert(!_accept_loop_complete.valid() &&
@@ -4604,7 +4476,7 @@ namespace golos {
             }
 
             void node_impl::add_node(const fc::ip::endpoint &ep) {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 // if we're connecting to them, we believe they're not firewalled
                 potential_peer_record updated_peer_record = _potential_peer_db.lookup_or_create_entry_for_endpoint(ep);
 
@@ -4641,7 +4513,7 @@ namespace golos {
             }
 
             void node_impl::connect_to_endpoint(const fc::ip::endpoint &remote_endpoint) {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 if (is_connection_to_endpoint_in_progress(remote_endpoint))
                     FC_THROW_EXCEPTION(already_connected_to_requested_peer, "already connected to requested endpoint ${endpoint}",
                             ("endpoint", remote_endpoint));
@@ -4653,7 +4525,7 @@ namespace golos {
             }
 
             peer_connection_ptr node_impl::get_connection_to_endpoint(const fc::ip::endpoint &remote_endpoint) {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 for (const peer_connection_ptr &active_peer : _active_connections) {
                     fc::optional<fc::ip::endpoint> endpoint_for_this_peer(active_peer->get_remote_endpoint());
                     if (endpoint_for_this_peer &&
@@ -4672,13 +4544,13 @@ namespace golos {
             }
 
             bool node_impl::is_connection_to_endpoint_in_progress(const fc::ip::endpoint &remote_endpoint) {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 return get_connection_to_endpoint(remote_endpoint) !=
                        peer_connection_ptr();
             }
 
             void node_impl::move_peer_to_active_list(const peer_connection_ptr &peer) {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 _active_connections.insert(peer);
                 _handshaking_connections.erase(peer);
                 _closing_connections.erase(peer);
@@ -4689,7 +4561,7 @@ namespace golos {
             }
 
             void node_impl::move_peer_to_closing_list(const peer_connection_ptr &peer) {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 _active_connections.erase(peer);
                 _handshaking_connections.erase(peer);
                 _closing_connections.insert(peer);
@@ -4700,7 +4572,7 @@ namespace golos {
             }
 
             void node_impl::move_peer_to_terminating_list(const peer_connection_ptr &peer) {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 _active_connections.erase(peer);
                 _handshaking_connections.erase(peer);
                 _closing_connections.erase(peer);
@@ -4711,7 +4583,7 @@ namespace golos {
             }
 
             void node_impl::dump_node_status() {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 ilog("----------------- PEER STATUS UPDATE --------------------");
                 ilog(" number of peers: ${active} active, ${handshaking}, ${closing} closing.  attempting to maintain ${desired} - ${maximum} peers",
                         ("active", _active_connections.size())("handshaking", _handshaking_connections.size())("closing", _closing_connections.size())
@@ -4753,7 +4625,7 @@ namespace golos {
                     const std::string &reason_for_disconnect,
                     bool caused_by_error /* = false */,
                     const fc::oexception &error /* = fc::oexception() */ ) {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 move_peer_to_closing_list(peer_to_disconnect->shared_from_this());
 
                 if (peer_to_disconnect->they_have_requested_close) {
@@ -4798,35 +4670,35 @@ namespace golos {
             }
 
             void node_impl::listen_on_endpoint(const fc::ip::endpoint &ep, bool wait_if_not_available) {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 _node_configuration.listen_endpoint = ep;
                 _node_configuration.wait_if_endpoint_is_busy = wait_if_not_available;
                 save_node_configuration();
             }
 
             void node_impl::accept_incoming_connections(bool accept) {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 _node_configuration.accept_incoming_connections = accept;
                 save_node_configuration();
             }
 
             void node_impl::listen_on_port(uint16_t port, bool wait_if_not_available) {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 _node_configuration.listen_endpoint = fc::ip::endpoint(fc::ip::address(), port);
                 _node_configuration.wait_if_endpoint_is_busy = wait_if_not_available;
                 save_node_configuration();
             }
 
             fc::ip::endpoint node_impl::get_actual_listening_endpoint() const {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 return _actual_listening_endpoint;
             }
 
             std::vector<peer_status> node_impl::get_connected_peers() const {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 std::vector<peer_status> statuses;
                 for (const peer_connection_ptr &peer : _active_connections) {
-                    ASSERT_TASK_NOT_PREEMPTED(); // don't yield while iterating over _active_connections
+                    //ASSERT_TASK_NOT_PREEMPTED(); // don't yield while iterating over _active_connections
 
                     peer_status this_peer_status;
                     this_peer_status.version = 0;
@@ -4899,12 +4771,12 @@ namespace golos {
             }
 
             uint32_t node_impl::get_connection_count() const {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 return (uint32_t)_active_connections.size();
             }
 
             void node_impl::broadcast(const message &item_to_broadcast, const message_propagation_data &propagation_data) {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 fc::uint160_t hash_of_message_contents;
                 if (item_to_broadcast.msg_type ==
                     golos::network::block_message_type) {
@@ -4925,7 +4797,7 @@ namespace golos {
             }
 
             void node_impl::broadcast(const message &item_to_broadcast) {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 // this version is called directly from the client
                 message_propagation_data propagation_data{fc::time_point::now(),
                                                           fc::time_point::now(),
@@ -4935,7 +4807,7 @@ namespace golos {
             }
 
             void node_impl::sync_from(const item_id &current_head_block, const std::vector<uint32_t> &hard_fork_block_numbers) {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 _most_recent_blocks_accepted.clear();
                 _sync_item_type = current_head_block.item_type;
                 _most_recent_blocks_accepted.push_back(current_head_block.item_hash);
@@ -4943,12 +4815,12 @@ namespace golos {
             }
 
             bool node_impl::is_connected() const {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 return !_active_connections.empty();
             }
 
             std::vector<potential_peer_record> node_impl::get_potential_peers() const {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 std::vector<potential_peer_record> result;
                 // use explicit iterators here, for some reason the mac compiler can't used ranged-based for loops here
                 for (peer_database::iterator itr = _potential_peer_db.begin();
@@ -4959,7 +4831,7 @@ namespace golos {
             }
 
             void node_impl::set_advanced_node_parameters(const fc::variant_object &params) {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 if (params.contains("peer_connection_retry_timeout")) {
                     _peer_connection_retry_timeout = params["peer_connection_retry_timeout"].as<uint32_t>();
                 }
@@ -4990,7 +4862,7 @@ namespace golos {
             }
 
             fc::variant_object node_impl::get_advanced_node_parameters() {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 fc::mutable_variant_object result;
                 result["peer_connection_retry_timeout"] = _peer_connection_retry_timeout;
                 result["desired_number_of_connections"] = _desired_number_of_connections;
@@ -5002,22 +4874,22 @@ namespace golos {
             }
 
             message_propagation_data node_impl::get_transaction_propagation_data(const golos::network::transaction_id_type &transaction_id) {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 return _message_cache.get_message_propagation_data(transaction_id);
             }
 
             message_propagation_data node_impl::get_block_propagation_data(const golos::network::block_id_type &block_id) {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 return _message_cache.get_message_propagation_data(block_id);
             }
 
             node_id_t node_impl::get_node_id() const {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 return _node_id;
             }
 
             void node_impl::set_allowed_peers(const std::vector<node_id_t> &allowed_peers) {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
 #ifdef ENABLE_P2P_DEBUGGING_API
                 _allowed_peers.clear();
                 _allowed_peers.insert(allowed_peers.begin(), allowed_peers.end());
@@ -5037,28 +4909,28 @@ namespace golos {
             }
 
             void node_impl::clear_peer_database() {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 _potential_peer_db.clear();
             }
 
             void node_impl::set_total_bandwidth_limit(uint32_t upload_bytes_per_second, uint32_t download_bytes_per_second) {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 _rate_limiter.set_upload_limit(upload_bytes_per_second);
                 _rate_limiter.set_download_limit(download_bytes_per_second);
             }
 
             void node_impl::disable_peer_advertising() {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 _peer_advertising_disabled = true;
             }
 
             fc::variant_object node_impl::get_call_statistics() const {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 return _delegate->get_call_statistics();
             }
 
             fc::variant_object node_impl::network_get_info() const {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 fc::mutable_variant_object info;
                 info["listening_on"] = _actual_listening_endpoint;
                 info["node_public_key"] = _node_public_key;
@@ -5068,7 +4940,7 @@ namespace golos {
             }
 
             fc::variant_object node_impl::network_get_usage_stats() const {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 std::vector<uint32_t> network_usage_by_second;
                 network_usage_by_second.reserve(_average_network_read_speed_seconds.size());
                 std::transform(_average_network_read_speed_seconds.begin(), _average_network_read_speed_seconds.end(),
@@ -5114,13 +4986,8 @@ namespace golos {
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // implement node functions, they call the matching function in to detail::node_impl in the correct thread //
 
-#ifdef P2P_IN_DEDICATED_THREAD
 # define INVOKE_IN_IMPL(method_name, ...) \
     return my->_thread->async([&](){ return my->method_name(__VA_ARGS__); }, "thread invoke for method " BOOST_PP_STRINGIZE(method_name)).wait()
-#else
-                                                                                                                                # define INVOKE_IN_IMPL(method_name, ...) \
-    return my->method_name(__VA_ARGS__)
-#endif // P2P_IN_DEDICATED_THREAD
 
         node::node(const std::string &user_agent) :
                 my(new detail::node_impl(user_agent)) {
@@ -5130,7 +4997,7 @@ namespace golos {
         }
 
         void node::set_node_delegate(node_delegate *del) {
-            fc::thread *delegate_thread = &fc::thread::current();
+            std::thread *delegate_thread = &std::thread::current();
             INVOKE_IN_IMPL(set_node_delegate, del, delegate_thread);
         }
 
@@ -5247,57 +5114,6 @@ namespace golos {
             INVOKE_IN_IMPL(close);
         }
 
-        struct simulated_network::node_info {
-            node_delegate *delegate;
-            fc::future<void> message_sender_task_done;
-            std::queue<message> messages_to_deliver;
-
-            node_info(node_delegate *delegate) : delegate(delegate) {
-            }
-        };
-
-        simulated_network::~simulated_network() {
-            for (node_info *network_node_info : network_nodes) {
-                network_node_info->message_sender_task_done.cancel_and_wait("~simulated_network()");
-                delete network_node_info;
-            }
-        }
-
-        void simulated_network::message_sender(node_info *destination_node) {
-            while (!destination_node->messages_to_deliver.empty()) {
-                try {
-                    const message &message_to_deliver = destination_node->messages_to_deliver.front();
-                    if (message_to_deliver.msg_type == trx_message_type) {
-                        destination_node->delegate->handle_transaction(message_to_deliver.as<trx_message>());
-                    } else if (message_to_deliver.msg_type ==
-                               block_message_type) {
-                        std::vector<fc::uint160_t> contained_transaction_message_ids;
-                        destination_node->delegate->handle_block(message_to_deliver.as<block_message>(), false, contained_transaction_message_ids);
-                    } else {
-                        destination_node->delegate->handle_message(message_to_deliver);
-                    }
-                }
-                catch (const fc::exception &e) {
-                    elog("${r}", ("r", e));
-                }
-                destination_node->messages_to_deliver.pop();
-            }
-        }
-
-        void simulated_network::broadcast(const message &item_to_broadcast) {
-            for (node_info *network_node_info : network_nodes) {
-                network_node_info->messages_to_deliver.emplace(item_to_broadcast);
-                if (!network_node_info->message_sender_task_done.valid() ||
-                    network_node_info->message_sender_task_done.ready()) {
-                        network_node_info->message_sender_task_done = fc::async([=]() { message_sender(network_node_info); }, "simulated_network_sender");
-                }
-            }
-        }
-
-        void simulated_network::add_node_delegate(node_delegate *node_delegate_to_add) {
-            network_nodes.push_back(new node_info(node_delegate_to_add));
-        }
-
         namespace detail {
 #define ROLLING_WINDOW_SIZE 1000
 #define INITIALIZE_ACCUMULATOR(r, data, method_name) \
@@ -5306,7 +5122,7 @@ namespace golos {
       , BOOST_PP_CAT(_, BOOST_PP_CAT(method_name, _delay_after_accumulator))(boost::accumulators::tag::rolling_window::window_size = ROLLING_WINDOW_SIZE)
 
 
-            statistics_gathering_node_delegate_wrapper::statistics_gathering_node_delegate_wrapper(node_delegate *delegate, fc::thread *thread_for_delegate_calls)
+            statistics_gathering_node_delegate_wrapper::statistics_gathering_node_delegate_wrapper(node_delegate *delegate, std::thread *thread_for_delegate_calls)
                     :
                     _node_delegate(delegate),
                     _thread(thread_for_delegate_calls)
@@ -5440,7 +5256,7 @@ namespace golos {
 
             uint32_t statistics_gathering_node_delegate_wrapper::get_block_number(const item_hash_t &block_id) {
                 // this function doesn't need to block,
-                ASSERT_TASK_NOT_PREEMPTED();
+                //ASSERT_TASK_NOT_PREEMPTED();
                 return _node_delegate->get_block_number(block_id);
             }
 
@@ -5451,7 +5267,7 @@ namespace golos {
             /** returns graphene::blockchain::now() */
             fc::time_point_sec statistics_gathering_node_delegate_wrapper::get_blockchain_now() {
                 // this function doesn't need to block,
-                ASSERT_TASK_NOT_PREEMPTED();
+                //ASSERT_TASK_NOT_PREEMPTED();
                 return _node_delegate->get_blockchain_now();
             }
 

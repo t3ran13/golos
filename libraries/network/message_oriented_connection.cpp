@@ -1,26 +1,3 @@
-/*
- * Copyright (c) 2015 Cryptonomex, Inc., and contributors.
- *
- * The MIT License
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
 #include <fc/thread/thread.hpp>
 #include <fc/thread/mutex.hpp>
 #include <fc/thread/scoped_lock.hpp>
@@ -34,12 +11,6 @@
 # undef DEFAULT_LOGGER
 #endif
 #define DEFAULT_LOGGER "p2p"
-
-#ifndef NDEBUG
-# define VERIFY_CORRECT_THREAD() assert(_thread->is_current())
-#else
-# define VERIFY_CORRECT_THREAD() do {} while (0)
-#endif
 
 namespace golos {
     namespace network {
@@ -60,7 +31,7 @@ namespace golos {
                 bool _send_message_in_progress;
 
 #ifndef NDEBUG
-                fc::thread *_thread;
+                std::thread *_thread;
 #endif
 
                 void read_loop();
@@ -110,43 +81,43 @@ namespace golos {
                       _bytes_sent(0),
                       _send_message_in_progress(false)
 #ifndef NDEBUG
-                    , _thread(&fc::thread::current())
+                    , _thread(&std::thread::current())
 #endif
             {
             }
 
             message_oriented_connection_impl::~message_oriented_connection_impl() {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 destroy_connection();
             }
 
             fc::tcp_socket &message_oriented_connection_impl::get_socket() {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 return _sock.get_socket();
             }
 
             void message_oriented_connection_impl::accept() {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 _sock.accept();
                 assert(!_read_loop_done.valid()); // check to be sure we never launch two read loops
                 _read_loop_done = fc::async([=]() { read_loop(); }, "message read_loop");
             }
 
             void message_oriented_connection_impl::connect_to(const fc::ip::endpoint &remote_endpoint) {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 _sock.connect_to(remote_endpoint);
                 assert(!_read_loop_done.valid()); // check to be sure we never launch two read loops
                 _read_loop_done = fc::async([=]() { read_loop(); }, "message read_loop");
             }
 
             void message_oriented_connection_impl::bind(const fc::ip::endpoint &local_endpoint) {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 _sock.bind(local_endpoint);
             }
 
 
             void message_oriented_connection_impl::read_loop() {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 const int BUFFER_SIZE = 16;
                 const int LEFTOVER = BUFFER_SIZE - sizeof(message_header);
                 static_assert(BUFFER_SIZE >=
@@ -235,19 +206,8 @@ namespace golos {
             }
 
             void message_oriented_connection_impl::send_message(const message &message_to_send) {
-                VERIFY_CORRECT_THREAD();
-#if 0 // this gets too verbose
-#ifndef NDEBUG
-                fc::optional<fc::ip::endpoint> remote_endpoint;
-                if (_sock.get_socket().is_open())
-                  remote_endpoint = _sock.get_socket().remote_endpoint();
-                struct scope_logger {
-                  const fc::optional<fc::ip::endpoint>& endpoint;
-                  scope_logger(const fc::optional<fc::ip::endpoint>& endpoint) : endpoint(endpoint) { dlog("entering message_oriented_connection::send_message() for peer ${endpoint}", ("endpoint", endpoint)); }
-                  ~scope_logger() { dlog("leaving message_oriented_connection::send_message() for peer ${endpoint}", ("endpoint", endpoint)); }
-                } send_message_scope_logger(remote_endpoint);
-#endif
-#endif
+                ////VERIFY_CORRECT_THREAD();
+
                 struct verify_no_send_in_progress {
                     bool &var;
 
@@ -283,12 +243,12 @@ namespace golos {
             }
 
             void message_oriented_connection_impl::close_connection() {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 _sock.close();
             }
 
             void message_oriented_connection_impl::destroy_connection() {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
 
                 fc::optional<fc::ip::endpoint> remote_endpoint;
                 if (_sock.get_socket().is_open()) {
@@ -313,27 +273,27 @@ namespace golos {
             }
 
             uint64_t message_oriented_connection_impl::get_total_bytes_sent() const {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 return _bytes_sent;
             }
 
             uint64_t message_oriented_connection_impl::get_total_bytes_received() const {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 return _bytes_received;
             }
 
             fc::time_point message_oriented_connection_impl::get_last_message_sent_time() const {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 return _last_message_sent_time;
             }
 
             fc::time_point message_oriented_connection_impl::get_last_message_received_time() const {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 return _last_message_received_time;
             }
 
             fc::sha512 message_oriented_connection_impl::get_shared_secret() const {
-                VERIFY_CORRECT_THREAD();
+                //VERIFY_CORRECT_THREAD();
                 return _sock.get_shared_secret();
             }
 
