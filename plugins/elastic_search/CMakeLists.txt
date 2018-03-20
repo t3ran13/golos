@@ -2,6 +2,7 @@ set(CURRENT_TARGET elastic_search)
 
 list(APPEND CURRENT_TARGET_HEADERS
         include/golos/plugins/elastic_search/elastic_search_plugin.hpp
+        include/golos/plugins/elastic_search/elastic_search_objects.hpp
         )
 
 list(APPEND CURRENT_TARGET_SOURCES

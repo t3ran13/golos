@@ -1,4 +1,5 @@
 #pragma once
+#include <golos/plugins/elastic_search/elastic_search_objects.hpp>
 
 #include <golos/chain/database.hpp>
 #include <appbase/plugin.hpp>
@@ -14,9 +15,7 @@ namespace elastic_search {
     class elastic_search_plugin final : public appbase::plugin<elastic_search_plugin> {
         public:
 
-        APPBASE_PLUGIN_REQUIRES(
-                (chain::plugin)
-        )
+        APPBASE_PLUGIN_REQUIRES((chain::plugin))
 
         elastic_search_plugin();
 
@@ -46,4 +45,3 @@ namespace elastic_search {
         };
 
 }}} // namespace golos::plugins::elastic_search
-
