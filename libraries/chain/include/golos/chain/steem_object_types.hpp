@@ -71,7 +71,8 @@ namespace golos {
             savings_withdraw_object_type,
             decline_voting_rights_request_object_type,
             block_stats_object_type,
-            operation_history_object_type
+            operation_history_object_type,
+            account_transaction_history_object_type
         };
 
         class dynamic_global_property_object;

@@ -28,6 +28,11 @@ namespace elastic_search {
             return _db;
         }
 
+        bool _elasticsearch_visitor = false;
+
+        uint32_t _elasticsearch_bulk_replay = 10000;
+        uint32_t _elasticsearch_bulk_sync = 100;
+
         elastic_search_plugin &_my;
 
     private:
@@ -82,7 +87,64 @@ namespace elastic_search {
     void elastic_search_plugin::elastic_search_plugin_impl::add_elasticsearch(
             const account_name_type account_id, const operation_history_object& oho, const signed_block& b)
     {
+        golos::chain::database& db = database();
+        const auto &stats_obj = account_id(db).statistics(db);
 
+        // add new entry
+        const auto &ath = db.create<account_transaction_history_object>([&](account_transaction_history_object &obj) {
+            obj.account = account_id;
+            obj.sequence = stats_obj.total_ops + 1;
+        });
+
+        /*// keep stats growing as no op will be removed
+        db.modify(stats_obj, [&](account_statistics_object &obj) {
+            obj.most_recent_op = ath.id;
+            obj.total_ops = ath.sequence;
+        });*/
+
+        // operation_type
+        int op_type = oho.op.which();
+
+        // operation history data
+        operation_history_struct os;
+        os.trx_in_block = oho.trx_in_block;
+        os.op_in_trx = oho.op_in_trx;
+        os.virtual_op = oho.virtual_op;
+        os.op = fc::json::to_string(oho.op);
+
+        // visitor data
+        visitor_struct vs;
+        if(_elasticsearch_visitor) {
+            operation_visitor o_v;
+            oho.op.visit(o_v);
+
+            vs.transfer_data.amount = o_v.transfer_amount;
+            vs.transfer_data.from = o_v.transfer_from;
+            vs.transfer_data.to = o_v.transfer_to;
+        }
+
+        // block data
+        std::string trx_id = "";
+        if(!b.transactions.empty() && oho.trx_in_block < b.transactions.size()) {
+            trx_id = b.transactions[oho.trx_in_block].id().str();
+        }
+        block_struct bs;
+        bs.block_num = b.block_num();
+        bs.block_time = b.timestamp;
+        bs.trx_id = trx_id;
+
+        // check if we are in replay or in sync and change number of bulk documents accordingly
+        uint32_t limit_documents = 0;
+        if((fc::time_point::now() - b.timestamp) < fc::seconds(30))
+            limit_documents = _elasticsearch_bulk_sync;
+        else
+            limit_documents = _elasticsearch_bulk_replay;
+
+        createBulkLine(ath, os, op_type, bs, vs); // we have everything, creating bulk line
+
+        /*if (curl && bulk.size() >= limit_documents) { // we are in bulk time, ready to add data to elasticsearech
+            sendBulk(_elasticsearch_node_url, _elasticsearch_logs);
+        }*/
     }
 
     void elastic_search_plugin::elastic_search_plugin_impl::createBulkLine(

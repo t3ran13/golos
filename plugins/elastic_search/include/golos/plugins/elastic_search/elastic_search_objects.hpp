@@ -12,7 +12,8 @@ namespace elastic_search {
     using namespace golos::protocol;
     using namespace golos::chain;
 
-    class operation_history_object : public object<operation_history_object_type, operation_history_object>
+    class operation_history_object
+            : public object<operation_history_object_type, operation_history_object>
     {
     public:
         operation_history_object() {}
@@ -23,6 +24,14 @@ namespace elastic_search {
         uint16_t trx_in_block = 0;
         uint16_t op_in_trx = 0;
         uint16_t virtual_op = 0;
+    };
+
+    class account_transaction_history_object :
+            public object<account_transaction_history_object_type, account_transaction_history_object>
+    {
+    public:
+        account_name_type account;
+        uint32_t sequence;
     };
 
     struct operation_visitor
@@ -56,16 +65,10 @@ namespace elastic_search {
     };
 
     struct transfer_struct {
+        //asset_id_type asset;
         share_type amount;
         account_name_type from;
         account_name_type to;
-    };
-
-    class account_transaction_history_object
-    {
-    public:
-        account_name_type account;
-        uint32_t sequence;
     };
 
     struct visitor_struct {
