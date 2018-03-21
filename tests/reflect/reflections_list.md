@@ -1,4 +1,6 @@
-
+# This is the list of all usages of fc::reflect.
+## Here you can find paths to file where the structures are declared and reflected and the structures with their fields 
+```
 golos/plugins/test_api/include/golos/plugins/test_api/test_api_plugin.hpp
 FC_REFLECT((golos::plugins::test_api::test_api_a_t), (value))
 FC_REFLECT((golos::plugins::test_api::test_api_b_t), (value))
@@ -876,3 +878,4 @@ FC_REFLECT((fc::console_appender::config), (format)(stream)(level_colors)(flush)
 
 golos/thirdparty/fc/include/fc/log/gelf_appender.hpp
 FC_REFLECT((fc::gelf_appender::config), (endpoint)(host))
+```
