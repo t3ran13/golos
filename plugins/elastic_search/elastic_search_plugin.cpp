@@ -6,18 +6,27 @@
 #include <golos/plugins/chain/plugin.hpp>
 #include <golos/protocol/block.hpp>
 
+#include <fc/asio.hpp>
+#include <fc/network/resolve.hpp>
+#include <boost/algorithm/string.hpp>
+#include <golos/protocol/operation_util.hpp>
+#include <golos/plugins/elastic_search/impacted_accounts.hpp>
+
 
 namespace golos {
 namespace plugins {
 namespace elastic_search {
 
     using namespace golos::chain;
+    using namespace golos::protocol;
 
     class elastic_search_plugin::elastic_search_plugin_impl {
     public:
         elastic_search_plugin_impl(elastic_search_plugin &plugin)
                 : _my(plugin),
-                  _db(appbase::app().get_plugin<golos::plugins::chain::plugin>().db()) {
+                  _db(appbase::app().get_plugin<golos::plugins::chain::plugin>().db()),
+                  io_serv (fc::asio::default_io_service()) {
+
         }
 
         ~elastic_search_plugin_impl() = default;
@@ -33,17 +42,21 @@ namespace elastic_search {
         uint32_t _elasticsearch_bulk_replay = 10000;
         uint32_t _elasticsearch_bulk_sync = 100;
 
+        boost::asio::ip::tcp::endpoint epoint;
         elastic_search_plugin &_my;
+        vector<string> bulk;
 
     private:
 
+        void send_message(const std::string& message);
+
+        boost::asio::io_service io_serv;
         golos::chain::database &_db;
 
         void add_elasticsearch(const account_name_type acct_id, const operation_history_object& oho, const signed_block& b);
-        void createBulkLine(account_transaction_history_object ath, operation_history_struct os, int op_type, block_struct bs, visitor_struct vs);
-        void sendBulk(std::string _node_url, bool _elasticsearch_logs);
+        void create_bulk_line(account_transaction_history_object ath, operation_history_struct os, int op_type, block_struct bs, visitor_struct vs);
+        void send_bulk();
     };
-
 
     void elastic_search_plugin::elastic_search_plugin_impl::update_account_history(const operation_notification & op_notif)
     {
@@ -65,23 +78,12 @@ namespace elastic_search {
         flat_set<account_name_type> impacted;
         vector<authority> other;
 
-        /*
-        operation_get_required_authorities( op.op, impacted, impacted, other ); // fee_payer is added here
+        get_impacted_accounts(oper, impacted);
 
-        if( op.op.which() == operation::tag< account_create_operation >::value )
-            impacted.insert( op.result.get<object_id_type>() );
-        else
-            graphene::app::operation_get_impacted_accounts( op.op, impacted );
-
-        for( auto& a : other )
-            for( auto& item : a.account_auths )
-                impacted.insert( item.first );
-
-        for( auto& account_id : impacted )
+        for( auto& account_id : impacted)
         {
-            add_elasticsearch( account_id, oho, b );
+            add_elasticsearch(account_id, oho, b);
         }
-        */
     }
 
     void elastic_search_plugin::elastic_search_plugin_impl::add_elasticsearch(
@@ -140,22 +142,46 @@ namespace elastic_search {
         else
             limit_documents = _elasticsearch_bulk_replay;
 
-        createBulkLine(ath, os, op_type, bs, vs); // we have everything, creating bulk line
+        create_bulk_line(ath, os, op_type, bs, vs); // we have everything, creating bulk line
+        send_bulk();
 
         /*if (curl && bulk.size() >= limit_documents) { // we are in bulk time, ready to add data to elasticsearech
             sendBulk(_elasticsearch_node_url, _elasticsearch_logs);
         }*/
     }
 
-    void elastic_search_plugin::elastic_search_plugin_impl::createBulkLine(
-            account_transaction_history_object ath, operation_history_struct os, int op_type, block_struct bs, visitor_struct vs)
-    {
-
+    void elastic_search_plugin::elastic_search_plugin_impl::send_message(const std::string& message) {
+        boost::asio::ip::tcp::socket socket(io_serv);
+        boost::asio::connect(socket, epoint);
+        boost::asio::write(socket, message);
     }
 
-    void elastic_search_plugin::elastic_search_plugin_impl::sendBulk(std::string _elasticsearch_node_url, bool _elasticsearch_logs)
+    void elastic_search_plugin::elastic_search_plugin_impl::create_bulk_line(
+            account_transaction_history_object ath, operation_history_struct os, int op_type, block_struct bs, visitor_struct vs)
     {
+        bulk_struct bulks;
+        bulks.account_history = ath;
+        bulks.operation_history = os;
+        bulks.operation_type = op_type;
+        bulks.block_data = bs;
+        bulks.additional_data = vs;
 
+        std::string alltogether = fc::json::to_string(bulks);
+
+        auto block_date = bulks.block_data.block_time.to_iso_string();
+        std::vector<std::string> parts;
+        boost::split(parts, block_date, boost::is_any_of("-"));
+        std::string index_name = "graphene-" + parts[0] + "-" + parts[1];
+
+        // bulk header before each line, op_type = create to avoid dups, index id will be ath id(2.9.X).
+        std::string _id = fc::json::to_string(ath.id);
+        bulk.push_back("{ \"index\" : { \"_index\" : \""+index_name+"\", \"_type\" : \"data\", \"op_type\" : \"create\", \"_id\" : "+_id+" } }"); // header
+        bulk.push_back(alltogether);
+    }
+
+    void elastic_search_plugin::elastic_search_plugin_impl::send_bulk()
+    {
+        send_message();
     }
 
     // Plugin
@@ -181,8 +207,12 @@ namespace elastic_search {
             _my->database().post_apply_operation.connect( [&](const operation_notification& b){ _my->update_account_history(b); } );
             //_my->database().applied_block.connect( [&]( const signed_block& b){ _my->update_account_history(b); } );
 
-            if (options.count("elasticsearch-node-url")) {
+            if (!options.count("elasticsearch-node-url")) {
+                ilog("elastic_search plugin: No node url. Plugin disavled.");
+                return;
             }
+            _my->epoint = fc::ip::endpoint::from_string(options.at("p2p-endpoint").as<string>());
+
 
             ilog("elastic_search plugin: plugin_initialize() end");
         } FC_CAPTURE_AND_RETHROW()
