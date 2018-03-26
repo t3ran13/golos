@@ -1,4 +1,3 @@
-Variables_counter = 1
 Tabs_count = 3
 Spaces_in_tab = 4
 Structures = {}
@@ -51,23 +50,23 @@ class Structure_info
     tmp.each { |x| test_name += x + "_"}
     test_name = test_name[0...-1]
 
-    data = tab * padding + "BOOST_AUTO_TEST_CASE(#{test_name}, database_fixture) {\n"
+    data = tab * padding + "BOOST_AUTO_TEST_CASE(#{test_name}) {\n"
     padding += 1
 
     data += tab * padding + "try {\n"
     padding += 1
 
-    data += tab * padding + "#{@name} variable_1, variable_2;\n"
-    # Variables_counter += 1
+    data += tab * padding + "#{@name} v1, v2;\n"
+
     data += "\n"
     len = @fields.size
     for i in 0...len
-      data += tab * padding + "set_random_value(variable_#{Variables_counter}." + @fields[i] + ");\n"
+      data += tab * padding + "set_random_value(v1." + @fields[i] + ");\n"
     end
     data += "\n"
 
     data += tab * padding + "auto data = fc::raw::pack(v1);\n" +
-            tab * padding + "std::fstream stream_ex;\n" + 
+            tab * padding + "std::fstream stream_ex, stream_results;\n" + 
             tab * padding + "stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);\n" + 
             tab * padding + "fc::path file(\"logs\");\n" + 
             tab * padding + "stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);\n" + 
@@ -371,7 +370,7 @@ cpp_test_code =
 #include <fc/crypto/digest.hpp>
 
 #include \"../common/database_fixture.hpp\"
-#include \"/values_random_generator.hpp\"
+#include \"values_random_generator.hpp\"
 
 #include <cmath>
 
