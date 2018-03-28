@@ -45,13 +45,27 @@ add_executable(reflect_test ${REFLECT_TESTS} ${COMMON_SOURCES})
 
 target_link_libraries(reflect_test
     golos_chain
-    golos_protocol
-    golos_account_history
-    golos_debug_node
-    golos_block_info
     appbase
-    golos_chain_plugin
+    golos::webserver_plugin
+    golos::p2p
+    graphene_utilities
+    golos::chain_plugin
+    golos::network_broadcast_api
+    golos::witness
+    golos::database_api
+    golos::test_api_plugin
+    golos::social_network
+    golos::market_history
+    golos::blockchain_statistics
+    golos::account_by_key
+    golos::account_history
+    golos::private_message
+    golos::auth_util
+    golos::debug_node
+    golos::raw_block
+    golos::block_info
     golos::json_rpc
+    golos_protocol
     fc
     ${PLATFORM_SPECIFIC_LIBS}
 )

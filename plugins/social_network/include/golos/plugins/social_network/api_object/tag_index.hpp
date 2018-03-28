@@ -1,6 +1,6 @@
 #pragma once
 
-#include <fc/include/fc/reflect/reflect.hpp>
+#include <fc/reflect/reflect.hpp>
 namespace golos {
     namespace plugins {
         namespace social_network {
