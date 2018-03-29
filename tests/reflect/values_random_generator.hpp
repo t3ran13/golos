@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include <string>
+#include <map>
 
 #include <golos/plugins/chain/plugin.hpp>
 #include <golos/plugins/p2p/p2p_plugin.hpp>
@@ -33,6 +34,10 @@
 #include <random>
 #include <golos/plugins/follow/follow_operations.hpp>
 #include <golos/plugins/follow/plugin.hpp>
+#include <golos/plugins/market_history/market_history_objects.hpp>
+#include <golos/protocol/protocol.hpp>
+#include <golos/wallet/remote_node_api.hpp>
+#include <golos/wallet/wallet.hpp>
 
 #include <graphene/utilities/git_revision.hpp>
 
@@ -841,5 +846,70 @@ void set_random_value( golos::plugins::block_info::block_with_info & x ) {
 }
 
 
+void set_random_value( golos::plugins::market_history::order & x ) {
+    set_random_value( x.price );
+    set_random_value( x.steem );
+    set_random_value( x.sbd );
+}
+
+// it's pretty sad that this code won't always work
+// template < class T >
+// void set_random_value( std::vector <T> & x ) {
+//     int32_t n;
+//     n = rand() % RANDOM_MAX_VECTOR_SIZE + 1;
+
+//     for (auto i = 0; i < n; i++) {
+//         T tmp;
+//         set_random_value( tmp );
+//     }
+// }
+
+void set_random_value( std::vector <golos::plugins::market_history::order> & x ) {
+    int32_t n;
+    n = rand() % RANDOM_MAX_VECTOR_SIZE + 1;
+    
+    for (auto i = 0; i < n; i++) {
+        golos::plugins::market_history::order tmp;
+        set_random_value( tmp );
+    }
+}
+
+// TODO: FIGURE OUT HOW TO WRITE THIS CASE BETTER 
+void set_random_value( fc::variant & x ) {
+    uint32_t n;
+    set_random_value( n );
+    x = std::move ( fc::variant(n) );
+}
 
 
+
+void set_random_value( fc::sha512 & x ) {
+    auto hx = get_random_hex_string__();
+    x = std::move ( fc::sha512( hx ) );
+}
+
+// void set_random_value( std::map<golos::protocol::public_key_type, std::string> &)
+void set_random_value( std::map<golos::protocol::public_key_type, std::string> & x ) {
+    int32_t n;
+    n = rand() % RANDOM_MAX_VECTOR_SIZE + 1;
+    
+    for (auto i = 0; i < n; i++) {
+        golos::protocol::public_key_type key;
+        std::string val;
+
+        set_random_value( key );
+        set_random_value( val );
+
+        x[key] = val;
+    }
+}
+
+void set_random_value( golos::wallet::plain_keys & x ) {
+    set_random_value( x.checksum );
+    set_random_value( x.keys );
+}
+
+        // struct plain_keys {
+        //     fc::sha512                  checksum;
+        //     map<public_key_type,string> keys;
+        // };
