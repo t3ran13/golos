@@ -66,6 +66,7 @@ target_link_libraries(reflect_test
     golos::block_info
     golos::json_rpc
     golos_protocol
+    golos::follow
     fc
     ${PLATFORM_SPECIFIC_LIBS}
 )
