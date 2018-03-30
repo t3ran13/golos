@@ -39,6 +39,18 @@
 #include <golos/wallet/remote_node_api.hpp>
 #include <golos/wallet/wallet.hpp>
 
+#include <golos/network/config.hpp>
+#include <golos/network/core_messages.hpp>
+#include <golos/network/exceptions.hpp>
+#include <golos/network/message.hpp>
+#include <golos/network/message_oriented_connection.hpp>
+#include <golos/network/node.hpp>
+#include <golos/network/peer_connection.hpp>
+#include <golos/network/peer_database.hpp>
+#include <golos/network/stcp_socket.hpp>
+
+#include <golos/chain/snapshot_state.hpp>
+
 #include <graphene/utilities/git_revision.hpp>
 
 #define RANDOM_MAX_STRING_SIZE 100
@@ -48,6 +60,10 @@
 #define RANDOM_DOUBLE_UPPER_BOUND 1000000.0
 
 namespace bip = boost::interprocess;
+
+// TODO: figure out what to do with fc::variant_object
+void set_random_value (fc::variant_object & x) {
+}
 
 
 void set_random_value (double & x) {
@@ -88,15 +104,6 @@ void set_random_value (int32_t & x) {
     x = rand();
 }
 
-void set_random_value( std::vector<int32_t> & x ) {
-    srand(time(NULL));
-    int32_t n = rand();
-
-    for (auto i = 0; i < n; i++) {
-        x.push_back( rand() );
-    }
-}
-
 void set_random_value (int64_t & x) {
     srand(time(NULL));
     x = rand();
@@ -120,6 +127,18 @@ void set_random_value (uint32_t & x) {
 void set_random_value (uint64_t & x) {
     srand(time(NULL));
     x = rand();
+}
+
+std::string get_random_ip_address_str__() {
+    std::string s;
+    for (int i = 0; i < 4; i++) {
+        auto n = rand() % 255;
+        s += std::to_string( n );
+        if (i < 3) {
+            s += "::";
+        }
+    }
+    return s;
 }
 
 std::string get_random_hex_string__() {
@@ -229,10 +248,60 @@ void set_random_value(fc::flat_set <T> & x) {
     }
 }
 
+template < class T >
+void set_random_value(std::set <T> & x) {
+    srand( time( NULL ) );
+    int count = rand() % RANDOM_MAX_SET_SIZE + 1;
 
-// void set_random_value(golos::plugins::private_message::message_id_type & x) {
-// 	set_random_value( x._id );
-// }
+    for (auto i = 0; i < count; i++) {
+        T tmp;
+        set_random_value( tmp );
+
+        x.insert( tmp );
+    }
+}
+
+template < class T, class U >
+void set_random_value( std::pair <T, U> & x) {
+    T first;
+    U second;
+
+    set_random_value( first );
+    set_random_value( second );
+
+    std::pair<T, U> tmp{first, second};
+    x = std::move(tmp);
+}
+
+
+template < class T >
+void set_random_value(std::vector <T> & x) {
+    srand( time( NULL ) );
+    int count = rand() % RANDOM_MAX_SET_SIZE + 1;
+
+    for (auto i = 0; i < count; i++) {
+        T tmp;
+        set_random_value( tmp );
+
+        x.push_back( tmp );
+    }
+}
+
+template < class T , class T1>
+void set_random_value(std::map <T, T1> & x) {
+    srand( time( NULL ) );
+    int count = rand() % RANDOM_MAX_SET_SIZE + 1;
+
+    for (auto i = 0; i < count; i++) {
+        T key;
+        T1 val;
+
+        set_random_value( key );
+        set_random_value( val );
+
+        x[key] = val;
+    }
+}
 
 void set_random_value(fc::time_point_sec & x) {
     srand( time( NULL ) );
@@ -264,19 +333,6 @@ void set_random_value(fc::safe<int64_t> & x) { // aka share_type
     x = std::move( tmp );
 }
 
-void set_random_value( std::vector<golos::protocol::share_type> & x) {
-    srand( time( NULL ) );
-    uint32_t n = rand() % RANDOM_MAX_VECTOR_SIZE + 1;
-    
-    for (auto i = 0; i < n; i++) {
-        golos::protocol::share_type tmp;
-        set_random_value( tmp );
-
-        x.push_back( tmp );
-    }
-
-}
-
 
 void set_random_value(golos::protocol::asset & x) {
     set_random_value( x.amount );
@@ -293,37 +349,6 @@ void set_random_value(golos::plugins::social_network::vote_state & x) {
     set_random_value( x.percent );
     set_random_value( x.reputation );
     set_random_value( x.time );
-}
-
-void set_random_value(std::vector<golos::plugins::social_network::vote_state> & x) {
-    int32_t count;
-    set_random_value(count);
-    count %= RANDOM_MAX_VECTOR_SIZE; 
-
-    for (auto i = 0; i < count; i++) {
-        golos::plugins::social_network::vote_state tmp;
-        set_random_value( tmp );
-        x.push_back( tmp );
-    }
-}
-
-void set_random_value(std::vector<std::string> & x) {
-    int32_t count;
-    set_random_value(count);
-    count %= RANDOM_MAX_VECTOR_SIZE; 
-    for (auto i = 0; i < count; i++) {
-        x.push_back( get_random_string__() );
-    }
-}
-
-void set_random_value(std::vector<golos::protocol::account_name_type> & x) {
-    int32_t count;
-    set_random_value(count);
-    count %= RANDOM_MAX_VECTOR_SIZE; 
-    for (auto i = 0; i < count; i++) {
-        fc::fixed_string<> tmp_s( get_random_string__() );
-        x.push_back( tmp_s );
-    }
 }
 
 template <class T>
@@ -343,19 +368,6 @@ void set_random_value( golos::protocol::beneficiary_route_type & x ) {
     set_random_value( x.account );
     set_random_value( x.weight );
 }
-
-void set_random_value( std::vector < golos::protocol::beneficiary_route_type > & x ) {
-    srand(time(NULL));
-    int32_t n = rand() % RANDOM_MAX_VECTOR_SIZE + 1;
-
-    for (auto i = 0; i < n; i++) {
-        golos::protocol::beneficiary_route_type tmp;
-        set_random_value( tmp );
-
-        x.push_back( tmp );
-    }
-}
-
 
 void set_random_value(std::set <std::string> & x) {
     srand( time( NULL ) );
@@ -384,39 +396,9 @@ void set_random_value(golos::plugins::database_api::tag_count_object & x) {
     set_random_value( x.count );
 }
 
-void set_random_value(std::vector< golos::plugins::database_api::tag_count_object > & x) {
-    int32_t count;
-    set_random_value(count);
-    count %= RANDOM_MAX_VECTOR_SIZE; 
-
-    for (auto i = 0; i < count; i++) {
-        golos::plugins::database_api::tag_count_object tmp;
-
-        set_random_value( tmp.tag );
-        set_random_value( tmp.count );
-
-        x.push_back( tmp );
-    }    
-}
-
-
 void set_random_value(fc::ripemd160 & x) {
     fc::ripemd160 tmp;
     x = std::move( tmp.hash( get_random_hex_string__() ) );
-}
-
-void set_random_value(std::vector<golos::protocol::transaction_id_type> & x) {
-    int32_t count;
-    set_random_value(count);
-    count %= RANDOM_MAX_VECTOR_SIZE; 
-
-    for (auto i = 0; i < count; i++) {
-        golos::protocol::transaction_id_type tmp;
-
-        set_random_value( tmp );
-
-        x.push_back( tmp );
-    }    
 }
 
 // TODO: figure out how to work with fc::static_variant
@@ -565,66 +547,9 @@ void set_random_value( std::map<uint64_t, golos::plugins::database_api::applied_
     }
 }
 
-
-void set_random_value( std::vector < std::pair < std::string, uint32_t > > & x ) {
-    srand( time( NULL ) );
-    uint32_t n = rand() % RANDOM_MAX_VECTOR_SIZE + 1;
-    
-    for (auto i = 0; i < n; i++) {
-        std::string key = get_random_string__();
-        uint32_t val = rand();
-        std::pair < std::string, uint32_t > tmp {key, val};
-
-        x.push_back( tmp );
-    }
-}
-
-
-void set_random_value( std::vector<std::pair<golos::protocol::account_name_type, uint32_t> > & x ) {
-    srand( time( NULL ) );
-    uint32_t n = rand() % RANDOM_MAX_VECTOR_SIZE + 1;
-    
-    for (auto i = 0; i < n; i++) {
-        golos::protocol::account_name_type key;
-        set_random_value( key );
-        uint32_t val = rand();
-        std::pair < std::string, uint32_t > tmp {key, val};
-
-        x.push_back( tmp );
-    }
-}
-
-
-void set_random_value( std::map<std::string, std::vector<std::string> > & x ) {
-    srand( time( NULL ) );
-    uint32_t n = rand() % RANDOM_MAX_VECTOR_SIZE + 1;
-    
-    for (auto i = 0; i < n; i++) {
-        auto key = get_random_string__();
-        std::vector<std::string> val;
-        
-        set_random_value( val );
-
-        x[key] = val;
-    }
-}
-
-
 void set_random_value( golos::plugins::database_api::extended_limit_order & x ) {
     set_random_value( x.real_price );
     set_random_value( x.rewarded );
-}
-
-
-void set_random_value( std::vector < golos::plugins::database_api::extended_limit_order > & x ) {
-    srand( time( NULL ) );
-    uint32_t n = rand() % RANDOM_MAX_VECTOR_SIZE + 1;
-    
-    for (auto i = 0; i < n; i++) {
-        golos::plugins::database_api::extended_limit_order tmp;
-        set_random_value( tmp );
-        x.push_back( tmp );
-    }
 }
 
 void set_random_value( golos::plugins::database_api::order_history_item & x ) {
@@ -634,19 +559,6 @@ void set_random_value( golos::plugins::database_api::order_history_item & x ) {
     set_random_value( x.steem_quantity );
     set_random_value( x.real_price );
 }
-
-
-void set_random_value( std::vector <golos::plugins::database_api::order_history_item> & x ) {
-    srand( time( NULL ) );
-    uint32_t n = rand() % RANDOM_MAX_VECTOR_SIZE + 1;
-    
-    for (auto i = 0; i < n; i++) {
-        golos::plugins::database_api::order_history_item tmp;
-        set_random_value( tmp );
-        x.push_back( tmp );
-    }
-}
-
 
 void set_random_value( golos::plugins::database_api::candle_stick & x ) {
     set_random_value( x.open_time );
@@ -658,19 +570,6 @@ void set_random_value( golos::plugins::database_api::candle_stick & x ) {
     set_random_value( x.steem_volume );
     set_random_value( x.dollar_volume );
 }
-
-
-void set_random_value( std::vector < golos::plugins::database_api::candle_stick > & x ) {
-    srand( time( NULL ) );
-    uint32_t n = rand() % RANDOM_MAX_VECTOR_SIZE + 1;
-    
-    for (auto i = 0; i < n; i++) {
-        golos::plugins::database_api::candle_stick tmp;
-        set_random_value( tmp );
-        x.push_back( tmp );
-    }
-}
-
 
 void set_random_value( golos::protocol::chain_properties  & x ) {  // IS NOT NEEDED TO BE FILLED WITH RANDOM VALUES
 
@@ -772,29 +671,23 @@ void set_random_value( golos::plugins::block_info::block_info & x ) {
     set_random_value( x.num_pow_witnesses );
 }
 
-
-void set_random_value( fc::ecc::compact_signature & x ) {
-    // fc::array<unsigned char, 65> arr;
-    for (size_t i = 0; i < 65; i++) {
-        unsigned char tmp;
+template<typename T, size_t N>
+void set_random_value( fc::array<T, N> & x ) {
+    for (size_t i = 0; i < N; i++) {
+        T tmp;
         set_random_value( tmp );
         x.data[i] = tmp;
-    }
+    }   
 }
 
-void set_random_value( std::vector < fc::ecc::compact_signature > & x ) {
-    int32_t n;
-    n = rand() % RANDOM_MAX_VECTOR_SIZE + 1;
-
-    for (auto i = 0; i < n; i++) {
-        fc::ecc::compact_signature tmp;
-
-        set_random_value( tmp );
-
-        x.push_back( tmp );
-    } 
-}
-
+// void set_random_value( fc::ecc::compact_signature & x ) {
+//     // fc::array<unsigned char, 65> arr;
+//     for (size_t i = 0; i < 65; i++) {
+//         unsigned char tmp;
+//         set_random_value( tmp );
+//         x.data[i] = tmp;
+//     }
+// }
 
 void set_random_value( golos::protocol::transaction & x ) {
     set_random_value( x.ref_block_num );
@@ -817,18 +710,6 @@ void set_random_value( golos::protocol::signed_transaction & x ) {
 
 }
 
-void set_random_value( std::vector <golos::protocol::signed_transaction> & x ) {
-    int32_t n;
-    n = rand() % RANDOM_MAX_VECTOR_SIZE + 1;
-
-    for (auto i = 0; i < n; i++) {
-        golos::protocol::signed_transaction tmp;
-        set_random_value( tmp );
-    }
-}
-
-
-
 void set_random_value( golos::chain::signed_block & x ) {
     set_random_value( x.transactions );
     // signature_type witness_signature;
@@ -850,28 +731,6 @@ void set_random_value( golos::plugins::market_history::order & x ) {
     set_random_value( x.price );
     set_random_value( x.steem );
     set_random_value( x.sbd );
-}
-
-// it's pretty sad that this code won't always work
-// template < class T >
-// void set_random_value( std::vector <T> & x ) {
-//     int32_t n;
-//     n = rand() % RANDOM_MAX_VECTOR_SIZE + 1;
-
-//     for (auto i = 0; i < n; i++) {
-//         T tmp;
-//         set_random_value( tmp );
-//     }
-// }
-
-void set_random_value( std::vector <golos::plugins::market_history::order> & x ) {
-    int32_t n;
-    n = rand() % RANDOM_MAX_VECTOR_SIZE + 1;
-    
-    for (auto i = 0; i < n; i++) {
-        golos::plugins::market_history::order tmp;
-        set_random_value( tmp );
-    }
 }
 
 // TODO: FIGURE OUT HOW TO WRITE THIS CASE BETTER 
@@ -909,7 +768,64 @@ void set_random_value( golos::wallet::plain_keys & x ) {
     set_random_value( x.keys );
 }
 
-        // struct plain_keys {
-        //     fc::sha512                  checksum;
-        //     map<public_key_type,string> keys;
-        // };
+void set_random_value( golos::network::item_id & x ) {
+    set_random_value( x.item_type );
+    set_random_value( x.item_hash );
+}
+
+void set_random_value( golos::network::peer_connection::timestamped_item_id & x ) {
+    set_random_value( x.item );
+    set_random_value( x.timestamp );
+}
+
+void set_random_value( fc::ip::address  & x ) {
+    auto ip_str = get_random_ip_address_str__();
+    fc::ip::address tmp( ip_str );
+
+    x = std::move( tmp );
+}
+
+void set_random_value( fc::ip::endpoint & x ) {
+    uint16_t port;
+    set_random_value( port );
+    fc::ip::address address;
+    set_random_value( address );
+    fc::ip::endpoint tmp( address, port );
+    // boost::asio::ip::tcp::endpoint tmp(boost::asio::ip::address::from_string( ip_str ), port);
+    x = std::move( tmp );
+}
+
+void set_random_value( fc::exception & x ) {
+}
+
+template <class T, class T1>
+void set_random_value( fc::enum_type<T, T1> & x) {
+}
+
+
+void set_random_value( fc::microseconds & x ) {
+    int64_t c;
+    set_random_value( c );
+    fc::microseconds tmp( c );
+    x = std::move( tmp );
+}
+
+void set_random_value( golos::chain::account_keys & x) {
+    set_random_value( x.owner_key );
+    set_random_value( x.active_key );
+    set_random_value( x.posting_key );
+    set_random_value( x.memo_key );
+}
+
+
+void set_random_value( golos::chain::account_balances & x) {
+    set_random_value( x.assets );
+}
+
+void set_random_value( golos::chain::snapshot_summary & x) {
+    set_random_value( x.balance );
+    set_random_value( x.sbd_balance );
+    set_random_value( x.total_vesting_shares );
+    set_random_value( x.total_vesting_fund_steem );
+    set_random_value( x.accounts_count );
+}

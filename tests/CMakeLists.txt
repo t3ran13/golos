@@ -68,6 +68,7 @@ target_link_libraries(reflect_test
     golos_protocol
     golos::follow
     golos_wallet
+    golos_network
     fc
     ${PLATFORM_SPECIFIC_LIBS}
 )
