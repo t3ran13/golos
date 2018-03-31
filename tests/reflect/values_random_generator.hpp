@@ -50,6 +50,22 @@
 #include <golos/network/stcp_socket.hpp>
 
 #include <golos/chain/snapshot_state.hpp>
+// ERRORs |
+//        V
+// #include <golos/chain/immutable_chain_parameters.hpp>
+#include <fc/bloom_filter.hpp>
+#include <fc/network/http/connection.hpp>
+#include <fc/rpc/bstate.hpp>
+#include <fc/log/console_appender.hpp>
+#include <fc/log/json_console_appender.hpp>
+#include <fc/log/gelf_appender.hpp>
+#include <fc/log/file_appender.hpp>
+#include <fc/log/logger.hpp>
+#include <fc/log/logger_config.hpp>
+
+#include <fc/static_variant.hpp>
+#include <fc/variant.hpp>
+
 
 #include <graphene/utilities/git_revision.hpp>
 
@@ -61,10 +77,25 @@
 
 namespace bip = boost::interprocess;
 
+// mercen rand
+// mt19937 rnd = mt19937(duration_cast<nanoseconds>(high_resolution_clock::now().time_since_epoch()).count());
+template <class T>
+void set_random_value(fc::safe<T> & x);
+void set_random_value( golos::protocol::beneficiary_route_type & x );
+
 // TODO: figure out what to do with fc::variant_object
 void set_random_value (fc::variant_object & x) {
 }
+// TODO: figure out how to work with fc::static_variant
+// template<typename... Types>
+// void set_random_value(fc::static_variant<T, ... Types>  & x) {
 
+// }
+template < class... T >
+void set_random_value(fc::static_variant< T... args>  & x) {
+
+}
+// void set_random_value(golos::protocol::operation & x);
 
 void set_random_value (double & x) {
     double lower_bound = RANDOM_DOUBLE_LOWER_BOUND;
@@ -128,6 +159,13 @@ void set_random_value (uint64_t & x) {
     srand(time(NULL));
     x = rand();
 }
+
+void set_random_value (long long unsigned int & x) {
+    srand(time(NULL));
+    x = rand();
+}
+
+
 
 std::string get_random_ip_address_str__() {
     std::string s;
@@ -326,10 +364,11 @@ void set_random_value(fc::uint128_t & x) {
     x = std::move( tmp );
 }
 
-void set_random_value(fc::safe<int64_t> & x) { // aka share_type
-    srand( time( NULL ) );
-    uint64_t n = rand();
-    fc::safe<uint64_t> tmp( n );
+template <class T>
+void set_random_value(fc::safe<T> & x) { // aka share_type
+    T n;
+    set_random_value( n );
+    fc::safe<T> tmp( n );
     x = std::move( tmp );
 }
 
@@ -829,3 +868,93 @@ void set_random_value( golos::chain::snapshot_summary & x) {
     set_random_value( x.total_vesting_fund_steem );
     set_random_value( x.accounts_count );
 }
+
+// void set_random_value( golos::chain::immutable_chain_parameters & x) {
+//     set_random_value( x.min_committee_member_count );
+//     set_random_value( x.min_witness_count );
+//     set_random_value( x.num_special_accounts );
+//     set_random_value( x.num_special_assets );
+// }
+
+
+void set_random_value( golos::protocol::signed_block_header & x) {
+    set_random_value( x.witness_signature );
+    set_random_value( x.timestamp );
+    set_random_value( x.witness );
+    set_random_value( x.transaction_merkle_root );
+    set_random_value( x.extensions );
+}
+
+ // pow2_input {
+// account_name_type worker_account;
+// block_id_type prev_block;
+// uint64_t nonce = 0;
+
+
+// struct pow2 {
+// pow2_input input;
+// uint32_t pow_summary = 0;
+
+void set_random_value( golos::protocol::pow2_input & x) {
+    set_random_value( x.worker_account );
+    set_random_value( x.prev_block );
+    set_random_value( x.nonce );
+}
+
+
+void set_random_value( golos::protocol::pow2 & x) {
+    set_random_value( x.input );
+    set_random_value( x.pow_summary );
+}
+
+
+void set_random_value( fc::equihash::proof & x) {
+    set_random_value( x.n );
+    set_random_value( x.k );
+    set_random_value( x.seed );
+    set_random_value( x.inputs );
+}
+
+
+void set_random_value( golos::protocol::pow & x) {
+    set_random_value( x.worker );
+    set_random_value( x.input );
+    set_random_value( x.signature );
+    set_random_value( x.work );
+
+}
+
+
+void set_random_value( fc::bloom_parameters::optimal_parameters_t & x) {
+    set_random_value( x.number_of_hashes );
+    set_random_value( x.table_size );
+}
+
+
+void set_random_value( fc::http::header & x) {
+    set_random_value( x.key );
+    set_random_value( x.val );
+}
+
+
+// void set_random_value( fc::log::console_appender::log_level & x) {
+// }
+
+void set_random_value( fc::json_console_appender::j_config & x) {
+    set_random_value( x.format );
+    set_random_value( x.flush );
+}
+
+std::string get_random_path_string__() {
+    int32_t n = rand() % 10 + 1;
+    std::string data ("/");
+    for (int i = 0; i < n; i++) {
+        data += get_random_string__() + "/";
+    }
+}
+
+void set_random_value( fc::path  & x) {
+    fc::path tmp( get_random_path_string__() );
+    x = std::move( tmp );
+}
+

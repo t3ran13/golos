@@ -4127,1080 +4127,1104 @@ BOOST_FIXTURE_TEST_SUITE(reflect, database_fixture)
         }
         FC_LOG_AND_RETHROW()
     }
+// NOT IN USE AT ALL
+    // BOOST_AUTO_TEST_CASE(golos_chain_immutable_chain_parameters) {
+    //     try {
+    //         golos::chain::immutable_chain_parameters v1, v2;
 
-    BOOST_AUTO_TEST_CASE(golos_chain_immutable_chain_parameters) {
-        try {
-            golos::chain::immutable_chain_parameters v1, v2;
+    //         set_random_value(v1.min_committee_member_count);
+    //         set_random_value(v1.min_witness_count);
+    //         set_random_value(v1.num_special_accounts);
+    //         set_random_value(v1.num_special_assets);
 
-            set_random_value(v1.min_committee_member_count);
-            set_random_value(v1.min_witness_count);
-            set_random_value(v1.num_special_accounts);
-            set_random_value(v1.num_special_assets);
-
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
-    BOOST_AUTO_TEST_CASE(golos_chain_transaction_object) {
-        try {
-            golos::chain::transaction_object v1, v2;
+// NO DEFALUT CONSTRUCTOR
+    // BOOST_AUTO_TEST_CASE(golos_chain_transaction_object) {
+    //     try {
+    //         golos::chain::transaction_object v1, v2;
 
-            set_random_value(v1.id);
-            set_random_value(v1.packed_trx);
-            set_random_value(v1.trx_id);
-            set_random_value(v1.expiration);
+    //         set_random_value(v1.id);
+    //         set_random_value(v1.packed_trx);
+    //         set_random_value(v1.trx_id);
+    //         set_random_value(v1.expiration);
 
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
+// NO DEFALUT CONSTRUCTOR
+    // BOOST_AUTO_TEST_CASE(golos_chain_block_summary_object) {
+    //     try {
+    //         golos::chain::block_summary_object v1, v2;
 
-    BOOST_AUTO_TEST_CASE(golos_chain_block_summary_object) {
-        try {
-            golos::chain::block_summary_object v1, v2;
+    //         set_random_value(v1.id);
+    //         set_random_value(v1.block_id);
 
-            set_random_value(v1.id);
-            set_random_value(v1.block_id);
-
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
-    BOOST_AUTO_TEST_CASE(golos_chain_comment_mode) {
-        try {
-            golos::chain::comment_mode v1, v2;
+// ENUM
+    // BOOST_AUTO_TEST_CASE(golos_chain_comment_mode) {
+    //     try {
+    //         golos::chain::comment_mode v1, v2;
 
-            set_random_value(v1.first_payout);
-            set_random_value(v1.second_payout);
-            set_random_value(v1.archived);
+    //         set_random_value(v1.first_payout);
+    //         set_random_value(v1.second_payout);
+    //         set_random_value(v1.archived);
 
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
-    BOOST_AUTO_TEST_CASE(golos_chain_comment_object) {
-        try {
-            golos::chain::comment_object v1, v2;
+// NO DEFALUT CONSTRUCTOR
+    // BOOST_AUTO_TEST_CASE(golos_chain_comment_object) {
+    //     try {
+    //         golos::chain::comment_object v1, v2;
 
-            set_random_value(v1.id);
-            set_random_value(v1.author);
-            set_random_value(v1.permlink);
-            set_random_value(v1.category);
-            set_random_value(v1.parent_author);
-            set_random_value(v1.parent_permlink);
-            set_random_value(v1.title);
-            set_random_value(v1.body);
-            set_random_value(v1.json_metadata);
-            set_random_value(v1.last_update);
-            set_random_value(v1.created);
-            set_random_value(v1.active);
-            set_random_value(v1.last_payout);
-            set_random_value(v1.depth);
-            set_random_value(v1.children);
-            set_random_value(v1.children_rshares2);
-            set_random_value(v1.net_rshares);
-            set_random_value(v1.abs_rshares);
-            set_random_value(v1.vote_rshares);
-            set_random_value(v1.children_abs_rshares);
-            set_random_value(v1.cashout_time);
-            set_random_value(v1.max_cashout_time);
-            set_random_value(v1.total_vote_weight);
-            set_random_value(v1.reward_weight);
-            set_random_value(v1.total_payout_value);
-            set_random_value(v1.curator_payout_value);
-            set_random_value(v1.beneficiary_payout_value);
-            set_random_value(v1.author_rewards);
-            set_random_value(v1.net_votes);
-            set_random_value(v1.root_comment);
-            set_random_value(v1.mode);
-            set_random_value(v1.max_accepted_payout);
-            set_random_value(v1.percent_steem_dollars);
-            set_random_value(v1.allow_replies);
-            set_random_value(v1.allow_votes);
-            set_random_value(v1.allow_curation_rewards);
-            set_random_value(v1.beneficiaries);
+    //         set_random_value(v1.id);
+    //         set_random_value(v1.author);
+    //         set_random_value(v1.permlink);
+    //         set_random_value(v1.category);
+    //         set_random_value(v1.parent_author);
+    //         set_random_value(v1.parent_permlink);
+    //         set_random_value(v1.title);
+    //         set_random_value(v1.body);
+    //         set_random_value(v1.json_metadata);
+    //         set_random_value(v1.last_update);
+    //         set_random_value(v1.created);
+    //         set_random_value(v1.active);
+    //         set_random_value(v1.last_payout);
+    //         set_random_value(v1.depth);
+    //         set_random_value(v1.children);
+    //         set_random_value(v1.children_rshares2);
+    //         set_random_value(v1.net_rshares);
+    //         set_random_value(v1.abs_rshares);
+    //         set_random_value(v1.vote_rshares);
+    //         set_random_value(v1.children_abs_rshares);
+    //         set_random_value(v1.cashout_time);
+    //         set_random_value(v1.max_cashout_time);
+    //         set_random_value(v1.total_vote_weight);
+    //         set_random_value(v1.reward_weight);
+    //         set_random_value(v1.total_payout_value);
+    //         set_random_value(v1.curator_payout_value);
+    //         set_random_value(v1.beneficiary_payout_value);
+    //         set_random_value(v1.author_rewards);
+    //         set_random_value(v1.net_votes);
+    //         set_random_value(v1.root_comment);
+    //         set_random_value(v1.mode);
+    //         set_random_value(v1.max_accepted_payout);
+    //         set_random_value(v1.percent_steem_dollars);
+    //         set_random_value(v1.allow_replies);
+    //         set_random_value(v1.allow_votes);
+    //         set_random_value(v1.allow_curation_rewards);
+    //         set_random_value(v1.beneficiaries);
 
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
-    BOOST_AUTO_TEST_CASE(golos_chain_comment_vote_object) {
-        try {
-            golos::chain::comment_vote_object v1, v2;
+// NO DEFALUT CONSTRUCTOR
+    // BOOST_AUTO_TEST_CASE(golos_chain_comment_vote_object) {
+    //     try {
+    //         golos::chain::comment_vote_object v1, v2;
 
-            set_random_value(v1.id);
-            set_random_value(v1.voter);
-            set_random_value(v1.comment);
-            set_random_value(v1.weight);
-            set_random_value(v1.rshares);
-            set_random_value(v1.vote_percent);
-            set_random_value(v1.last_update);
-            set_random_value(v1.num_changes);
+    //         set_random_value(v1.id);
+    //         set_random_value(v1.voter);
+    //         set_random_value(v1.comment);
+    //         set_random_value(v1.weight);
+    //         set_random_value(v1.rshares);
+    //         set_random_value(v1.vote_percent);
+    //         set_random_value(v1.last_update);
+    //         set_random_value(v1.num_changes);
 
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
-    BOOST_AUTO_TEST_CASE(golos_chain_category_object) {
-        try {
-            golos::chain::category_object v1, v2;
+// NO DEFALUT CONSTRUCTOR
+    // BOOST_AUTO_TEST_CASE(golos_chain_category_object) {
+    //     try {
+    //         golos::chain::category_object v1, v2;
 
-            set_random_value(v1.id);
-            set_random_value(v1.name);
-            set_random_value(v1.abs_rshares);
-            set_random_value(v1.total_payouts);
-            set_random_value(v1.discussions);
-            set_random_value(v1.last_update);
+    //         set_random_value(v1.id);
+    //         set_random_value(v1.name);
+    //         set_random_value(v1.abs_rshares);
+    //         set_random_value(v1.total_payouts);
+    //         set_random_value(v1.discussions);
+    //         set_random_value(v1.last_update);
 
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
-    BOOST_AUTO_TEST_CASE(golos_chain_account_object) {
-        try {
-            golos::chain::account_object v1, v2;
+// NO DEFALUT CONSTRUCTOR
+    // BOOST_AUTO_TEST_CASE(golos_chain_account_object) {
+    //     try {
+    //         golos::chain::account_object v1, v2;
 
-            set_random_value(v1.id);
-            set_random_value(v1.name);
-            set_random_value(v1.memo_key);
-            set_random_value(v1.json_metadata);
-            set_random_value(v1.proxy);
-            set_random_value(v1.last_account_update);
-            set_random_value(v1.created);
-            set_random_value(v1.mined);
-            set_random_value(v1.owner_challenged);
-            set_random_value(v1.active_challenged);
-            set_random_value(v1.last_owner_proved);
-            set_random_value(v1.last_active_proved);
-            set_random_value(v1.recovery_account);
-            set_random_value(v1.last_account_recovery);
-            set_random_value(v1.reset_account);
-            set_random_value(v1.comment_count);
-            set_random_value(v1.lifetime_vote_count);
-            set_random_value(v1.post_count);
-            set_random_value(v1.can_vote);
-            set_random_value(v1.voting_power);
-            set_random_value(v1.last_vote_time);
-            set_random_value(v1.balance);
-            set_random_value(v1.savings_balance);
-            set_random_value(v1.sbd_balance);
-            set_random_value(v1.sbd_seconds);
-            set_random_value(v1.sbd_seconds_last_update);
-            set_random_value(v1.sbd_last_interest_payment);
-            set_random_value(v1.savings_sbd_balance);
-            set_random_value(v1.savings_sbd_seconds);
-            set_random_value(v1.savings_sbd_seconds_last_update);
-            set_random_value(v1.savings_sbd_last_interest_payment);
-            set_random_value(v1.savings_withdraw_requests);
-            set_random_value(v1.vesting_shares);
-            set_random_value(v1.vesting_withdraw_rate);
-            set_random_value(v1.next_vesting_withdrawal);
-            set_random_value(v1.withdrawn);
-            set_random_value(v1.to_withdraw);
-            set_random_value(v1.withdraw_routes);
-            set_random_value(v1.curation_rewards);
-            set_random_value(v1.posting_rewards);
-            set_random_value(v1.proxied_vsf_votes);
-            set_random_value(v1.witnesses_voted_for);
-            set_random_value(v1.last_post);
+    //         set_random_value(v1.id);
+    //         set_random_value(v1.name);
+    //         set_random_value(v1.memo_key);
+    //         set_random_value(v1.json_metadata);
+    //         set_random_value(v1.proxy);
+    //         set_random_value(v1.last_account_update);
+    //         set_random_value(v1.created);
+    //         set_random_value(v1.mined);
+    //         set_random_value(v1.owner_challenged);
+    //         set_random_value(v1.active_challenged);
+    //         set_random_value(v1.last_owner_proved);
+    //         set_random_value(v1.last_active_proved);
+    //         set_random_value(v1.recovery_account);
+    //         set_random_value(v1.last_account_recovery);
+    //         set_random_value(v1.reset_account);
+    //         set_random_value(v1.comment_count);
+    //         set_random_value(v1.lifetime_vote_count);
+    //         set_random_value(v1.post_count);
+    //         set_random_value(v1.can_vote);
+    //         set_random_value(v1.voting_power);
+    //         set_random_value(v1.last_vote_time);
+    //         set_random_value(v1.balance);
+    //         set_random_value(v1.savings_balance);
+    //         set_random_value(v1.sbd_balance);
+    //         set_random_value(v1.sbd_seconds);
+    //         set_random_value(v1.sbd_seconds_last_update);
+    //         set_random_value(v1.sbd_last_interest_payment);
+    //         set_random_value(v1.savings_sbd_balance);
+    //         set_random_value(v1.savings_sbd_seconds);
+    //         set_random_value(v1.savings_sbd_seconds_last_update);
+    //         set_random_value(v1.savings_sbd_last_interest_payment);
+    //         set_random_value(v1.savings_withdraw_requests);
+    //         set_random_value(v1.vesting_shares);
+    //         set_random_value(v1.vesting_withdraw_rate);
+    //         set_random_value(v1.next_vesting_withdrawal);
+    //         set_random_value(v1.withdrawn);
+    //         set_random_value(v1.to_withdraw);
+    //         set_random_value(v1.withdraw_routes);
+    //         set_random_value(v1.curation_rewards);
+    //         set_random_value(v1.posting_rewards);
+    //         set_random_value(v1.proxied_vsf_votes);
+    //         set_random_value(v1.witnesses_voted_for);
+    //         set_random_value(v1.last_post);
 
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
-    BOOST_AUTO_TEST_CASE(golos_chain_account_authority_object) {
-        try {
-            golos::chain::account_authority_object v1, v2;
+// NO DEFALUT CONSTRUCTOR
+    // BOOST_AUTO_TEST_CASE(golos_chain_account_authority_object) {
+    //     try {
+    //         golos::chain::account_authority_object v1, v2;
 
-            set_random_value(v1.id);
-            set_random_value(v1.account);
-            set_random_value(v1.owner);
-            set_random_value(v1.active);
-            set_random_value(v1.posting);
-            set_random_value(v1.last_owner_update);
+    //         set_random_value(v1.id);
+    //         set_random_value(v1.account);
+    //         set_random_value(v1.owner);
+    //         set_random_value(v1.active);
+    //         set_random_value(v1.posting);
+    //         set_random_value(v1.last_owner_update);
 
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
-    BOOST_AUTO_TEST_CASE(golos_chain_account_bandwidth_object) {
-        try {
-            golos::chain::account_bandwidth_object v1, v2;
+// NO DEFALUT CONSTRUCTOR
+    // BOOST_AUTO_TEST_CASE(golos_chain_account_bandwidth_object) {
+    //     try {
+    //         golos::chain::account_bandwidth_object v1, v2;
 
-            set_random_value(v1.id);
-            set_random_value(v1.account);
-            set_random_value(v1.type);
-            set_random_value(v1.average_bandwidth);
-            set_random_value(v1.lifetime_bandwidth);
-            set_random_value(v1.last_bandwidth_update);
+    //         set_random_value(v1.id);
+    //         set_random_value(v1.account);
+    //         set_random_value(v1.type);
+    //         set_random_value(v1.average_bandwidth);
+    //         set_random_value(v1.lifetime_bandwidth);
+    //         set_random_value(v1.last_bandwidth_update);
 
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
-    BOOST_AUTO_TEST_CASE(golos_chain_owner_authority_history_object) {
-        try {
-            golos::chain::owner_authority_history_object v1, v2;
+// NO DEFALUT CONSTRUCTOR
+    // BOOST_AUTO_TEST_CASE(golos_chain_owner_authority_history_object) {
+    //     try {
+    //         golos::chain::owner_authority_history_object v1, v2;
 
-            set_random_value(v1.id);
-            set_random_value(v1.account);
-            set_random_value(v1.previous_owner_authority);
-            set_random_value(v1.last_valid_time);
+    //         set_random_value(v1.id);
+    //         set_random_value(v1.account);
+    //         set_random_value(v1.previous_owner_authority);
+    //         set_random_value(v1.last_valid_time);
 
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
-    BOOST_AUTO_TEST_CASE(golos_chain_account_recovery_request_object) {
-        try {
-            golos::chain::account_recovery_request_object v1, v2;
+// NO DEFALUT CONSTRUCTOR
+    // BOOST_AUTO_TEST_CASE(golos_chain_account_recovery_request_object) {
+    //     try {
+    //         golos::chain::account_recovery_request_object v1, v2;
 
-            set_random_value(v1.id);
-            set_random_value(v1.account_to_recover);
-            set_random_value(v1.new_owner_authority);
-            set_random_value(v1.expires);
+    //         set_random_value(v1.id);
+    //         set_random_value(v1.account_to_recover);
+    //         set_random_value(v1.new_owner_authority);
+    //         set_random_value(v1.expires);
 
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
-    BOOST_AUTO_TEST_CASE(golos_chain_change_recovery_account_request_object) {
-        try {
-            golos::chain::change_recovery_account_request_object v1, v2;
+// NO DEFALUT CONSTRUCTOR
+    // BOOST_AUTO_TEST_CASE(golos_chain_change_recovery_account_request_object) {
+    //     try {
+    //         golos::chain::change_recovery_account_request_object v1, v2;
 
-            set_random_value(v1.id);
-            set_random_value(v1.account_to_recover);
-            set_random_value(v1.recovery_account);
-            set_random_value(v1.effective_on);
+    //         set_random_value(v1.id);
+    //         set_random_value(v1.account_to_recover);
+    //         set_random_value(v1.recovery_account);
+    //         set_random_value(v1.effective_on);
 
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
-    BOOST_AUTO_TEST_CASE(golos_chain_operation_object) {
-        try {
-            golos::chain::operation_object v1, v2;
+// NO DEFALUT CONSTRUCTOR
+    // BOOST_AUTO_TEST_CASE(golos_chain_operation_object) {
+    //     try {
+    //         golos::chain::operation_object v1, v2;
 
-            set_random_value(v1.id);
-            set_random_value(v1.trx_id);
-            set_random_value(v1.block);
-            set_random_value(v1.trx_in_block);
-            set_random_value(v1.op_in_trx);
-            set_random_value(v1.virtual_op);
-            set_random_value(v1.timestamp);
-            set_random_value(v1.serialized_op);
+    //         set_random_value(v1.id);
+    //         set_random_value(v1.trx_id);
+    //         set_random_value(v1.block);
+    //         set_random_value(v1.trx_in_block);
+    //         set_random_value(v1.op_in_trx);
+    //         set_random_value(v1.virtual_op);
+    //         set_random_value(v1.timestamp);
+    //         set_random_value(v1.serialized_op);
 
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
-    BOOST_AUTO_TEST_CASE(golos_chain_account_history_object) {
-        try {
-            golos::chain::account_history_object v1, v2;
+// NO DEFALUT CONSTRUCTOR
+    // BOOST_AUTO_TEST_CASE(golos_chain_account_history_object) {
+    //     try {
+    //         golos::chain::account_history_object v1, v2;
 
-            set_random_value(v1.id);
-            set_random_value(v1.account);
-            set_random_value(v1.sequence);
-            set_random_value(v1.op);
+    //         set_random_value(v1.id);
+    //         set_random_value(v1.account);
+    //         set_random_value(v1.sequence);
+    //         set_random_value(v1.op);
 
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
-    BOOST_AUTO_TEST_CASE(golos_chain_hardfork_property_object) {
-        try {
-            golos::chain::hardfork_property_object v1, v2;
+// NO DEFALUT CONSTRUCTOR
+    // BOOST_AUTO_TEST_CASE(golos_chain_hardfork_property_object) {
+    //     try {
+    //         golos::chain::hardfork_property_object v1, v2;
 
-            set_random_value(v1.id);
-            set_random_value(v1.processed_hardforks);
-            set_random_value(v1.last_hardfork);
-            set_random_value(v1.current_hardfork_version);
-            set_random_value(v1.next_hardfork);
-            set_random_value(v1.next_hardfork_time);
+    //         set_random_value(v1.id);
+    //         set_random_value(v1.processed_hardforks);
+    //         set_random_value(v1.last_hardfork);
+    //         set_random_value(v1.current_hardfork_version);
+    //         set_random_value(v1.next_hardfork);
+    //         set_random_value(v1.next_hardfork_time);
 
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
-    BOOST_AUTO_TEST_CASE(golos_chain_dynamic_global_property_object) {
-        try {
-            golos::chain::dynamic_global_property_object v1, v2;
+// NO DEFALUT CONSTRUCTOR
+    // BOOST_AUTO_TEST_CASE(golos_chain_dynamic_global_property_object) {
+    //     try {
+    //         golos::chain::dynamic_global_property_object v1, v2;
 
-            set_random_value(v1.id);
-            set_random_value(v1.head_block_number);
-            set_random_value(v1.head_block_id);
-            set_random_value(v1.time);
-            set_random_value(v1.current_witness);
-            set_random_value(v1.total_pow);
-            set_random_value(v1.num_pow_witnesses);
-            set_random_value(v1.virtual_supply);
-            set_random_value(v1.current_supply);
-            set_random_value(v1.confidential_supply);
-            set_random_value(v1.current_sbd_supply);
-            set_random_value(v1.confidential_sbd_supply);
-            set_random_value(v1.total_vesting_fund_steem);
-            set_random_value(v1.total_vesting_shares);
-            set_random_value(v1.total_reward_fund_steem);
-            set_random_value(v1.total_reward_shares2);
-            set_random_value(v1.sbd_interest_rate);
-            set_random_value(v1.sbd_print_rate);
-            set_random_value(v1.average_block_size);
-            set_random_value(v1.maximum_block_size);
-            set_random_value(v1.current_aslot);
-            set_random_value(v1.recent_slots_filled);
-            set_random_value(v1.participation_count);
-            set_random_value(v1.last_irreversible_block_num);
-            set_random_value(v1.max_virtual_bandwidth);
-            set_random_value(v1.current_reserve_ratio);
-            set_random_value(v1.vote_regeneration_per_day);
+    //         set_random_value(v1.id);
+    //         set_random_value(v1.head_block_number);
+    //         set_random_value(v1.head_block_id);
+    //         set_random_value(v1.time);
+    //         set_random_value(v1.current_witness);
+    //         set_random_value(v1.total_pow);
+    //         set_random_value(v1.num_pow_witnesses);
+    //         set_random_value(v1.virtual_supply);
+    //         set_random_value(v1.current_supply);
+    //         set_random_value(v1.confidential_supply);
+    //         set_random_value(v1.current_sbd_supply);
+    //         set_random_value(v1.confidential_sbd_supply);
+    //         set_random_value(v1.total_vesting_fund_steem);
+    //         set_random_value(v1.total_vesting_shares);
+    //         set_random_value(v1.total_reward_fund_steem);
+    //         set_random_value(v1.total_reward_shares2);
+    //         set_random_value(v1.sbd_interest_rate);
+    //         set_random_value(v1.sbd_print_rate);
+    //         set_random_value(v1.average_block_size);
+    //         set_random_value(v1.maximum_block_size);
+    //         set_random_value(v1.current_aslot);
+    //         set_random_value(v1.recent_slots_filled);
+    //         set_random_value(v1.participation_count);
+    //         set_random_value(v1.last_irreversible_block_num);
+    //         set_random_value(v1.max_virtual_bandwidth);
+    //         set_random_value(v1.current_reserve_ratio);
+    //         set_random_value(v1.vote_regeneration_per_day);
 
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
-    BOOST_AUTO_TEST_CASE(golos_chain_shared_authority) {
-        try {
-            golos::chain::shared_authority v1, v2;
+// NO DEFALUT CONSTRUCTOR
+    // BOOST_AUTO_TEST_CASE(golos_chain_shared_authority) {
+    //     try {
+    //         golos::chain::shared_authority v1, v2;
 
-            set_random_value(v1.weight_threshold);
-            set_random_value(v1.account_auths);
-            set_random_value(v1.key_auths);
+    //         set_random_value(v1.weight_threshold);
+    //         set_random_value(v1.account_auths);
+    //         set_random_value(v1.key_auths);
 
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
-    BOOST_AUTO_TEST_CASE(golos_chain_object_type) {
-        try {
-            golos::chain::object_type v1, v2;
+// ENUM
+    // BOOST_AUTO_TEST_CASE(golos_chain_object_type) {
+    //     try {
+    //         golos::chain::object_type v1, v2;
 
-            set_random_value(v1.dynamic_global_property_object_type);
-            set_random_value(v1.account_object_type);
-            set_random_value(v1.account_authority_object_type);
-            set_random_value(v1.account_bandwidth_object_type);
-            set_random_value(v1.witness_object_type);
-            set_random_value(v1.transaction_object_type);
-            set_random_value(v1.block_summary_object_type);
-            set_random_value(v1.witness_schedule_object_type);
-            set_random_value(v1.comment_object_type);
-            set_random_value(v1.category_object_type);
-            set_random_value(v1.comment_vote_object_type);
-            set_random_value(v1.witness_vote_object_type);
-            set_random_value(v1.limit_order_object_type);
-            set_random_value(v1.feed_history_object_type);
-            set_random_value(v1.convert_request_object_type);
-            set_random_value(v1.liquidity_reward_balance_object_type);
-            set_random_value(v1.operation_object_type);
-            set_random_value(v1.account_history_object_type);
-            set_random_value(v1.hardfork_property_object_type);
-            set_random_value(v1.withdraw_vesting_route_object_type);
-            set_random_value(v1.owner_authority_history_object_type);
-            set_random_value(v1.account_recovery_request_object_type);
-            set_random_value(v1.change_recovery_account_request_object_type);
-            set_random_value(v1.escrow_object_type);
-            set_random_value(v1.savings_withdraw_object_type);
-            set_random_value(v1.decline_voting_rights_request_object_type);
-            set_random_value(v1.block_stats_object_type);
+    //         set_random_value(v1.dynamic_global_property_object_type);
+    //         set_random_value(v1.account_object_type);
+    //         set_random_value(v1.account_authority_object_type);
+    //         set_random_value(v1.account_bandwidth_object_type);
+    //         set_random_value(v1.witness_object_type);
+    //         set_random_value(v1.transaction_object_type);
+    //         set_random_value(v1.block_summary_object_type);
+    //         set_random_value(v1.witness_schedule_object_type);
+    //         set_random_value(v1.comment_object_type);
+    //         set_random_value(v1.category_object_type);
+    //         set_random_value(v1.comment_vote_object_type);
+    //         set_random_value(v1.witness_vote_object_type);
+    //         set_random_value(v1.limit_order_object_type);
+    //         set_random_value(v1.feed_history_object_type);
+    //         set_random_value(v1.convert_request_object_type);
+    //         set_random_value(v1.liquidity_reward_balance_object_type);
+    //         set_random_value(v1.operation_object_type);
+    //         set_random_value(v1.account_history_object_type);
+    //         set_random_value(v1.hardfork_property_object_type);
+    //         set_random_value(v1.withdraw_vesting_route_object_type);
+    //         set_random_value(v1.owner_authority_history_object_type);
+    //         set_random_value(v1.account_recovery_request_object_type);
+    //         set_random_value(v1.change_recovery_account_request_object_type);
+    //         set_random_value(v1.escrow_object_type);
+    //         set_random_value(v1.savings_withdraw_object_type);
+    //         set_random_value(v1.decline_voting_rights_request_object_type);
+    //         set_random_value(v1.block_stats_object_type);
 
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
-    BOOST_AUTO_TEST_CASE(golos_chain_bandwidth_type) {
-        try {
-            golos::chain::bandwidth_type v1, v2;
 
-            set_random_value(v1.post);
-            set_random_value(v1.forum);
-            set_random_value(v1.market);
-            set_random_value(v1.old_forum);
-            set_random_value(v1.old_market);
+// ENUM
+    // BOOST_AUTO_TEST_CASE(golos_chain_bandwidth_type) {
+    //     try {
+    //         golos::chain::bandwidth_type v1, v2;
 
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         set_random_value(v1.post);
+    //         set_random_value(v1.forum);
+    //         set_random_value(v1.market);
+    //         set_random_value(v1.old_forum);
+    //         set_random_value(v1.old_market);
+
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
-    BOOST_AUTO_TEST_CASE(golos_chain_limit_order_object) {
-        try {
-            golos::chain::limit_order_object v1, v2;
+// ENUM
+    // BOOST_AUTO_TEST_CASE(golos_chain_limit_order_object) {
+    //     try {
+    //         golos::chain::limit_order_object v1, v2;
 
-            set_random_value(v1.id);
-            set_random_value(v1.created);
-            set_random_value(v1.expiration);
-            set_random_value(v1.seller);
-            set_random_value(v1.orderid);
-            set_random_value(v1.for_sale);
-            set_random_value(v1.sell_price);
+    //         set_random_value(v1.id);
+    //         set_random_value(v1.created);
+    //         set_random_value(v1.expiration);
+    //         set_random_value(v1.seller);
+    //         set_random_value(v1.orderid);
+    //         set_random_value(v1.for_sale);
+    //         set_random_value(v1.sell_price);
 
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
-    BOOST_AUTO_TEST_CASE(golos_chain_feed_history_object) {
-        try {
-            golos::chain::feed_history_object v1, v2;
+// ENUM
+    // BOOST_AUTO_TEST_CASE(golos_chain_feed_history_object) {
+    //     try {
+    //         golos::chain::feed_history_object v1, v2;
 
-            set_random_value(v1.id);
-            set_random_value(v1.current_median_history);
-            set_random_value(v1.price_history);
+    //         set_random_value(v1.id);
+    //         set_random_value(v1.current_median_history);
+    //         set_random_value(v1.price_history);
 
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
-    BOOST_AUTO_TEST_CASE(golos_chain_convert_request_object) {
-        try {
-            golos::chain::convert_request_object v1, v2;
+// ENUM
+    // BOOST_AUTO_TEST_CASE(golos_chain_convert_request_object) {
+    //     try {
+    //         golos::chain::convert_request_object v1, v2;
 
-            set_random_value(v1.id);
-            set_random_value(v1.owner);
-            set_random_value(v1.requestid);
-            set_random_value(v1.amount);
-            set_random_value(v1.conversion_date);
+    //         set_random_value(v1.id);
+    //         set_random_value(v1.owner);
+    //         set_random_value(v1.requestid);
+    //         set_random_value(v1.amount);
+    //         set_random_value(v1.conversion_date);
 
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
+// NO DEFALUT CONSTRUCTOR
+    // BOOST_AUTO_TEST_CASE(golos_chain_liquidity_reward_balance_object) {
+    //     try {
+    //         golos::chain::liquidity_reward_balance_object v1, v2;
 
-    BOOST_AUTO_TEST_CASE(golos_chain_liquidity_reward_balance_object) {
-        try {
-            golos::chain::liquidity_reward_balance_object v1, v2;
+    //         set_random_value(v1.id);
+    //         set_random_value(v1.owner);
+    //         set_random_value(v1.steem_volume);
+    //         set_random_value(v1.sbd_volume);
+    //         set_random_value(v1.weight);
+    //         set_random_value(v1.last_update);
 
-            set_random_value(v1.id);
-            set_random_value(v1.owner);
-            set_random_value(v1.steem_volume);
-            set_random_value(v1.sbd_volume);
-            set_random_value(v1.weight);
-            set_random_value(v1.last_update);
-
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
+// NO DEFALUT CONSTRUCTOR
+    // BOOST_AUTO_TEST_CASE(golos_chain_withdraw_vesting_route_object) {
+    //     try {
+    //         golos::chain::withdraw_vesting_route_object v1, v2;
 
-    BOOST_AUTO_TEST_CASE(golos_chain_withdraw_vesting_route_object) {
-        try {
-            golos::chain::withdraw_vesting_route_object v1, v2;
+    //         set_random_value(v1.id);
+    //         set_random_value(v1.from_account);
+    //         set_random_value(v1.to_account);
+    //         set_random_value(v1.percent);
+    //         set_random_value(v1.auto_vest);
 
-            set_random_value(v1.id);
-            set_random_value(v1.from_account);
-            set_random_value(v1.to_account);
-            set_random_value(v1.percent);
-            set_random_value(v1.auto_vest);
-
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
+// NO DEFALUT CONSTRUCTOR
+    // BOOST_AUTO_TEST_CASE(golos_chain_savings_withdraw_object) {
+    //     try {
+    //         golos::chain::savings_withdraw_object v1, v2;
 
-    BOOST_AUTO_TEST_CASE(golos_chain_savings_withdraw_object) {
-        try {
-            golos::chain::savings_withdraw_object v1, v2;
+    //         set_random_value(v1.id);
+    //         set_random_value(v1.from);
+    //         set_random_value(v1.to);
+    //         set_random_value(v1.memo);
+    //         set_random_value(v1.request_id);
+    //         set_random_value(v1.amount);
+    //         set_random_value(v1.complete);
 
-            set_random_value(v1.id);
-            set_random_value(v1.from);
-            set_random_value(v1.to);
-            set_random_value(v1.memo);
-            set_random_value(v1.request_id);
-            set_random_value(v1.amount);
-            set_random_value(v1.complete);
-
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
-    BOOST_AUTO_TEST_CASE(golos_chain_escrow_object) {
-        try {
-            golos::chain::escrow_object v1, v2;
+// NO DEFALUT CONSTRUCTOR
+    // BOOST_AUTO_TEST_CASE(golos_chain_escrow_object) {
+    //     try {
+    //         golos::chain::escrow_object v1, v2;
 
-            set_random_value(v1.id);
-            set_random_value(v1.escrow_id);
-            set_random_value(v1.from);
-            set_random_value(v1.to);
-            set_random_value(v1.agent);
-            set_random_value(v1.ratification_deadline);
-            set_random_value(v1.escrow_expiration);
-            set_random_value(v1.sbd_balance);
-            set_random_value(v1.steem_balance);
-            set_random_value(v1.pending_fee);
-            set_random_value(v1.to_approved);
-            set_random_value(v1.agent_approved);
-            set_random_value(v1.disputed);
+    //         set_random_value(v1.id);
+    //         set_random_value(v1.escrow_id);
+    //         set_random_value(v1.from);
+    //         set_random_value(v1.to);
+    //         set_random_value(v1.agent);
+    //         set_random_value(v1.ratification_deadline);
+    //         set_random_value(v1.escrow_expiration);
+    //         set_random_value(v1.sbd_balance);
+    //         set_random_value(v1.steem_balance);
+    //         set_random_value(v1.pending_fee);
+    //         set_random_value(v1.to_approved);
+    //         set_random_value(v1.agent_approved);
+    //         set_random_value(v1.disputed);
 
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
-    BOOST_AUTO_TEST_CASE(golos_chain_decline_voting_rights_request_object) {
-        try {
-            golos::chain::decline_voting_rights_request_object v1, v2;
+// NO DEFALUT CONSTRUCTOR
+    // BOOST_AUTO_TEST_CASE(golos_chain_decline_voting_rights_request_object) {
+    //     try {
+    //         golos::chain::decline_voting_rights_request_object v1, v2;
 
-            set_random_value(v1.id);
-            set_random_value(v1.account);
-            set_random_value(v1.effective_date);
+    //         set_random_value(v1.id);
+    //         set_random_value(v1.account);
+    //         set_random_value(v1.effective_date);
 
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
+// NO DEFALUT CONSTRUCTOR
+//     BOOST_AUTO_TEST_CASE(golos_chain_object_schema_repr) {
+//         try {
+//             golos::chain::object_schema_repr v1, v2;
 
-    BOOST_AUTO_TEST_CASE(golos_chain_object_schema_repr) {
-        try {
-            golos::chain::object_schema_repr v1, v2;
+//             set_random_value(v1.space_type);
+//             set_random_value(v1.type);
 
-            set_random_value(v1.space_type);
-            set_random_value(v1.type);
-
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+//             auto data = fc::raw::pack(v1);
+//             std::fstream stream_ex, stream_results;
+//             stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+//             fc::path file("logs");
+//             stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+//             stream_ex.write(data.data(), data.size());
+//             stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+//             fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+//             stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+//             stream_results.write(data.data(), data.size());
+//             stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+//             stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+//             fc::raw::unpack(stream_ex, v2);
+//             stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+//         }
+//         FC_LOG_AND_RETHROW()
+//     }
+// // NO DEFALUT CONSTRUCTOR
+//     BOOST_AUTO_TEST_CASE(golos_chain_operation_schema_repr) {
+//         try {
+//             golos::chain::operation_schema_repr v1, v2;
 
-    BOOST_AUTO_TEST_CASE(golos_chain_operation_schema_repr) {
-        try {
-            golos::chain::operation_schema_repr v1, v2;
+//             set_random_value(v1.id);
+//             set_random_value(v1.type);
 
-            set_random_value(v1.id);
-            set_random_value(v1.type);
-
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+//             auto data = fc::raw::pack(v1);
+//             std::fstream stream_ex, stream_results;
+//             stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+//             fc::path file("logs");
+//             stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+//             stream_ex.write(data.data(), data.size());
+//             stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+//             fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+//             stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+//             stream_results.write(data.data(), data.size());
+//             stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+//             stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+//             fc::raw::unpack(stream_ex, v2);
+//             stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+//         }
+//         FC_LOG_AND_RETHROW()
+//     }
+// // NO DEFALUT CONSTRUCTOR
+//     BOOST_AUTO_TEST_CASE(golos_chain_db_schema) {
+//         try {
+//             golos::chain::db_schema v1, v2;
 
-    BOOST_AUTO_TEST_CASE(golos_chain_db_schema) {
-        try {
-            golos::chain::db_schema v1, v2;
+//             set_random_value(v1.types);
+//             set_random_value(v1.object_types);
+//             set_random_value(v1.operation_type);
+//             set_random_value(v1.custom_operation_types);
 
-            set_random_value(v1.types);
-            set_random_value(v1.object_types);
-            set_random_value(v1.operation_type);
-            set_random_value(v1.custom_operation_types);
-
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+//             auto data = fc::raw::pack(v1);
+//             std::fstream stream_ex, stream_results;
+//             stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+//             fc::path file("logs");
+//             stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+//             stream_ex.write(data.data(), data.size());
+//             stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+//             fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+//             stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+//             stream_results.write(data.data(), data.size());
+//             stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+//             stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+//             fc::raw::unpack(stream_ex, v2);
+//             stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+//         }
+//         FC_LOG_AND_RETHROW()
+//     }
 
     BOOST_AUTO_TEST_CASE(golos_protocol_public_key_type) {
         try {
@@ -6116,7 +6140,8 @@ BOOST_FIXTURE_TEST_SUITE(reflect, database_fixture)
         try {
             golos::protocol::pow2_operation v1, v2;
 
-            set_random_value(v1.work);
+            // TODO fc:variant
+            // set_random_value(v1.work);
             set_random_value(v1.new_owner_key);
             set_random_value(v1.props);
 
@@ -7491,357 +7516,307 @@ BOOST_FIXTURE_TEST_SUITE(reflect, database_fixture)
         FC_LOG_AND_RETHROW()
     }
 
-    BOOST_AUTO_TEST_CASE(golos_protocol_authority_classification) {
-        try {
-            golos::protocol::authority::classification v1, v2;
+// ENUM
+    // BOOST_AUTO_TEST_CASE(golos_protocol_authority_classification) {
+    //     try {
+    //         golos::protocol::authority::classification v1, v2;
 
-            set_random_value(v1.owner);
-            set_random_value(v1.active);
-            set_random_value(v1.key);
-            set_random_value(v1.posting);
+    //         set_random_value(v1.owner);
+    //         set_random_value(v1.active);
+    //         set_random_value(v1.key);
+    //         set_random_value(v1.posting);
 
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
-    BOOST_AUTO_TEST_CASE(golos_plugin_tests_test_a_operation) {
-        try {
-            golos::plugin_tests::test_a_operation v1, v2;
+// TEST STRUCTRES >>>>
+    // BOOST_AUTO_TEST_CASE(book) {
+    //     try {
+    //         book v1, v2;
 
-            set_random_value(v1.account);
+    //         set_random_value(v1.name);
+    //         set_random_value(v1.author);
+    //         set_random_value(v1.pages);
+    //         set_random_value(v1.prize);
+    //         set_random_value(v1.deq);
+    //         set_random_value(v1.auth);
 
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
-    BOOST_AUTO_TEST_CASE(golos_plugin_tests_test_b_operation) {
-        try {
-            golos::plugin_tests::test_b_operation v1, v2;
+    // BOOST_AUTO_TEST_CASE(astr) {
+    //     try {
+    //         astr v1, v2;
 
-            set_random_value(v1.account);
+    //         set_random_value(v1.str);
+    //         set_random_value(v1.str1);
+    //         set_random_value(v1.str2);
 
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
-    BOOST_AUTO_TEST_CASE(book) {
-        try {
-            book v1, v2;
+    // BOOST_AUTO_TEST_CASE(bstr) {
+    //     try {
+    //         bstr v1, v2;
 
-            set_random_value(v1.name);
-            set_random_value(v1.author);
-            set_random_value(v1.pages);
-            set_random_value(v1.prize);
-            set_random_value(v1.deq);
-            set_random_value(v1.auth);
+    //         set_random_value(v1.str);
+    //         set_random_value(v1.str1);
+    //         set_random_value(v1.str2);
 
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
-    BOOST_AUTO_TEST_CASE(astr) {
-        try {
-            astr v1, v2;
+    // BOOST_AUTO_TEST_CASE(tx_signing_request) {
+    //     try {
+    //         tx_signing_request v1, v2;
 
-            set_random_value(v1.str);
-            set_random_value(v1.str1);
-            set_random_value(v1.str2);
+    //         set_random_value(v1.tx);
+    //         set_random_value(v1.wif);
 
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
-    BOOST_AUTO_TEST_CASE(bstr) {
-        try {
-            bstr v1, v2;
+    // BOOST_AUTO_TEST_CASE(tx_signing_result) {
+    //     try {
+    //         tx_signing_result v1, v2;
 
-            set_random_value(v1.str);
-            set_random_value(v1.str1);
-            set_random_value(v1.str2);
+    //         set_random_value(v1.digest);
+    //         set_random_value(v1.sig_digest);
+    //         set_random_value(v1.key);
+    //         set_random_value(v1.sig);
 
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
-    BOOST_AUTO_TEST_CASE(tx_signing_request) {
-        try {
-            tx_signing_request v1, v2;
+    // BOOST_AUTO_TEST_CASE(mystruct) {
+    //     try {
+    //         mystruct v1, v2;
 
-            set_random_value(v1.tx);
-            set_random_value(v1.wif);
+    //         set_random_value(v1.alpha);
+    //         set_random_value(v1.beta);
 
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
-    BOOST_AUTO_TEST_CASE(tx_signing_result) {
-        try {
-            tx_signing_result v1, v2;
+    // BOOST_AUTO_TEST_CASE(signing_request) {
+    //     try {
+    //         signing_request v1, v2;
 
-            set_random_value(v1.digest);
-            set_random_value(v1.sig_digest);
-            set_random_value(v1.key);
-            set_random_value(v1.sig);
+    //         set_random_value(v1.dig);
+    //         set_random_value(v1.wif);
 
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
-    BOOST_AUTO_TEST_CASE(mystruct) {
-        try {
-            mystruct v1, v2;
+    // BOOST_AUTO_TEST_CASE(signing_result) {
+    //     try {
+    //         signing_result v1, v2;
 
-            set_random_value(v1.alpha);
-            set_random_value(v1.beta);
+    //         set_random_value(v1.dig);
+    //         set_random_value(v1.key);
+    //         set_random_value(v1.sig);
 
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
+// TEST STRUCTRES <<<<<
 
-    BOOST_AUTO_TEST_CASE(signing_request) {
-        try {
-            signing_request v1, v2;
+// ENUM
+    // BOOST_AUTO_TEST_CASE(fc_variant_type_id) {
+    //     try {
+    //         fc::variant::type_id v1, v2;
 
-            set_random_value(v1.dig);
-            set_random_value(v1.wif);
+    //         set_random_value(v1.null_type);
+    //         set_random_value(v1.int64_type);
+    //         set_random_value(v1.uint64_type);
+    //         set_random_value(v1.double_type);
+    //         set_random_value(v1.bool_type);
+    //         set_random_value(v1.string_type);
+    //         set_random_value(v1.array_type);
+    //         set_random_value(v1.object_type);
+    //         set_random_value(v1.blob_type);
 
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
-
-    BOOST_AUTO_TEST_CASE(signing_result) {
-        try {
-            signing_result v1, v2;
-
-            set_random_value(v1.dig);
-            set_random_value(v1.key);
-            set_random_value(v1.sig);
-
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
-            
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
-            
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
-
-        }
-        FC_LOG_AND_RETHROW()
-    }
-
-    BOOST_AUTO_TEST_CASE(fc_variant_type_id) {
-        try {
-            fc::variant::type_id v1, v2;
-
-            set_random_value(v1.null_type);
-            set_random_value(v1.int64_type);
-            set_random_value(v1.uint64_type);
-            set_random_value(v1.double_type);
-            set_random_value(v1.bool_type);
-            set_random_value(v1.string_type);
-            set_random_value(v1.array_type);
-            set_random_value(v1.object_type);
-            set_random_value(v1.blob_type);
-
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
-            
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
-            
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
-
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
     BOOST_AUTO_TEST_CASE(fc_blob) {
         try {
@@ -8228,104 +8203,105 @@ BOOST_FIXTURE_TEST_SUITE(reflect, database_fixture)
         }
         FC_LOG_AND_RETHROW()
     }
+// ENUM
+    // BOOST_AUTO_TEST_CASE(fc_json_console_appender_j_stream_type) {
+    //     try {
+    //         fc::json_console_appender::j_stream::type v1, v2;
 
-    BOOST_AUTO_TEST_CASE(fc_json_console_appender_j_stream_type) {
-        try {
-            fc::json_console_appender::j_stream::type v1, v2;
+    //         set_random_value(v1.std_out);
+    //         set_random_value(v1.std_error);
 
-            set_random_value(v1.std_out);
-            set_random_value(v1.std_error);
-
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
-    BOOST_AUTO_TEST_CASE(fc_json_console_appender_j_color_type) {
-        try {
-            fc::json_console_appender::j_color::type v1, v2;
+// ENUM
+    // BOOST_AUTO_TEST_CASE(fc_json_console_appender_j_color_type) {
+    //     try {
+    //         fc::json_console_appender::j_color::type v1, v2;
 
-            set_random_value(v1.red);
-            set_random_value(v1.green);
-            set_random_value(v1.brown);
-            set_random_value(v1.blue);
-            set_random_value(v1.magenta);
-            set_random_value(v1.cyan);
-            set_random_value(v1.white);
-            set_random_value(v1.console_default);
+    //         set_random_value(v1.red);
+    //         set_random_value(v1.green);
+    //         set_random_value(v1.brown);
+    //         set_random_value(v1.blue);
+    //         set_random_value(v1.magenta);
+    //         set_random_value(v1.cyan);
+    //         set_random_value(v1.white);
+    //         set_random_value(v1.console_default);
 
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
+// ENUM 
+    // BOOST_AUTO_TEST_CASE(fc_json_console_appender_j_level_color) {
+    //     try {
+    //         fc::json_console_appender::j_level_color v1, v2;
 
-    BOOST_AUTO_TEST_CASE(fc_json_console_appender_j_level_color) {
-        try {
-            fc::json_console_appender::j_level_color v1, v2;
+    //         set_random_value(v1.level);
+    //         set_random_value(v1.color);
 
-            set_random_value(v1.level);
-            set_random_value(v1.color);
-
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
     BOOST_AUTO_TEST_CASE(fc_json_console_appender_j_config) {
         try {
             fc::json_console_appender::j_config v1, v2;
 
             set_random_value(v1.format);
-            set_random_value(v1.stream);
-            set_random_value(v1.level_colors);
+            // set_random_value(v1.stream);
+            // set_random_value(v1.level_colors);
             set_random_value(v1.flush);
 
             auto data = fc::raw::pack(v1);
@@ -8355,7 +8331,8 @@ BOOST_FIXTURE_TEST_SUITE(reflect, database_fixture)
 
             set_random_value(v1.name);
             set_random_value(v1.type);
-            set_random_value(v1.args);
+            // VARIANT
+            // set_random_value(v1.args);
             set_random_value(v1.enabled);
 
             auto data = fc::raw::pack(v1);
@@ -8471,104 +8448,106 @@ BOOST_FIXTURE_TEST_SUITE(reflect, database_fixture)
         }
         FC_LOG_AND_RETHROW()
     }
+// ENUM
+    // BOOST_AUTO_TEST_CASE(fc_console_appender_stream_type) {
+    //     try {
+    //         fc::console_appender::stream::type v1, v2;
 
-    BOOST_AUTO_TEST_CASE(fc_console_appender_stream_type) {
-        try {
-            fc::console_appender::stream::type v1, v2;
+    //         set_random_value(v1.std_out);
+    //         set_random_value(v1.std_error);
 
-            set_random_value(v1.std_out);
-            set_random_value(v1.std_error);
-
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
-    BOOST_AUTO_TEST_CASE(fc_console_appender_color_type) {
-        try {
-            fc::console_appender::color::type v1, v2;
+// ENUM
+    // BOOST_AUTO_TEST_CASE(fc_console_appender_color_type) {
+    //     try {
+    //         fc::console_appender::color::type v1, v2;
 
-            set_random_value(v1.red);
-            set_random_value(v1.green);
-            set_random_value(v1.brown);
-            set_random_value(v1.blue);
-            set_random_value(v1.magenta);
-            set_random_value(v1.cyan);
-            set_random_value(v1.white);
-            set_random_value(v1.console_default);
+    //         set_random_value(v1.red);
+    //         set_random_value(v1.green);
+    //         set_random_value(v1.brown);
+    //         set_random_value(v1.blue);
+    //         set_random_value(v1.magenta);
+    //         set_random_value(v1.cyan);
+    //         set_random_value(v1.white);
+    //         set_random_value(v1.console_default);
 
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
-    BOOST_AUTO_TEST_CASE(fc_console_appender_level_color) {
-        try {
-            fc::console_appender::level_color v1, v2;
+// ENUM
+    // BOOST_AUTO_TEST_CASE(fc_console_appender_level_color) {
+    //     try {
+    //         fc::console_appender::level_color v1, v2;
 
-            set_random_value(v1.level);
-            set_random_value(v1.color);
+    //         set_random_value(v1.level);
+    //         set_random_value(v1.color);
 
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
     BOOST_AUTO_TEST_CASE(fc_console_appender_config) {
         try {
             fc::console_appender::config v1, v2;
 
             set_random_value(v1.format);
-            set_random_value(v1.stream);
-            set_random_value(v1.level_colors);
+            // set_random_value(v1.stream);
+            // set_random_value(v1.level_colors);
             set_random_value(v1.flush);
 
             auto data = fc::raw::pack(v1);
@@ -8592,33 +8571,33 @@ BOOST_FIXTURE_TEST_SUITE(reflect, database_fixture)
         FC_LOG_AND_RETHROW()
     }
 
-    BOOST_AUTO_TEST_CASE(fc_gelf_appender_config) {
-        try {
-            fc::gelf_appender::config v1, v2;
+    // BOOST_AUTO_TEST_CASE(fc_gelf_appender_config) {
+    //     try {
+    //         fc::gelf_appender::config v1, v2;
 
-            set_random_value(v1.endpoint);
-            set_random_value(v1.host);
+    //         set_random_value(v1.endpoint);
+    //         set_random_value(v1.host);
 
-            auto data = fc::raw::pack(v1);
-            std::fstream stream_ex, stream_results;
-            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-            fc::path file("logs");
-            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_ex.write(data.data(), data.size());
-            stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-            stream_results.write(data.data(), data.size());
-            stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-        }
-        FC_LOG_AND_RETHROW()
-    }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
 
 BOOST_AUTO_TEST_SUITE_END()
