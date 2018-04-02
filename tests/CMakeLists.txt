@@ -44,6 +44,7 @@ file(GLOB REFLECT_TESTS "reflect/*.cpp")
 add_executable(reflect_test ${REFLECT_TESTS} ${COMMON_SOURCES})
 
 target_link_libraries(reflect_test
+    fc
     golos_chain
     appbase
     golos::webserver_plugin
@@ -69,7 +70,6 @@ target_link_libraries(reflect_test
     golos::follow
     golos_wallet
     golos_network
-    fc
     ${PLATFORM_SPECIFIC_LIBS}
 )
 

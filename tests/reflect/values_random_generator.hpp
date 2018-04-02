@@ -4,6 +4,8 @@
 #include <string>
 #include <map>
 
+#include <fc/static_variant.hpp>
+
 #include <golos/plugins/chain/plugin.hpp>
 #include <golos/plugins/p2p/p2p_plugin.hpp>
 #include <golos/plugins/webserver/webserver_plugin.hpp>
@@ -63,7 +65,7 @@
 #include <fc/log/logger.hpp>
 #include <fc/log/logger_config.hpp>
 
-#include <fc/static_variant.hpp>
+#include "../../thirdparty/fc/include/fc/static_variant.hpp"
 #include <fc/variant.hpp>
 
 
@@ -78,10 +80,76 @@
 namespace bip = boost::interprocess;
 
 // mercen rand
+
+std::string get_random_ip_address_str__() {
+    std::string s;
+    for (int i = 0; i < 4; i++) {
+        auto n = rand() % 255;
+        s += std::to_string( n );
+        if (i < 3) {
+            s += "::";
+        }
+    }
+    return s;
+}
+
+std::string get_random_hex_string__() {
+    std::string s;
+    srand(time(NULL));
+    int len = rand() % RANDOM_MAX_STRING_SIZE + 1;
+    s.resize(len);
+    static const char alphanum[] =
+        "0123456789"
+        "ABCDEF";
+    int alphanum_size = sizeof(alphanum);
+
+    for (int i = 0; i < len; ++i) {
+        auto x = rand() % (alphanum_size - 1);
+        s[i] = alphanum[x];
+    }
+
+    s[len] = 0;
+    return s;
+}
+
+std::string get_random_string__(int32_t sz = -1) {
+    srand(time(NULL));
+    std::string s;
+    int len;
+
+    if (sz == -1) {
+        len = rand() % RANDOM_MAX_STRING_SIZE + 1;
+    }
+    else {
+        len = sz;
+    }
+
+    s.resize(len);
+    static const char alphanum[] =
+        "0123456789"
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "abcdefghijklmnopqrstuvwxyz";
+    int alphanum_size = sizeof(alphanum);
+
+    for (int i = 0; i < len; ++i) {
+        auto x = rand() % (alphanum_size - 1);
+        s[i] = alphanum[x];
+    }
+
+    s[len] = 0;
+    return s;
+}
 // mt19937 rnd = mt19937(duration_cast<nanoseconds>(high_resolution_clock::now().time_since_epoch()).count());
-template <class T>
-void set_random_value(fc::safe<T> & x);
-void set_random_value( golos::protocol::beneficiary_route_type & x );
+// template < class X, class... T >
+// void set_random_value( const fc::static_variant< X, T... args>  & x) {
+
+// }
+
+// void set_random_value( const fc::static_variant<golos::void_t> & x);
+
+// void set_random_value( const fc::static_variant<golos::void_t> & x) {
+
+// }
 
 // TODO: figure out what to do with fc::variant_object
 void set_random_value (fc::variant_object & x) {
@@ -91,11 +159,145 @@ void set_random_value (fc::variant_object & x) {
 // void set_random_value(fc::static_variant<T, ... Types>  & x) {
 
 // }
-template < class... T >
-void set_random_value(fc::static_variant< T... args>  & x) {
-
-}
 // void set_random_value(golos::protocol::operation & x);
+
+template <class T>
+void set_random_value ( fc::safe<T> & x );
+void set_random_value ( golos::protocol::beneficiary_route_type & x );
+void set_random_value ( golos::protocol::asset & x );
+void set_random_value ( double & x );
+void set_random_value ( float & x );
+void set_random_value ( bool & x );
+void set_random_value ( int8_t & x );
+void set_random_value ( int8_t & x );
+void set_random_value ( int16_t & x );
+void set_random_value ( int32_t & x );
+void set_random_value ( int64_t & x );
+void set_random_value ( uint8_t & x ) ;
+void set_random_value ( uint16_t & x ) ;
+void set_random_value ( uint32_t & x ) ;
+void set_random_value (uint64_t & x) ;
+void set_random_value (long long unsigned int & x) ;
+void set_random_value(std::string & s);
+void set_random_value(std::vector<char> & s);
+void set_random_value(fc::fixed_string<> & x);
+void set_random_value(golos::protocol::public_key_type & x);
+void set_random_value(fc::time_point & x);
+template < class T >
+void set_random_value(fc::flat_set <T> & x) ;
+template < class T >
+void set_random_value(std::set <T> & x);
+template < class T, class U >
+void set_random_value( std::pair <T, U> & x);
+template < class T >
+void set_random_value(std::vector <T> & x) ;
+template < class T , class T1>
+void set_random_value(std::map <T, T1> & x) ;
+void set_random_value(fc::time_point_sec & x) ;
+void set_random_value(golos::plugins::private_message::message_body & x) ;
+void set_random_value(fc::uint128_t & x);
+template <class T>
+void set_random_value(fc::safe<T> & x);
+void set_random_value(golos::protocol::asset & x);
+void set_random_value(golos::plugins::social_network::category_object::id_type & x);
+void set_random_value(golos::plugins::social_network::vote_state & x);
+template <class T>
+void set_random_value(fc::optional<T> & x);
+template<typename T>
+void set_random_value( chainbase::object_id<T> & x);
+void set_random_value( golos::protocol::beneficiary_route_type & x );
+void set_random_value(std::set <std::string> & x);
+void set_random_value(fc::fixed_string<fc::sha256> & x);
+void set_random_value(golos::protocol::version & x);
+
+void set_random_value(golos::protocol::hardfork_version & x);
+void set_random_value(golos::plugins::database_api::tag_count_object & x);
+void set_random_value(fc::ripemd160 & x);
+void set_random_value(golos::protocol::authority::account_authority_map & x );
+void set_random_value(golos::protocol::authority::key_authority_map & x ) ;
+void set_random_value(golos::protocol::authority & x);
+void set_random_value(golos::plugins::database_api::applied_operation & x) ;
+void set_random_value( std::map<uint64_t, golos::plugins::database_api::applied_operation > & x ) ;
+void set_random_value(golos::plugins::database_api::account_api_object & x) ;
+void set_random_value( golos::plugins::database_api::order_history_item & x );
+void set_random_value( golos::plugins::database_api::candle_stick & x );
+void set_random_value( golos::protocol::chain_properties & x ) ;
+void set_random_value( golos::protocol::price & x ) ;
+void set_random_value( fc::sha256 & x ) ;
+void set_random_value( std::deque<golos::protocol::price> & x ) ;
+void set_random_value( golos::plugins::social_network::comment_api_object & x ) ;
+void set_random_value( golos::plugins::follow::comment_feed_entry & x );
+void set_random_value( golos::plugins::block_info::block_info & x );
+template<typename T, size_t N>
+void set_random_value( fc::array<T, N> & x );
+void set_random_value( golos::protocol::transaction & x ) ;
+void set_random_value( golos::protocol::signed_transaction & x );
+void set_random_value( golos::chain::signed_block & x ) ;
+void set_random_value( golos::plugins::block_info::block_with_info & x );
+void set_random_value( golos::plugins::market_history::order & x ) ;
+void set_random_value( fc::variant & x ) ;
+void set_random_value( fc::sha512 & x ) ;
+void set_random_value( std::map<golos::protocol::public_key_type, std::string> & x ) ;
+void set_random_value( golos::wallet::plain_keys & x );
+void set_random_value( golos::network::item_id & x );
+void set_random_value( golos::network::peer_connection::timestamped_item_id & x );
+void set_random_value( fc::ip::address  & x ) ;
+void set_random_value( fc::ip::endpoint & x ) ;
+template <class T, class T1>
+void set_random_value( fc::enum_type<T, T1> & x);
+void set_random_value( fc::microseconds & x ) ;
+void set_random_value( golos::chain::account_keys & x) ;
+void set_random_value( golos::chain::account_balances & x) ;
+void set_random_value( golos::chain::snapshot_summary & x) ;
+void set_random_value( golos::protocol::signed_block_header & x) ;
+void set_random_value( golos::protocol::pow2_input & x) ;
+void set_random_value( golos::protocol::pow2 & x) ;
+void set_random_value( fc::equihash::proof & x) ;
+void set_random_value( golos::protocol::pow & x) ;
+void set_random_value( fc::bloom_parameters::optimal_parameters_t & x) ;
+void set_random_value( fc::http::header & x) ;
+void set_random_value( fc::json_console_appender::j_config & x) ;
+std::string get_random_path_string__() ;
+void set_random_value( fc::path  & x);
+void set_random_value(golos::plugins::database_api::extended_limit_order & x);
+void set_random_value(fc::exception & x);
+void set_random_value(char & x); 
+void set_random_value(golos::network::address_info & x);
+void set_random_value(golos::network::current_connection_data & x );
+void set_random_value(golos::chain::account_summary & x );
+void set_random_value(
+    fc::static_variant<
+        golos::void_t,
+        golos::protocol::version,
+        golos::protocol::hardfork_version_vote>& x
+);
+void set_random_value( golos::protocol::operation & x);
+void set_random_value(fc::static_variant<golos::void_t> & x);
+void set_random_value(fc::static_variant<golos::protocol::comment_payout_beneficiaries> & x);
+void set_random_value(fc::rpc::error_object & x);
+void set_random_value( fc::log_level & x);
+void set_random_value(fc::appender_config & x);
+void set_random_value(fc::logger_config & x);
+void set_random_value(fc::logging_config & x);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 void set_random_value (double & x) {
     double lower_bound = RANDOM_DOUBLE_LOWER_BOUND;
@@ -166,65 +368,6 @@ void set_random_value (long long unsigned int & x) {
 }
 
 
-
-std::string get_random_ip_address_str__() {
-    std::string s;
-    for (int i = 0; i < 4; i++) {
-        auto n = rand() % 255;
-        s += std::to_string( n );
-        if (i < 3) {
-            s += "::";
-        }
-    }
-    return s;
-}
-
-std::string get_random_hex_string__() {
-    std::string s;
-    srand(time(NULL));
-    int len = rand() % RANDOM_MAX_STRING_SIZE + 1;
-    s.resize(len);
-    static const char alphanum[] =
-        "0123456789"
-        "ABCDEF";
-    int alphanum_size = sizeof(alphanum);
-
-    for (int i = 0; i < len; ++i) {
-        auto x = rand() % (alphanum_size - 1);
-        s[i] = alphanum[x];
-    }
-
-    s[len] = 0;
-    return s;
-}
-
-std::string get_random_string__(int32_t sz = -1) {
-    srand(time(NULL));
-    std::string s;
-    int len;
-
-    if (sz == -1) {
-        len = rand() % RANDOM_MAX_STRING_SIZE + 1;
-    }
-    else {
-        len = sz;
-    }
-
-    s.resize(len);
-    static const char alphanum[] =
-        "0123456789"
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        "abcdefghijklmnopqrstuvwxyz";
-    int alphanum_size = sizeof(alphanum);
-
-    for (int i = 0; i < len; ++i) {
-        auto x = rand() % (alphanum_size - 1);
-        s[i] = alphanum[x];
-    }
-
-    s[len] = 0;
-    return s;
-}
 
 void set_random_value(std::string & s) {
     s = get_random_string__();
@@ -586,11 +729,6 @@ void set_random_value( std::map<uint64_t, golos::plugins::database_api::applied_
     }
 }
 
-void set_random_value( golos::plugins::database_api::extended_limit_order & x ) {
-    set_random_value( x.real_price );
-    set_random_value( x.rewarded );
-}
-
 void set_random_value( golos::plugins::database_api::order_history_item & x ) {
     set_random_value( x.time );
     set_random_value( x.type ); // buy or sell
@@ -733,29 +871,32 @@ void set_random_value( golos::protocol::transaction & x ) {
     set_random_value( x.ref_block_prefix );
     set_random_value( x.expiration );
     // vector<operation> operations; TODO
+
+    // TROUBLES WITH fc::static_variant
     set_random_value( x.extensions );
     
 }
 
 void set_random_value( golos::protocol::signed_transaction & x ) {
-    set_random_value( x.signatures );
-
+    // TROUBLES WITH fc::static_variant
     set_random_value( x.signatures );
     set_random_value( x.ref_block_num );
     set_random_value( x.ref_block_prefix );
     set_random_value( x.expiration );
     // vector<operation> operations; TODO
+
+    // TROUBLES WITH fc::static_variant
     set_random_value( x.extensions ); 
 
 }
 
 void set_random_value( golos::chain::signed_block & x ) {
     set_random_value( x.transactions );
-    // signature_type witness_signature;
     set_random_value( x.witness_signature );
     set_random_value( x.timestamp ); 
     set_random_value( x.witness );
     set_random_value( x.transaction_merkle_root );
+    // TROUBLES WITH fc::static_variant
     set_random_value( x.extensions );
 }
 
@@ -856,7 +997,6 @@ void set_random_value( golos::chain::account_keys & x) {
     set_random_value( x.memo_key );
 }
 
-
 void set_random_value( golos::chain::account_balances & x) {
     set_random_value( x.assets );
 }
@@ -882,25 +1022,15 @@ void set_random_value( golos::protocol::signed_block_header & x) {
     set_random_value( x.timestamp );
     set_random_value( x.witness );
     set_random_value( x.transaction_merkle_root );
+    // TROUBLES WITH fc::static_variant
     set_random_value( x.extensions );
 }
-
- // pow2_input {
-// account_name_type worker_account;
-// block_id_type prev_block;
-// uint64_t nonce = 0;
-
-
-// struct pow2 {
-// pow2_input input;
-// uint32_t pow_summary = 0;
 
 void set_random_value( golos::protocol::pow2_input & x) {
     set_random_value( x.worker_account );
     set_random_value( x.prev_block );
     set_random_value( x.nonce );
 }
-
 
 void set_random_value( golos::protocol::pow2 & x) {
     set_random_value( x.input );
@@ -937,9 +1067,6 @@ void set_random_value( fc::http::header & x) {
 }
 
 
-// void set_random_value( fc::log::console_appender::log_level & x) {
-// }
-
 void set_random_value( fc::json_console_appender::j_config & x) {
     set_random_value( x.format );
     set_random_value( x.flush );
@@ -951,10 +1078,103 @@ std::string get_random_path_string__() {
     for (int i = 0; i < n; i++) {
         data += get_random_string__() + "/";
     }
+    return data;
 }
 
 void set_random_value( fc::path  & x) {
     fc::path tmp( get_random_path_string__() );
     x = std::move( tmp );
+}
+
+void set_random_value(golos::plugins::database_api::extended_limit_order & x) {
+    set_random_value( x.id );
+
+    set_random_value( x.created );
+    set_random_value( x.expiration );
+    set_random_value( x.seller );
+    set_random_value( x.orderid );
+    set_random_value( x.for_sale ); 
+    set_random_value( x.sell_price );   
+    set_random_value( x.real_price );
+    set_random_value( x.rewarded ); 
+}
+
+void set_random_value(char & x) {
+    int sz = 2;
+    auto s = get_random_string__(sz);
+    x = s[0];
+}
+
+void set_random_value( golos::network::address_info & x ) {
+    set_random_value( x.remote_endpoint );
+    set_random_value( x.last_seen_time );
+    set_random_value( x.latency );
+    set_random_value( x.node_id );
+    set_random_value( x.direction );
+    set_random_value( x.firewalled );
+}
+
+
+void set_random_value(golos::network::current_connection_data & x ) {
+    set_random_value( x.connection_duration );
+    set_random_value( x.remote_endpoint );
+    set_random_value( x.node_id );
+    set_random_value( x.clock_offset );
+    set_random_value( x.round_trip_delay );
+    set_random_value( x.connection_direction );
+    set_random_value( x.firewalled );
+    set_random_value( x.user_data );
+}
+
+
+void set_random_value(golos::chain::account_summary & x ) {
+    set_random_value( x.id );
+    set_random_value( x.name );
+    set_random_value( x.keys );
+    set_random_value( x.posting_rewards );
+    set_random_value( x.curation_rewards );
+    set_random_value( x.balances );
+    set_random_value( x.json_metadata );
+    set_random_value( x.proxy );
+    set_random_value( x.post_count );
+    set_random_value( x.recovery_account );
+    set_random_value( x.reputation );
+}
+
+void set_random_value(
+    fc::static_variant<
+        golos::void_t,
+        golos::protocol::version,
+        golos::protocol::hardfork_version_vote>
+    & x) {
+}
+void set_random_value(fc::static_variant<golos::void_t> & x) {
+
+}
+
+void set_random_value(fc::static_variant<golos::protocol::comment_payout_beneficiaries> & x) {
+
+}
+
+void set_random_value(fc::rpc::error_object & x) {
+    set_random_value( x.code );
+    set_random_value( x.message );
+    set_random_value( x.data );
+}
+
+void set_random_value( fc::log_level & x) {
+
+}
+
+void set_random_value(fc::appender_config & x) {
+
+}
+
+void set_random_value(fc::logger_config & x) {
+
+}
+
+void set_random_value(fc::logging_config & x) {
+
 }
 
