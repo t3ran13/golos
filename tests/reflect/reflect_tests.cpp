@@ -160,7 +160,7 @@ BOOST_FIXTURE_TEST_SUITE(reflect, database_fixture)
 
     // BOOST_AUTO_TEST_CASE(golos_plugins_private_message_message_object) {
     //     try {
-    //         golos::plugins::private_message::message_object v1, v2;
+            // golos::plugins::private_message::message_object v1, v2;
 
     //         set_random_value(v1.id);
     //         set_random_value(v1.from);

@@ -234,9 +234,6 @@ FC_REFLECT( (golos::plugins::block_info::block_with_info),
     (block)
     (info)
 )
-FC_REFLECT ((golos::plugins::block_info::test_str),
-    (lol)
-)
 
 golos/plugins/network_broadcast_api/include/golos/plugins/network_broadcast_api/network_broadcast_api_plugin.hpp
 FC_REFLECT((golos::plugins::network_broadcast_api::broadcast_transaction_synchronous_t),
@@ -751,20 +748,6 @@ FC_REFLECT_TYPENAME((golos::protocol::authority::account_authority_map))
 FC_REFLECT_TYPENAME((golos::protocol::authority::key_authority_map))
 FC_REFLECT((golos::protocol::authority), (weight_threshold)(account_auths)(key_auths))
 FC_REFLECT_ENUM(golos::protocol::authority::classification, (owner)(active)(key)(posting))
-
-golos/tests/tests/operation_time_tests.cpp
-FC_REFLECT( (golos::plugins::block_info::block_info),
-    //     (block_id)
-    //     (block_size)
-    //     (average_block_size)
-    //     (aslot)
-    //     (last_irreversible_block_num)
-    //     (num_pow_witnesses)
-    // )
-FC_REFLECT( (golos::plugins::block_info::block_with_info),
-    //     (block)
-    //     (info)
-    // )
 
 golos/tests/plugin_tests/plugin_ops.cpp
 FC_REFLECT( golos::plugin_tests::test_a_operation, (account) )
