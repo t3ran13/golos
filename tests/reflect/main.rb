@@ -20,7 +20,7 @@ class Structure_info
     @path = @path[p..-1]
   end
 
-  def fill_inherited_fields(xxx = "start > ")
+  def fill_inherited_fields()
     if @macro != "FC_REFLECT_DERIVED"
       return @fields
     else
@@ -33,7 +33,7 @@ class Structure_info
           return
         end
         
-        v = c.fill_inherited_fields(@name)
+        v = c.fill_inherited_fields()
         v.each {|x| res << x}
       end
       @inherited_fields = res
@@ -42,7 +42,9 @@ class Structure_info
   end
 
 
-  def get_cpp_test_case 
+  def get_cpp_test_case
+    return nil if @macro == "FC_REFLECT_ENUM"
+
     tab = " " * 4
     padding = 1
     tmp = @name.split("::")
@@ -348,7 +350,7 @@ PATH_TO_GOLOS_FOLDER = '/home/anton/code/work/466/1/golos'
 # Parsing files and searching for all reflected structure
 # And getting their full description
 travel(PATH_TO_GOLOS_FOLDER)
-Structures.each {|name, value| value.fill_inherited_fields(name)}
+Structures.each {|name, value| value.fill_inherited_fields()}
 # Structures.each {|name, value| puts "", value.to_s}
 
 cpp_test_code = 
@@ -388,11 +390,17 @@ BOOST_FIXTURE_TEST_SUITE(reflect, database_fixture)
 
 
 "
-Structures.each {|name, value| cpp_test_code += value.get_cpp_test_case}
+
 
 cpp_test_code += 
 "
 BOOST_AUTO_TEST_SUITE_END()
 #endif
 "
+
+Structures.each {|name, value|
+  tmp_s = value.get_cpp_test_case
+  cpp_test_code += tmp_s if tmp_s != nil
+}
+
 puts cpp_test_code

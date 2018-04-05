@@ -68,7 +68,7 @@
 #include <fc/log/logger.hpp>
 #include <fc/log/logger_config.hpp>
 
-#include "../../thirdparty/fc/include/fc/static_variant.hpp"
+// #include "../../thirdparty/fc/include/fc/static_variant.hpp"
 #include <fc/variant.hpp>
 
 
@@ -298,3 +298,4 @@ void set_random_value ( fc::logger_config & x);
 void set_random_value ( fc::logging_config & x);
 void set_random_value ( fc::variant_object & x);
 
+void set_random_value( golos::chain::buffer_type & x);

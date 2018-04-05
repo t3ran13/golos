@@ -849,3 +849,13 @@ void set_random_value(fc::logging_config & x) {
 
 }
 
+// boost::interprocess::vector<char, allocator<char>> AKA  buffer_type;
+void set_random_value( golos::chain::buffer_type & x) {
+    std::vector < char > v;
+    set_random_value(v);
+
+    for (size_t i = 0; i < v.size(); i++) {
+        x.push_back( v[i] );
+    }
+}
+

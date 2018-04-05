@@ -16,13 +16,13 @@
 
 #include <fc/crypto/digest.hpp>
 
-#include "../common/database_fixture.hpp"
+// #include "../common/database_fixture.hpp"
+#include "reflect_database_fixture.hpp"
 #include "values_random_generator.hpp"
 
 #include <cmath>
 
 #include <golos/plugins/block_info/plugin.hpp>
-#include "../common/database_fixture.hpp"
 
 
 using namespace golos::chain;
@@ -30,15 +30,7 @@ using namespace golos::protocol;
 #define REFLECT_TESTS_OUTPUT_FILE "reflect_tests_output_file.txt"
 
 
-BOOST_FIXTURE_TEST_SUITE(reflect, database_fixture)
-
-
-    // BOOST_AUTO_TEST_CASE(golos_plugins_teasddsst_api_test_api_a_t) {
-    //     try {
-    //         fc::static_variant s;
-    //     }
-    //     FC_LOG_AND_RETHROW()
-    // }
+BOOST_FIXTURE_TEST_SUITE(reflect, reflect_database_fixture)
 
     BOOST_AUTO_TEST_CASE(golos_plugins_test_api_test_api_a_t) {
         try {
@@ -158,40 +150,48 @@ BOOST_FIXTURE_TEST_SUITE(reflect, database_fixture)
         FC_LOG_AND_RETHROW()
     }
 
-    // BOOST_AUTO_TEST_CASE(golos_plugins_private_message_message_object) {
-    //     try {
-            // golos::plugins::private_message::message_object v1, v2;
+    BOOST_AUTO_TEST_CASE(golos_plugins_private_message_message_object) {
+        try {
+            db = & appbase::app().get_plugin<golos::plugins::chain::plugin>().db();
+            const auto& v1 = db->create<golos::plugins::private_message::message_object>(
+                [&]( golos::plugins::private_message::message_object& obj ) {
+                
+                set_random_value( obj.from );
+                set_random_value( obj.to );
+                set_random_value( obj.from_memo_key );
+                set_random_value( obj.to_memo_key );
+                set_random_value( obj.sent_time );
+                set_random_value( obj.receive_time );
+                set_random_value( obj.checksum );
+                set_random_value( obj.encrypted_message );
 
-    //         set_random_value(v1.id);
-    //         set_random_value(v1.from);
-    //         set_random_value(v1.to);
-    //         set_random_value(v1.from_memo_key);
-    //         set_random_value(v1.to_memo_key);
-    //         set_random_value(v1.sent_time);
-    //         set_random_value(v1.receive_time);
-    //         set_random_value(v1.checksum);
-    //         set_random_value(v1.encrypted_message);
+            } );
 
-    //         auto data = fc::raw::pack(v1);
-    //         std::fstream stream_ex, stream_results;
-    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-    //         fc::path file("logs");
-    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-    //         stream_ex.write(data.data(), data.size());
-    //         stream_ex.close();
+            auto& v2 = db->create<golos::plugins::private_message::message_object>(
+                [&]( golos::plugins::private_message::message_object& obj ) {
+            } );
+
+            auto data = fc::raw::pack(v1);
+            std::fstream stream_ex, stream_results;
+            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+            fc::path file("logs");
+            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+            stream_ex.write(data.data(), data.size());
+            stream_ex.close();
             
-    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-    //         stream_results.write(data.data(), data.size());
-    //         stream_results.close();
+            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+            stream_results.write(data.data(), data.size());
+            stream_results.close();
             
-    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-    //         fc::raw::unpack(stream_ex, v2);
-    //         stream_ex.close();
+            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+            // FIXME VVV
+            fc::raw::unpack(stream_ex, v2);
+            stream_ex.close();
 
-    //     }
-    //     FC_LOG_AND_RETHROW()
-    // }
+        }
+        FC_LOG_AND_RETHROW()
+    }
 
 
  // TROUBLE: can't pack this structure
