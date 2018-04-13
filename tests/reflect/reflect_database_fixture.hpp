@@ -27,7 +27,7 @@ using namespace golos::protocol;
 struct reflect_database_fixture {
     // the reason we use an app is to exercise the indexes of built-in
     //   plugins
-    chain::database *db;
+    chain::database db;
     signed_transaction trx;
     // fc::ecc::private_key init_account_priv_key = STEEMIT_INIT_PRIVATE_KEY;
     // string debug_key = golos::utilities::key_to_wif(init_account_priv_key);
@@ -35,13 +35,10 @@ struct reflect_database_fixture {
     uint32_t default_skip = 0 | database::skip_undo_history_check |
                             database::skip_authority_check;
 
-    golos::plugins::chain::plugin *ch_plugin = nullptr;
-
     optional<fc::temp_directory> data_dir;
     bool skip_key_index_test = false;
 
-    reflect_database_fixture() {
-    }
+    reflect_database_fixture();
 
     virtual ~reflect_database_fixture();
 

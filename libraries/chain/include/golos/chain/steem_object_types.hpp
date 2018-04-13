@@ -5,8 +5,22 @@
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/mem_fun.hpp>
 
-//#include <golos/db2/database.hpp>
 #include <chainbase/chainbase.hpp>
+
+namespace fc {
+    namespace raw {
+        template<typename Stream, typename T>
+        inline void pack(Stream& s, const chainbase::object_id<T>& id) {
+            s.write((const char*)&id._id, sizeof(id._id));
+        }
+
+        template<typename Stream, typename T>
+        inline void unpack(Stream& s, chainbase::object_id<T>& id) {
+            s.read((char*)&id._id, sizeof(id._id));
+        }
+
+    }
+}
 
 #include <golos/protocol/types.hpp>
 #include <golos/protocol/authority.hpp>
@@ -189,18 +203,6 @@ namespace fc {
     }
 
     namespace raw {
-        template<typename Stream, typename T>
-        inline void pack(Stream &s, const chainbase::object_id<T> &id) {
-            s.write((const char *)&id._id, sizeof(id._id));
-        }
-
-        template<typename Stream, typename T>
-        inline void unpack(Stream &s, chainbase::object_id<T> &id) {
-            s.read((char *)&id._id, sizeof(id._id));
-        }
-    }
-
-    namespace raw {
         using chainbase::allocator;
 
         template<typename T>
@@ -225,10 +227,6 @@ namespace fc {
             return v;
         }
     }
-}
-
-namespace fc {
-
 }
 
 FC_REFLECT_ENUM(golos::chain::object_type,

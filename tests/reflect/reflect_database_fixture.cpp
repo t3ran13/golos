@@ -66,6 +66,9 @@ using std::cerr;
 using namespace golos::plugins;
 using golos::plugins::json_rpc::msg_pack;
 
+reflect_database_fixture::reflect_database_fixture() {
+    initialize();
+}
 
 reflect_database_fixture::~reflect_database_fixture() {
     close_database();
@@ -86,47 +89,33 @@ void reflect_database_fixture::initialize() {
         }
     }
 
-    ch_plugin = &appbase::app().register_plugin<golos::plugins::chain::plugin>();
-    // ah_plugin = &appbase::app().register_plugin<account_history::plugin>();
-    // db_plugin = &appbase::app().register_plugin<debug_node::plugin>();
+    add_plugin_index < golos::plugins::market_history::bucket_index > (db);
+    add_plugin_index < golos::plugins::market_history::order_history_index > (db);
+    add_plugin_index < golos::plugins::private_message::message_index>(db);
+    add_plugin_index < golos::plugins::social_network::tags::tag_index>(db);
+    add_plugin_index < golos::plugins::social_network::tags::tag_stats_index>(db);
+    add_plugin_index < golos::plugins::social_network::tags::peer_stats_index>(db);
+    add_plugin_index < golos::plugins::social_network::tags::author_tag_stats_index>(db);
+    add_plugin_index < golos::plugins::social_network::languages::language_index>(db);
+    add_plugin_index < golos::plugins::social_network::languages::language_stats_index>(db);
+    add_plugin_index < golos::plugins::social_network::languages::peer_stats_index>(db);
+    add_plugin_index < golos::plugins::social_network::languages::author_language_stats_index>(db);
+    add_plugin_index < golos::plugins::follow::follow_index>(db);
+    add_plugin_index < golos::plugins::follow::feed_index>(db);
+    add_plugin_index < golos::plugins::follow::blog_index>(db);
+    add_plugin_index < golos::plugins::follow::reputation_index>(db);
+    add_plugin_index < golos::plugins::follow::follow_count_index>(db);
+    add_plugin_index < golos::plugins::follow::blog_author_stats_index>(db);
+    add_plugin_index < golos::plugins::account_by_key::key_lookup_index>(db);
 
-    appbase::app().initialize<
-            golos::plugins::chain::plugin
-            // golos::plugins::chain::plugin,
-            // account_history::plugin,
-            // debug_node::plugin
-    >( argc, argv );
-
-    // auto & db = ch_plugin->db();
-    db = & appbase::app().get_plugin<golos::plugins::chain::plugin>().db();
-
-    add_plugin_index < golos::plugins::market_history::bucket_index > (*db);
-    add_plugin_index < golos::plugins::market_history::order_history_index > (*db);
-    add_plugin_index < golos::plugins::private_message::message_index>(*db);
-    add_plugin_index < golos::plugins::social_network::tags::tag_index>(*db);
-    add_plugin_index < golos::plugins::social_network::tags::tag_stats_index>(*db);
-    add_plugin_index < golos::plugins::social_network::tags::peer_stats_index>(*db);
-    add_plugin_index < golos::plugins::social_network::tags::author_tag_stats_index>(*db);
-    add_plugin_index < golos::plugins::social_network::languages::language_index>(*db);
-    add_plugin_index < golos::plugins::social_network::languages::language_stats_index>(*db);
-    add_plugin_index < golos::plugins::social_network::languages::peer_stats_index>(*db);
-    add_plugin_index < golos::plugins::social_network::languages::author_language_stats_index>(*db);
-    add_plugin_index < golos::plugins::follow::follow_index>(*db);
-    add_plugin_index < golos::plugins::follow::feed_index>(*db);
-    add_plugin_index < golos::plugins::follow::blog_index>(*db);
-    add_plugin_index < golos::plugins::follow::reputation_index>(*db);
-    add_plugin_index < golos::plugins::follow::follow_count_index>(*db);
-    add_plugin_index < golos::plugins::follow::blog_author_stats_index>(*db);
-    add_plugin_index < golos::plugins::account_by_key::key_lookup_index>(*db);
-
-    BOOST_REQUIRE( db );
+    open_database();
 }
 
 void reflect_database_fixture::open_database() {
     if (!data_dir) {
         data_dir = fc::temp_directory(golos::utilities::temp_directory_path());
-        db->_log_hardforks = false;
-        db->open(data_dir->path(), data_dir->path(), INITIAL_TEST_SUPPLY,
+        db._log_hardforks = false;
+        db.open(data_dir->path(), data_dir->path(), INITIAL_TEST_SUPPLY,
                 1024 * 1024 *
                 8, chainbase::database::read_write); // 8 MB file for testing
     }
@@ -134,7 +123,7 @@ void reflect_database_fixture::open_database() {
 
 void reflect_database_fixture::close_database() {
     if (data_dir) {
-        db->wipe(data_dir->path(), data_dir->path(), true);
+        db.wipe(data_dir->path(), data_dir->path(), true);
     }
 }
 

@@ -3,6 +3,7 @@
 
 #include <boost/test/unit_test.hpp>
 
+#include <golos/chain/steem_object_types.hpp>
 #include <golos/chain/block_summary_object.hpp>
 #include <golos/chain/database.hpp>
 #include <golos/chain/hardfork.hpp>
@@ -40,17 +41,17 @@ namespace raw {
 //         return os;
 //     }
 
-    template < class T >
-    fc::datastream<long unsigned int>& operator<< ( fc::datastream<long unsigned int>& os, const chainbase::object_id<T> & obj ) {  
-        os << obj._id;
-        return os;  
-    }
-
-    template < class T >
-    fc::datastream<char*>& operator<< ( fc::datastream<char*>& os, const chainbase::object_id<T> & obj ) {  
-        os << obj._id;
-        return os;  
-    }
+//    template < class T >
+//    fc::datastream<long unsigned int>& operator<< ( fc::datastream<long unsigned int>& os, const chainbase::object_id<T> & obj ) {
+//        os << obj._id;
+//        return os;
+//    }
+//
+//    template < class T >
+//    fc::datastream<char*>& operator<< ( fc::datastream<char*>& os, const chainbase::object_id<T> & obj ) {
+//        os << obj._id;
+//        return os;
+//    }
 
 //     // std::istream& operator>> ( std::istream& is, chainbase::object_id<golos::plugins::private_message::message_object> & obj ) {  
 //     //     is >> obj._id;
@@ -298,8 +299,7 @@ BOOST_FIXTURE_TEST_SUITE(reflect, reflect_database_fixture)
 
     BOOST_AUTO_TEST_CASE(golos_plugins_private_message_message_object) {
         try {
-            db = & ch_plugin->db();
-            const auto& v1 = db->create<golos::plugins::private_message::message_object>(
+            const auto& v1 = db.create<golos::plugins::private_message::message_object>(
                 [&]( golos::plugins::private_message::message_object& obj ) {
                 
                 set_random_value( obj.from );
@@ -312,6 +312,7 @@ BOOST_FIXTURE_TEST_SUITE(reflect, reflect_database_fixture)
                 set_random_value( obj.encrypted_message );
 
             } );
+
 
             // auto& v2 = db->create<golos::plugins::private_message::message_object>(
             //     [&]( golos::plugins::private_message::message_object& obj ) {
@@ -344,11 +345,9 @@ BOOST_FIXTURE_TEST_SUITE(reflect, reflect_database_fixture)
 
     BOOST_AUTO_TEST_CASE(golos_plugins_private_message_message_api_obj) {
         try {
-            db = & ch_plugin->db();
-
-            const auto& tmp_obj = db->create<golos::plugins::private_message::message_object>(
+            const auto& tmp_obj = db.create<golos::plugins::private_message::message_object>(
                 [&]( golos::plugins::private_message::message_object& obj ) {
-                
+
                 set_random_value( obj.from );
                 set_random_value( obj.to );
                 set_random_value( obj.from_memo_key );
@@ -360,7 +359,7 @@ BOOST_FIXTURE_TEST_SUITE(reflect, reflect_database_fixture)
 
             } );
             golos::plugins::private_message::message_api_obj v1(tmp_obj), v2;
-            
+
             auto data = fc::raw::pack(v1);
             std::fstream stream_ex, stream_results;
             stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
@@ -368,12 +367,12 @@ BOOST_FIXTURE_TEST_SUITE(reflect, reflect_database_fixture)
             stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
             stream_ex.write(data.data(), data.size());
             stream_ex.close();
-            
+
             fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
             stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
             stream_results.write(data.data(), data.size());
             stream_results.close();
-            
+
             stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
             // fc::raw::unpack(stream_ex, v2);
             stream_ex.close();
@@ -499,12 +498,12 @@ BOOST_FIXTURE_TEST_SUITE(reflect, reflect_database_fixture)
             stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
             stream_ex.write(data.data(), data.size());
             stream_ex.close();
-            
+
             fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
             stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
             stream_results.write(data.data(), data.size());
             stream_results.close();
-            
+
             stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
             fc::raw::unpack(stream_ex, v2);
             stream_ex.close();
@@ -870,8 +869,7 @@ BOOST_FIXTURE_TEST_SUITE(reflect, reflect_database_fixture)
 // TROUBLE TODO
     BOOST_AUTO_TEST_CASE(golos_plugins_social_network_languages_language_object) {
         try {
-            db = & ch_plugin->db();
-            const auto& v1 = db->create<golos::plugins::social_network::languages::language_object>(
+            const auto& v1 = db.create<golos::plugins::social_network::languages::language_object>(
                 [&]( golos::plugins::social_network::languages::language_object& obj ) {
                 
 
@@ -893,7 +891,7 @@ BOOST_FIXTURE_TEST_SUITE(reflect, reflect_database_fixture)
 
             } );
 
-            auto& v2 = db->create<golos::plugins::social_network::languages::language_object>(
+            auto& v2 = db.create<golos::plugins::social_network::languages::language_object>(
                 [&]( golos::plugins::social_network::languages::language_object& obj ) {
             } );
 
