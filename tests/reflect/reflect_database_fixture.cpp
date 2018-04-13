@@ -55,12 +55,12 @@
 #include <golos/chain/account_object.hpp>
 #include "reflect_database_fixture.hpp"
 
-uint32_t STEEMIT_TESTING_GENESIS_TIMESTAMP = 1431700000;
 
 
 namespace golos {
 namespace chain {
 
+uint32_t STEEMIT_TESTING_GENESIS_TIMESTAMP = 1431700000;
 using std::cout;
 using std::cerr;
 using namespace golos::plugins;

@@ -3,8 +3,6 @@
 
 #include <boost/test/unit_test.hpp>
 
-// #include <golos/protocol/exceptions.hpp>
-
 #include <golos/chain/block_summary_object.hpp>
 #include <golos/chain/database.hpp>
 #include <golos/chain/hardfork.hpp>
@@ -16,7 +14,6 @@
 
 #include <fc/crypto/digest.hpp>
 
-// #include "../common/database_fixture.hpp"
 #include "reflect_database_fixture.hpp"
 #include "values_random_generator.hpp"
 
@@ -29,6 +26,155 @@ using namespace golos::chain;
 using namespace golos::protocol;
 #define REFLECT_TESTS_OUTPUT_FILE "reflect_tests_output_file.txt"
 
+
+namespace fc {
+namespace raw {
+
+//     fc::datastream<long unsigned int>& operator<< ( fc::datastream<long unsigned int>& os, const chainbase::object_id<golos::plugins::social_network::tags::peer_stats_object> & obj ) {  
+//         os << obj._id;
+//         return os;
+//     }
+
+//     fc::datastream<char*>& operator<< ( fc::datastream<char*>& os, const chainbase::object_id<golos::plugins::social_network::tags::peer_stats_object> & obj ) {  
+//         os << obj._id;
+//         return os;
+//     }
+
+    template < class T >
+    fc::datastream<long unsigned int>& operator<< ( fc::datastream<long unsigned int>& os, const chainbase::object_id<T> & obj ) {  
+        os << obj._id;
+        return os;  
+    }
+
+    template < class T >
+    fc::datastream<char*>& operator<< ( fc::datastream<char*>& os, const chainbase::object_id<T> & obj ) {  
+        os << obj._id;
+        return os;  
+    }
+
+//     // std::istream& operator>> ( std::istream& is, chainbase::object_id<golos::plugins::private_message::message_object> & obj ) {  
+//     //     is >> obj._id;
+//     //     return is;  
+//     // }
+
+//     // std::istream& operator>> ( std::istream& is, golos::chain::buffer_type & obj ) {  
+//     //     size_t len = obj.size();
+//     //     for (size_t i = 0; i < len; i++) {
+//     //         is >> obj[i];
+//     //     }
+//     //     return is;  
+//     // }
+
+//     template < class T >
+//     std::istream& operator>> ( std::istream& is, chainbase::object_id<golos::chain::account_object> & obj ) {  
+//         is >> obj._id;
+//         return is;  
+//     }
+
+//     // std::istream& operator>> ( std::istream& is, chainbase::object_id<golos::chain::account_object> & obj ) {  
+//     //     is >> obj._id;
+//     //     return is;  
+//     // }
+//     // std::istream& operator>> ( std::istream& is, chainbase::object_id<golos::chain::comment_object> & obj ) {  
+//     //     is >> obj._id;
+//     //     return is;  
+//     // }
+
+//     std::istream& operator>> ( std::istream& is, fc::time_point_sec & obj ) {  
+//         uint32_t utc_seconds;
+//         is >> utc_seconds;
+
+//         obj = std::move( fc::time_point_sec( utc_seconds ) ); 
+//         return is;  
+//     }
+
+
+//     template<typename T, size_t N>
+//     std::istream& operator>> ( std::istream& is, fc::array<T, N> & obj ) {  
+//         // is >> obj.key_data; 
+//         for (size_t i = 0; i < N; i++) {
+//             is >> obj.at( i );
+//         }
+//         return is;  
+//     }
+
+//     std::istream& operator>> ( std::istream& is, golos::protocol::public_key_type & obj ) {  
+//         is >> obj.key_data; 
+//         return is;  
+//     }
+
+//     std::istream& operator>> ( std::istream& is, fc::uint128_t & obj ) {  
+//         is >> 
+//         obj.hi >>
+//         obj.lo;
+
+//         return is;  
+//     }
+    
+//     std::istream& operator>> ( std::istream& is, fixed_string<> & obj ) {  
+//         is >> 
+//         obj.data;
+
+//         return is;  
+//     }
+
+//     std::istream& operator>> ( std::istream& is, fc::sha256 & obj ) {  
+//         // is >> 
+//         // obj.hi >>
+//         // obj.lo;
+        
+//         return is;  
+//     }
+
+//     std::istream& operator>> ( std::istream& is, golos::protocol::share_type  & obj ) {  
+//         is >> 
+//         obj.value;
+        
+//         return is;  
+//     }
+
+//     std::istream& operator>> ( std::istream& is, fc::fixed_string<fc::sha256> & obj ) {  
+//         is >> 
+//         obj.data;
+
+//         return is;  
+//     }
+    
+//     std::istream& operator>> ( std::istream& is, golos::plugins::social_network::languages::language_object& obj ) {  
+//         is >> 
+//         obj.name >>
+//         obj.created >>
+//         obj.active >>
+//         obj.cashout >>
+//         obj.net_rshares >>
+//         obj.net_votes >>
+//         obj.hot >>
+//         obj.trending >>
+//         obj.promoted_balance >>
+//         obj.children >>
+//         obj.children_rshares2 >>
+//         obj.author >>
+//         obj.parent >>
+//         obj.comment;
+//         return is;  
+//     }
+
+//     // std::istream& operator>> ( std::istream& is, golos::plugins::private_message::message_object& obj ) {  
+//     //     is >> 
+//     //     obj.id >>
+//     //     obj.from >>
+//     //     obj.to >>
+//     //     obj.from_memo_key >>
+//     //     obj.to_memo_key >>
+//     //     obj.sent_time >>
+//     //     obj.receive_time >>
+//     //     obj.checksum >>
+//     //     obj.encrypted_message;
+
+//     //     return is;  
+//     // }
+} 
+}
 
 BOOST_FIXTURE_TEST_SUITE(reflect, reflect_database_fixture)
 
@@ -152,7 +298,7 @@ BOOST_FIXTURE_TEST_SUITE(reflect, reflect_database_fixture)
 
     BOOST_AUTO_TEST_CASE(golos_plugins_private_message_message_object) {
         try {
-            db = & appbase::app().get_plugin<golos::plugins::chain::plugin>().db();
+            db = & ch_plugin->db();
             const auto& v1 = db->create<golos::plugins::private_message::message_object>(
                 [&]( golos::plugins::private_message::message_object& obj ) {
                 
@@ -167,9 +313,9 @@ BOOST_FIXTURE_TEST_SUITE(reflect, reflect_database_fixture)
 
             } );
 
-            auto& v2 = db->create<golos::plugins::private_message::message_object>(
-                [&]( golos::plugins::private_message::message_object& obj ) {
-            } );
+            // auto& v2 = db->create<golos::plugins::private_message::message_object>(
+            //     [&]( golos::plugins::private_message::message_object& obj ) {
+            // } );
 
             auto data = fc::raw::pack(v1);
             std::fstream stream_ex, stream_results;
@@ -184,53 +330,57 @@ BOOST_FIXTURE_TEST_SUITE(reflect, reflect_database_fixture)
             stream_results.write(data.data(), data.size());
             stream_results.close();
             
-            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-            // FIXME VVV
-            fc::raw::unpack(stream_ex, v2);
-            stream_ex.close();
+            // stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+            
+            // db->modify( v2, [&](golos::plugins::private_message::message_object & b ) {
+            //     fc::raw::unpack(stream_ex, b);                
+            // });
+            // fc::raw::unpack(stream_ex, v2);
+            // stream_ex.close();
 
         }
         FC_LOG_AND_RETHROW()
     }
 
+    BOOST_AUTO_TEST_CASE(golos_plugins_private_message_message_api_obj) {
+        try {
+            db = & ch_plugin->db();
 
- // TROUBLE: can't pack this structure
-// no match for ‘operator>>’ (operand types are ‘std::basic_fstream<char>’ and ‘chainbase::object_id<golos::plugins::private_message::message_object>’)
-//                      s >> v;
-//                        ^
-    // BOOST_AUTO_TEST_CASE(golos_plugins_private_message_message_api_obj) {
-    //     try {
-    //         golos::plugins::private_message::message_api_obj v1, v2;
-    //         set_random_value(v1.id);
-    //         set_random_value(v1.from);
-    //         set_random_value(v1.to);
-    //         set_random_value(v1.from_memo_key);
-    //         set_random_value(v1.to_memo_key);
-    //         set_random_value(v1.sent_time);
-    //         set_random_value(v1.receive_time);
-    //         set_random_value(v1.checksum);
-    //         set_random_value(v1.encrypted_message);
+            const auto& tmp_obj = db->create<golos::plugins::private_message::message_object>(
+                [&]( golos::plugins::private_message::message_object& obj ) {
+                
+                set_random_value( obj.from );
+                set_random_value( obj.to );
+                set_random_value( obj.from_memo_key );
+                set_random_value( obj.to_memo_key );
+                set_random_value( obj.sent_time );
+                set_random_value( obj.receive_time );
+                set_random_value( obj.checksum );
+                set_random_value( obj.encrypted_message );
 
-    //         auto data = fc::raw::pack(v1);
-    //         std::fstream stream_ex, stream_results;
-    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-    //         fc::path file("logs");
-    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-    //         stream_ex.write(data.data(), data.size());
-    //         stream_ex.close();
+            } );
+            golos::plugins::private_message::message_api_obj v1(tmp_obj), v2;
             
-    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-    //         stream_results.write(data.data(), data.size());
-    //         stream_results.close();
+            auto data = fc::raw::pack(v1);
+            std::fstream stream_ex, stream_results;
+            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+            fc::path file("logs");
+            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+            stream_ex.write(data.data(), data.size());
+            stream_ex.close();
             
-    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-    //         fc::raw::unpack(stream_ex, v2);
-    //         stream_ex.close();
+            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+            stream_results.write(data.data(), data.size());
+            stream_results.close();
+            
+            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+            // fc::raw::unpack(stream_ex, v2);
+            stream_ex.close();
 
-    //     }
-    //     FC_LOG_AND_RETHROW()
-    // }
+        }
+        FC_LOG_AND_RETHROW()
+    }
 // TROUBLE
     // BOOST_AUTO_TEST_CASE(golos_plugins_private_message_extended_message_object) {
     //     try {
@@ -364,37 +514,37 @@ BOOST_FIXTURE_TEST_SUITE(reflect, reflect_database_fixture)
     }
 
 // TROUBLE can't pack this
-//     BOOST_AUTO_TEST_CASE(golos_plugins_social_network_category_api_object) {
-//         try {
-//             golos::plugins::social_network::category_api_object v1, v2;
+    // BOOST_AUTO_TEST_CASE(golos_plugins_social_network_category_api_object) {
+    //     try {
+    //         golos::plugins::social_network::category_api_object v1, v2;
 
-//             set_random_value(v1.id);
-//             set_random_value(v1.name);
-//             set_random_value(v1.abs_rshares);
-//             set_random_value(v1.total_payouts);
-//             set_random_value(v1.discussions);
-//             set_random_value(v1.last_update);
+    //         set_random_value(v1.id);
+    //         set_random_value(v1.name);
+    //         set_random_value(v1.abs_rshares);
+    //         set_random_value(v1.total_payouts);
+    //         set_random_value(v1.discussions);
+    //         set_random_value(v1.last_update);
 
-//             auto data = fc::raw::pack(v1);
-//             std::fstream stream_ex, stream_results;
-//             stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-//             fc::path file("logs");
-//             stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-//             stream_ex.write(data.data(), data.size());
-//             stream_ex.close();
+    //         auto data = fc::raw::pack(v1);
+    //         std::fstream stream_ex, stream_results;
+    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+    //         fc::path file("logs");
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_ex.write(data.data(), data.size());
+    //         stream_ex.close();
             
-//             fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-//             stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-//             stream_results.write(data.data(), data.size());
-//             stream_results.close();
+    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+    //         stream_results.write(data.data(), data.size());
+    //         stream_results.close();
             
-//             stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-//             fc::raw::unpack(stream_ex, v2);
-//             stream_ex.close();
+    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+    //         fc::raw::unpack(stream_ex, v2);
+    //         stream_ex.close();
 
-//         }
-//         FC_LOG_AND_RETHROW()
-//     }
+    //     }
+    //     FC_LOG_AND_RETHROW()
+    // }
 
     BOOST_AUTO_TEST_CASE(golos_plugins_social_network_vote_state) {
         try {
@@ -461,7 +611,7 @@ BOOST_FIXTURE_TEST_SUITE(reflect, reflect_database_fixture)
 // TROUBLE
     // BOOST_AUTO_TEST_CASE(golos_plugins_social_network_discussion) {
     //     try {
-    //         golos::plugins::social_network::discussion v1, v2;
+            // golos::plugins::social_network::discussion v1, v2;
 
     //         set_random_value(v1.url);
     //         set_random_value(v1.root_title);
@@ -717,47 +867,61 @@ BOOST_FIXTURE_TEST_SUITE(reflect, reflect_database_fixture)
         }
         FC_LOG_AND_RETHROW()
     }
-// TROUBLE
-    // BOOST_AUTO_TEST_CASE(golos_plugins_social_network_languages_language_object) {
-    //     try {
-    //         golos::plugins::social_network::languages::language_object v1, v2;
+// TROUBLE TODO
+    BOOST_AUTO_TEST_CASE(golos_plugins_social_network_languages_language_object) {
+        try {
+            db = & ch_plugin->db();
+            const auto& v1 = db->create<golos::plugins::social_network::languages::language_object>(
+                [&]( golos::plugins::social_network::languages::language_object& obj ) {
+                
 
-    //         set_random_value(v1.id);
-    //         set_random_value(v1.name);
-    //         set_random_value(v1.created);
-    //         set_random_value(v1.active);
-    //         set_random_value(v1.cashout);
-    //         set_random_value(v1.net_rshares);
-    //         set_random_value(v1.net_votes);
-    //         set_random_value(v1.hot);
-    //         set_random_value(v1.trending);
-    //         set_random_value(v1.promoted_balance);
-    //         set_random_value(v1.children);
-    //         set_random_value(v1.children_rshares2);
-    //         set_random_value(v1.author);
-    //         set_random_value(v1.parent);
-    //         set_random_value(v1.comment);
+                    // set_random_value( obj.id);
+                    set_random_value( obj.name);
+                    set_random_value( obj.created);
+                    set_random_value( obj.active);
+                    set_random_value( obj.cashout);
+                    set_random_value( obj.net_rshares);
+                    set_random_value( obj.net_votes);
+                    set_random_value( obj.hot);
+                    set_random_value( obj.trending);
+                    set_random_value( obj.promoted_balance);
+                    set_random_value( obj.children);
+                    set_random_value( obj.children_rshares2);
+                    set_random_value( obj.author);
+                    set_random_value( obj.parent);
+                    set_random_value( obj.comment);
 
-    //         auto data = fc::raw::pack(v1);
-    //         std::fstream stream_ex, stream_results;
-    //         stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
-    //         fc::path file("logs");
-    //         stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
-    //         stream_ex.write(data.data(), data.size());
-    //         stream_ex.close();
+            } );
+
+            auto& v2 = db->create<golos::plugins::social_network::languages::language_object>(
+                [&]( golos::plugins::social_network::languages::language_object& obj ) {
+            } );
+
+
+            auto data = fc::raw::pack(v1);
+            std::fstream stream_ex, stream_results;
+            stream_ex.exceptions(std::fstream::failbit | std::fstream::badbit);
+            fc::path file("logs");
+            stream_ex.open(file.generic_string().c_str(), std::ios::out | std::ios::binary);
+            stream_ex.write(data.data(), data.size());
+            stream_ex.close();
             
-    //         fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
-    //         stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
-    //         stream_results.write(data.data(), data.size());
-    //         stream_results.close();
+            fc::path resutl_file(REFLECT_TESTS_OUTPUT_FILE);
+            stream_results.open(resutl_file.generic_string().c_str(), std::ios::out | std::ios::binary);
+            stream_results.write(data.data(), data.size());
+            stream_results.close();
             
-    //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-    //         fc::raw::unpack(stream_ex, v2);
-    //         stream_ex.close();
+            stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
+            // fc::raw::unpack(stream_ex, v2);
+            // db->modify( v2, [&]( golos::plugins::social_network::languages::language_object& b ) {
+            //     fc::raw::unpack(stream_ex, b);                
+            // });
 
-    //     }
-    //     FC_LOG_AND_RETHROW()
-    // }
+            stream_ex.close();
+
+        }
+        FC_LOG_AND_RETHROW()
+    }
 
 // TROUBLE
     // BOOST_AUTO_TEST_CASE(golos_plugins_social_network_languages_language_stats_object) {
@@ -964,16 +1128,26 @@ BOOST_FIXTURE_TEST_SUITE(reflect, reflect_database_fixture)
 
     // BOOST_AUTO_TEST_CASE(golos_plugins_social_network_tags_peer_stats_object) {
     //     try {
-    //         golos::plugins::social_network::tags::peer_stats_object v1, v2;
 
-    //         set_random_value(v1.id);
-    //         set_random_value(v1.voter);
-    //         set_random_value(v1.peer);
-    //         set_random_value(v1.direct_positive_votes);
-    //         set_random_value(v1.direct_votes);
-    //         set_random_value(v1.indirect_positive_votes);
-    //         set_random_value(v1.indirect_votes);
-    //         set_random_value(v1.rank);
+    //         db = & ch_plugin->db();
+    //         const auto& v1 = db->create<golos::plugins::social_network::tags::peer_stats_object>(
+    //             [&]( golos::plugins::social_network::tags::peer_stats_object& obj ) {
+                
+    //             set_random_value( obj.id );
+    //             set_random_value( obj.voter );
+    //             set_random_value( obj.peer );
+    //             set_random_value( obj.direct_positive_votes );
+    //             set_random_value( obj.direct_votes );
+    //             set_random_value( obj.indirect_positive_votes );
+    //             set_random_value( obj.indirect_votes );
+    //             set_random_value( obj.rank );
+
+    //         } );
+
+    //         auto& v2 = db->create<golos::plugins::social_network::tags::peer_stats_object>(
+    //             [&]( golos::plugins::social_network::tags::peer_stats_object& obj ) {
+    //         } );
+
 
     //         auto data = fc::raw::pack(v1);
     //         std::fstream stream_ex, stream_results;
@@ -989,7 +1163,10 @@ BOOST_FIXTURE_TEST_SUITE(reflect, reflect_database_fixture)
     //         stream_results.close();
             
     //         stream_ex.open(file.generic_string().c_str(), std::ios::in | std::ios::binary);
-    //         fc::raw::unpack(stream_ex, v2);
+    //         // fc::raw::unpack(stream_ex, v2);
+    //         db->modify( v2, [&]( golos::plugins::social_network::tags::peer_stats_object& b ) {
+    //             fc::raw::unpack(stream_ex, b);                
+    //         });
     //         stream_ex.close();
 
     //     }
