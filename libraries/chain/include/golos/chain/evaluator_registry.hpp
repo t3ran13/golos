@@ -19,9 +19,13 @@ namespace golos {
 
 
             template<typename EvaluatorType, typename... Args>
-            evaluator_proxy<OperationType> & register_evaluator(Args... args) {
-                _op_evaluators[OperationType::template tag<typename EvaluatorType::operation_type>::value].reset(new EvaluatorType(_db, args...));
-                return  *(_op_evaluators[OperationType::template tag<typename EvaluatorType::operation_type>::value]);
+            void register_evaluator(Args... args) {
+                auto it = OperationType::template tag<typename EvaluatorType::operation_type>::value;
+                auto& proxy = _op_evaluators[it];
+                if(proxy.get() == nullptr) {
+                    _op_evaluators[it].reset(new evaluator_proxy<OperationType>(_db, args...));
+                }
+                _op_evaluators[it]->template add_evaluator<EvaluatorType>();
             }
 
             evaluator<OperationType> &get_evaluator(const OperationType &op,uint32_t current_hardfork_version) {

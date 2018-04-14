@@ -95,7 +95,6 @@ else()
             include/golos/chain/shared_db_merkle.hpp
             include/golos/chain/snapshot_state.hpp
             include/golos/chain/evaluator/hf17/steem_evaluator.hpp
-            include/golos/chain/evaluator/hf17/evaluator_proxy.hpp
             include/golos/chain/steem_object_types.hpp
             include/golos/chain/steem_objects.hpp
             include/golos/chain/transaction_object.hpp

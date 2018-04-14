@@ -26,7 +26,6 @@
 #include <fc/io/json.hpp>
 
 #include <golos/chain/evaluator/hf17/steem_evaluator.hpp>
-#include <golos/chain/evaluator/hf17/evaluator_proxy.hpp>
 #include <golos/chain/evaluator_registry.hpp>
 
 #define VIRTUAL_SCHEDULE_LAP_LENGTH  ( fc::uint128_t(uint64_t(-1)) )
@@ -2798,45 +2797,46 @@ namespace golos {
         }
 
         void database::initialize_evaluators() {
-            _my->_evaluator_registry.register_evaluator<proxy_vote>().add_evaluator<vote_evaluator>();
-            _my->_evaluator_registry.register_evaluator<proxy_comment>().add_evaluator<comment_evaluator>();
-            _my->_evaluator_registry.register_evaluator<proxy_comment_options>().add_evaluator<comment_options_evaluator>();
-            _my->_evaluator_registry.register_evaluator<proxy_delete_comment>().add_evaluator<delete_comment_evaluator>();
-            _my->_evaluator_registry.register_evaluator<proxy_transfer>().add_evaluator<transfer_evaluator>();
-            _my->_evaluator_registry.register_evaluator<proxy_transfer_to_vesting>().add_evaluator<transfer_to_vesting_evaluator>();
-            _my->_evaluator_registry.register_evaluator<proxy_withdraw_vesting>().add_evaluator<withdraw_vesting_evaluator>();
-            _my->_evaluator_registry.register_evaluator<proxy_set_withdraw_vesting_route>().add_evaluator<set_withdraw_vesting_route_evaluator>();
-            _my->_evaluator_registry.register_evaluator<proxy_account_create>().add_evaluator<account_create_evaluator>();
-            _my->_evaluator_registry.register_evaluator<proxy_account_update>().add_evaluator<account_update_evaluator>();
-            _my->_evaluator_registry.register_evaluator<proxy_witness_update>().add_evaluator<witness_update_evaluator>();
-            _my->_evaluator_registry.register_evaluator<proxy_account_witness_vote>().add_evaluator<account_witness_vote_evaluator>();
-            _my->_evaluator_registry.register_evaluator<proxy_account_witness_proxy>().add_evaluator<account_witness_proxy_evaluator>();
-            _my->_evaluator_registry.register_evaluator<proxy_custom>().add_evaluator<custom_evaluator>();
-            _my->_evaluator_registry.register_evaluator<proxy_custom_binary>().add_evaluator<custom_binary_evaluator>();
-            _my->_evaluator_registry.register_evaluator<proxy_custom_json>().add_evaluator<custom_json_evaluator>();
-            _my->_evaluator_registry.register_evaluator<proxy_pow>().add_evaluator<pow_evaluator>();
-            _my->_evaluator_registry.register_evaluator<proxy_pow2>().add_evaluator<pow2_evaluator>();
-            _my->_evaluator_registry.register_evaluator<proxy_report_over_production>().add_evaluator<report_over_production_evaluator>();
-            _my->_evaluator_registry.register_evaluator<proxy_feed_publish>().add_evaluator<feed_publish_evaluator>();
-            _my->_evaluator_registry.register_evaluator<proxy_convert>().add_evaluator<convert_evaluator>();
-            _my->_evaluator_registry.register_evaluator<proxy_limit_order_create>().add_evaluator<limit_order_create_evaluator>();
-            _my->_evaluator_registry.register_evaluator<proxy_limit_order_create2>().add_evaluator<limit_order_create2_evaluator>();
-            _my->_evaluator_registry.register_evaluator<proxy_limit_order_cancel>().add_evaluator<limit_order_cancel_evaluator>();
-            _my->_evaluator_registry.register_evaluator<proxy_challenge_authority>().add_evaluator<challenge_authority_evaluator>();
-            _my->_evaluator_registry.register_evaluator<proxy_prove_authority>().add_evaluator<prove_authority_evaluator>();
-            _my->_evaluator_registry.register_evaluator<proxy_request_account_recovery>().add_evaluator<request_account_recovery_evaluator>();
-            _my->_evaluator_registry.register_evaluator<proxy_recover_account>().add_evaluator<recover_account_evaluator>();
-            _my->_evaluator_registry.register_evaluator<proxy_change_recovery_account>().add_evaluator<change_recovery_account_evaluator>();
-            _my->_evaluator_registry.register_evaluator<proxy_escrow_transfer>().add_evaluator<escrow_transfer_evaluator>();
-            _my->_evaluator_registry.register_evaluator<proxy_escrow_approve>().add_evaluator<escrow_approve_evaluator>();
-            _my->_evaluator_registry.register_evaluator<proxy_escrow_dispute>().add_evaluator<escrow_dispute_evaluator>();
-            _my->_evaluator_registry.register_evaluator<proxy_escrow_release>().add_evaluator<escrow_release_evaluator>();
-            _my->_evaluator_registry.register_evaluator<proxy_transfer_to_savings>().add_evaluator<transfer_to_savings_evaluator>();
-            _my->_evaluator_registry.register_evaluator<proxy_transfer_from_savings>().add_evaluator<transfer_from_savings_evaluator>();
-            _my->_evaluator_registry.register_evaluator<proxy_cancel_transfer_from_savings>().add_evaluator<cancel_transfer_from_savings_evaluator>();
-            _my->_evaluator_registry.register_evaluator<proxy_decline_voting_rights>().add_evaluator<decline_voting_rights_evaluator>();
-            _my->_evaluator_registry.register_evaluator<proxy_reset_account>().add_evaluator<reset_account_evaluator>();
-            _my->_evaluator_registry.register_evaluator<proxy_set_reset_account>().add_evaluator<set_reset_account_evaluator>();
+            _my->_evaluator_registry.register_evaluator<vote_evaluator>();
+            _my->_evaluator_registry.register_evaluator<comment_evaluator>();
+            _my->_evaluator_registry.register_evaluator<comment_options_evaluator>();
+            _my->_evaluator_registry.register_evaluator<delete_comment_evaluator>();
+            _my->_evaluator_registry.register_evaluator<transfer_evaluator>();
+            _my->_evaluator_registry.register_evaluator<transfer_to_vesting_evaluator>();
+            _my->_evaluator_registry.register_evaluator<withdraw_vesting_evaluator>();
+            _my->_evaluator_registry.register_evaluator<set_withdraw_vesting_route_evaluator>();
+            _my->_evaluator_registry.register_evaluator<account_create_evaluator>();
+            _my->_evaluator_registry.register_evaluator<account_update_evaluator>();
+            _my->_evaluator_registry.register_evaluator<witness_update_evaluator>();
+            _my->_evaluator_registry.register_evaluator<account_witness_vote_evaluator>();
+            _my->_evaluator_registry.register_evaluator<account_witness_proxy_evaluator>();
+            _my->_evaluator_registry.register_evaluator<custom_evaluator>();
+            _my->_evaluator_registry.register_evaluator<custom_binary_evaluator>();
+            _my->_evaluator_registry.register_evaluator<custom_json_evaluator>();
+            _my->_evaluator_registry.register_evaluator<pow_evaluator>();
+            _my->_evaluator_registry.register_evaluator<pow2_evaluator>();
+            _my->_evaluator_registry.register_evaluator<report_over_production_evaluator>();
+            _my->_evaluator_registry.register_evaluator<feed_publish_evaluator>();
+            _my->_evaluator_registry.register_evaluator<convert_evaluator>();
+            _my->_evaluator_registry.register_evaluator<limit_order_create_evaluator>();
+            _my->_evaluator_registry.register_evaluator<limit_order_create2_evaluator>();
+            _my->_evaluator_registry.register_evaluator<limit_order_cancel_evaluator>();
+            _my->_evaluator_registry.register_evaluator<challenge_authority_evaluator>();
+            _my->_evaluator_registry.register_evaluator<prove_authority_evaluator>();
+            _my->_evaluator_registry.register_evaluator<request_account_recovery_evaluator>();
+            _my->_evaluator_registry.register_evaluator<recover_account_evaluator>();
+            _my->_evaluator_registry.register_evaluator<change_recovery_account_evaluator>();
+            _my->_evaluator_registry.register_evaluator<escrow_transfer_evaluator>();
+            _my->_evaluator_registry.register_evaluator<escrow_approve_evaluator>();
+            _my->_evaluator_registry.register_evaluator<escrow_dispute_evaluator>();
+            _my->_evaluator_registry.register_evaluator<escrow_release_evaluator>();
+            _my->_evaluator_registry.register_evaluator<transfer_to_savings_evaluator>();
+            _my->_evaluator_registry.register_evaluator<transfer_from_savings_evaluator>();
+            _my->_evaluator_registry.register_evaluator<cancel_transfer_from_savings_evaluator>();
+            _my->_evaluator_registry.register_evaluator<decline_voting_rights_evaluator>();
+            _my->_evaluator_registry.register_evaluator<reset_account_evaluator>();
+            _my->_evaluator_registry.register_evaluator<set_reset_account_evaluator>();
+
         }
 
         void database::set_custom_operation_interpreter(const std::string &id, std::shared_ptr<custom_operation_interpreter> registry) {

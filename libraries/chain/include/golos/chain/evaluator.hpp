@@ -63,9 +63,9 @@ namespace golos {
 
             ~evaluator_proxy() = default;
 
-            template<typename VersionsEvaluatorType>
+            template<typename EvaluatorType>
             void add_evaluator() {
-                auto *evaluator = new VersionsEvaluatorType(db_);
+                auto *evaluator = new EvaluatorType(db_);
                 type = evaluator->get_type();
                 versions.emplace(evaluator->get_version(), evaluator);
             }
@@ -92,18 +92,6 @@ namespace golos {
 
     }
 }
-
-
-#define PROXY_DEFINE_EVALUATOR(X) \
-class proxy_## X  : public golos::chain::evaluator_proxy<golos::protocol::operation>\
-{                                                                           \
-   public:                                                                  \
-      using operation_type = X ## _operation;                               \
-                                                                            \
-      proxy_ ## X( database& db ):golos::chain::evaluator_proxy<golos::protocol::operation>(db)\
-      {}                                                                    \
-                                                                            \
-};
 
 #define DEFINE_EVALUATOR(X) \
 class X ## _evaluator : public golos::chain::evaluator_impl< X ## _evaluator > \
