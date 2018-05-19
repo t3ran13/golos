@@ -51,6 +51,16 @@ namespace golos {
 
             bool _is_producing = false;
 
+            bool is_reindexing() const {
+                return _is_reindexing;
+            }
+
+            void set_reindexing(bool p) {
+                _is_reindexing = p;
+            }
+
+            bool _is_reindexing = false;
+
             bool _log_hardforks = true;
 
             enum validation_steps {
@@ -300,15 +310,10 @@ namespace golos {
             fc::signal<void(const signed_transaction &)> on_applied_transaction;
 
             /**
-             *  Emitted After a block has been applied and committed.  The callback
-             *  should not yield and should execute quickly.
+             * This signal is emitted any on complete reindexing
              */
-            //fc::signal<void(const vector< golos::db2::generic_id >&)> changed_objects;
+            fc::signal<void()> complete_reindexing;
 
-            /** this signal is emitted any time an object is removed and contains a
-             * pointer to the last value of every object that was removed.
-             */
-            //fc::signal<void(const vector<const object*>&)>  removed_objects;
 
             //////////////////// db_witness_schedule.cpp ////////////////////
 

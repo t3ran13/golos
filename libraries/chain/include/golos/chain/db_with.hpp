@@ -72,11 +72,28 @@ namespace golos {
              */
             struct producing_helper final {
                 producing_helper(database& db): _db(db) {
+                    FC_ASSERT(!_db.is_producing());
                     _db.set_producing(true);
                 }
 
                 ~producing_helper() {
                     _db.set_producing(false);
+                }
+
+                database &_db;
+            };
+
+            /**
+             * Class is used to help the with_reindexing implementation
+             */
+            struct reindexing_helper final {
+                reindexing_helper(database& db): _db(db) {
+                    FC_ASSERT(!_db.is_reindexing());
+                    _db.set_reindexing(true);
+                }
+
+                ~reindexing_helper() {
+                    _db.set_reindexing(false);
                 }
 
                 database &_db;
@@ -111,6 +128,18 @@ namespace golos {
                  producing_helper restorer(db);
                  callback();
              }
+
+            /**
+             * Set reindexing flag to true, call callback, then set producing flag to false.
+             */
+            template <typename Lambda>
+            void with_reindexing(
+                database& db,
+                Lambda callback
+            ) {
+                reindexing_helper restorer(db);
+                callback();
+            }
         }
     }
 } // golos::chain::detail

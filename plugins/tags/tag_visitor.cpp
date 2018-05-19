@@ -324,7 +324,9 @@ namespace golos { namespace plugins { namespace tags {
     }
 
     void operation_visitor::operator()(const vote_operation& op) const {
-        update_tags(op.author, op.permlink);
+        if (!db_.is_reindexing()) {
+            update_tags(op.author, op.permlink);
+        }
     }
 
     void operation_visitor::operator()(const comment_payout_update_operation& op) const {

@@ -53,6 +53,25 @@ namespace golos { namespace plugins { namespace tags {
 #endif
         }
 
+        void on_complete_reindexing() {
+#ifndef IS_LOW_MEM
+            const auto& by_time_idx = database().get_index<comment_index, by_cashout_time>();
+            for (const auto& comment: by_time_idx) {
+                if (comment.cashout_time == fc::time_point_sec::maximum()) {
+                    break;
+                }
+                try {
+                    tags::operation_visitor visitor(database());
+                    visitor.update_tags(comment.author, to_string(comment.permlink));
+                } catch (const fc::exception& e) {
+                    edump((e.to_detail_string()));
+                } catch (...) {
+                    elog("unhandled exception");
+                }
+            }
+#endif
+        }
+
         golos::chain::database& database() {
             return database_;
         }
@@ -210,6 +229,9 @@ namespace golos { namespace plugins { namespace tags {
         auto& db = pimpl->database();
         db.post_apply_operation.connect([&](const operation_notification& note) {
             pimpl->on_operation(note);
+        });
+        db.complete_reindexing.connect([&](){
+            pimpl->on_complete_reindexing();
         });
         add_plugin_index<tags::tag_index>(db);
         add_plugin_index<tags::tag_stats_index>(db);

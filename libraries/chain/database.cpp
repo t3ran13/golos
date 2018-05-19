@@ -155,7 +155,6 @@ namespace golos { namespace chain {
 
                 ilog("Replaying blocks...");
 
-
                 uint64_t skip_flags =
                         skip_block_size_check |
                         skip_witness_signature |
@@ -169,9 +168,10 @@ namespace golos { namespace chain {
                         skip_validate_invariants |
                         skip_block_log;
 
-                with_strong_write_lock([&]() {
+                with_strong_write_lock([&]() { detail::with_reindexing(*this, [&] {
                     auto itr = _block_log.read_block(0);
                     auto last_block_num = _block_log.head()->block_num();
+                    auto end_pos = _block_log.get_block_pos(last_block_num);
 
                     set_reserved_memory(1024*1024*1024); // protect from memory fragmentations ...
                     while (itr.first.block_num() != last_block_num) {
@@ -179,9 +179,9 @@ namespace golos { namespace chain {
                         auto cur_block_num = itr.first.block_num();
                         if (cur_block_num % 100000 == 0) {
                             std::cerr
-                                << "   " << double(cur_block_num * 100) / last_block_num << "%   "
+                                << "   " << double(itr.second * 100) / end_pos << "%   "
                                 << cur_block_num << " of " << last_block_num
-                                << "   ("  << (free_memory() / (1024 * 1024)) << "M free"
+                                << "   ("  << (free_memory() - reserved_memory() / (1024 * 1024)) << "M free"
                                 << ", elapsed " << double((end - start).count()) / 1000000.0 << " sec)\n";
                         }
                         apply_block(itr.first, skip_flags);
@@ -192,7 +192,9 @@ namespace golos { namespace chain {
                     apply_block(itr.first, skip_flags);
                     set_reserved_memory(0);
                     set_revision(head_block_num());
-                });
+
+                    STEEMIT_TRY_NOTIFY(complete_reindexing);
+                }); });
 
                 if (_block_log.head()->block_num()) {
                     _fork_db.start_block(*_block_log.head());
