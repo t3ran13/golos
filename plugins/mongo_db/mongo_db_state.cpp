@@ -68,6 +68,7 @@ namespace mongo_db {
             format_value(body, "block_num", state_block.block_num());
 
             format_value(body, "author", auth);
+            format_oid(body, "author_id", auth);
             format_value(body, "permlink", perm);
             format_value(body, "abs_rshares", comment.abs_rshares);
             format_value(body, "active", comment.active);
@@ -147,6 +148,10 @@ namespace mongo_db {
             document root_comment_index;
             root_comment_index << "root_comment" << 1;
             doc.indexes_to_create.push_back(std::move(root_comment_index));
+
+            document author_index;
+            author_index << "author_id" << 1;
+            doc.indexes_to_create.push_back(std::move(author_index));
 
             body << close_document;
 
@@ -344,11 +349,16 @@ namespace mongo_db {
             auto doc = create_document("account_bandwidth_object", "_id", oid_hash);
             auto& body = doc.doc;
 
+            document account_index;
+            account_index << "account_id" << 1;
+            doc.indexes_to_create.push_back(std::move(account_index));
+
             body << "$set" << open_document;
 
             format_oid(body, oid);
 
             format_value(body, "account", band->account);
+            format_oid(body, "account_id", band->account);
             format_value(body, "type", band_type);
             format_value(body, "average_bandwidth", band->average_bandwidth);
             format_value(body, "lifetime_bandwidth", band->lifetime_bandwidth);
@@ -433,12 +443,22 @@ namespace mongo_db {
             auto doc = create_document("vesting_delegation_object", "_id", oid_hash);
             auto& body = doc.doc;
 
+            document delegator_index;
+            delegator_index << "delegator_id" << 1;
+            doc.indexes_to_create.push_back(std::move(delegator_index));
+
+            document delegatee_index;
+            delegatee_index << "delegatee_id" << 1;
+            doc.indexes_to_create.push_back(std::move(delegatee_index));
+
             body << "$set" << open_document;
 
             format_oid(body, oid);
 
             format_value(body, "delegator", delegation.delegator);
+            format_oid(body, "delegator_id", delegation.delegator);
             format_value(body, "delegatee", delegation.delegatee);
+            format_oid(body, "delegatee_id", delegation.delegatee);
             format_value(body, "vesting_shares", delegation.vesting_shares);
             format_value(body, "min_delegation_time", delegation.min_delegation_time);
 
@@ -473,15 +493,15 @@ namespace mongo_db {
             auto doc = create_document("escrow_object", "_id", oid_hash);
 
             document from_index;
-            from_index << "from" << 1;
+            from_index << "from_id" << 1;
             doc.indexes_to_create.push_back(std::move(from_index));
 
             document to_index;
-            to_index << "to" << 1;
+            to_index << "to_id" << 1;
             doc.indexes_to_create.push_back(std::move(to_index));
 
             document agent_index;
-            agent_index << "agent" << 1;
+            agent_index << "agent_id" << 1;
             doc.indexes_to_create.push_back(std::move(agent_index));
 
             auto& body = doc.doc;
@@ -492,9 +512,12 @@ namespace mongo_db {
 
             format_value(body, "removed", false);
             format_value(body, "escrow_id", escrow.escrow_id);
-            format_oid(body, "from", escrow.from);
-            format_oid(body, "to", escrow.to);
-            format_oid(body, "agent", escrow.agent);
+            format_value(body, "from", escrow.from);
+            format_oid(body, "from_id", escrow.from);
+            format_value(body, "to", escrow.to);
+            format_oid(body, "to_id", escrow.to);
+            format_value(body, "agent", escrow.agent);
+            format_oid(body, "agent_id", escrow.agent);
             format_value(body, "ratification_deadline", escrow.ratification_deadline);
             format_value(body, "escrow_expiration", escrow.escrow_expiration);
             format_value(body, "sbd_balance", escrow.sbd_balance);
@@ -540,12 +563,17 @@ namespace mongo_db {
             auto doc = create_document("proposal_object", "_id", oid_hash);
             auto& body = doc.doc;
 
+            document author_index;
+            author_index << "author_id" << 1;
+            doc.indexes_to_create.push_back(std::move(author_index));
+
             body << "$set" << open_document;
 
             format_oid(body, oid);
 
             format_value(body, "removed", false);
             format_value(body, "author", proposal.author);
+            format_oid(body, "author_id", proposal.author);
             format_value(body, "title", proposal.title);
 
             format_value(body, "memo", proposal.memo);
@@ -692,10 +720,15 @@ namespace mongo_db {
             auto itr = vote_idx.find(std::make_tuple(comment.id, voter.id));
             if (vote_idx.end() != itr) {
                 auto doc = create_document("comment_vote_object", "_id", oid_hash);
+                auto &body = doc.doc;
+
                 document comment_index;
                 comment_index << "comment" << 1;
                 doc.indexes_to_create.push_back(std::move(comment_index));
-                auto &body = doc.doc;
+
+                document author_index;
+                author_index << "author_id" << 1;
+                doc.indexes_to_create.push_back(std::move(author_index));
 
                 body << "$set" << open_document;
 
@@ -703,6 +736,7 @@ namespace mongo_db {
                 format_oid(body, "comment", comment_oid);
 
                 format_value(body, "author", op.author);
+                format_oid(body, "author_id", op.author);
                 format_value(body, "permlink", op.permlink);
                 format_value(body, "voter", op.voter);
 
@@ -756,6 +790,7 @@ namespace mongo_db {
         format_value(body, "removed", true);
 
         format_value(body, "author", op.author);
+        format_oid(body, "author_id", op.author);
         format_value(body, "permlink", op.permlink);
 
         body << close_document;
@@ -772,8 +807,18 @@ namespace mongo_db {
         auto doc = create_document("transfer", "", "");
         auto& body = doc.doc;
 
+        document from_index;
+        from_index << "from_id" << 1;
+        doc.indexes_to_create.push_back(std::move(from_index));
+
+        document to_index;
+        to_index << "to_id" << 1;
+        doc.indexes_to_create.push_back(std::move(to_index));
+
         format_value(body, "from", op.from);
+        format_oid(body, "from_id", op.from);
         format_value(body, "to", op.to);
+        format_oid(body, "to_id", op.to);
         format_value(body, "amount", op.amount);
         format_value(body, "memo", op.memo);
 
@@ -820,8 +865,8 @@ namespace mongo_db {
             format_value(body, "amount", op.amount);
 
             asset amount_gests;
-            amount_gests.amount = op.amount.amount /
-                (dgp.total_reward_fund_steem.amount / dgp.total_vesting_shares.amount);
+            amount_gests.amount = double(op.amount.amount.value) /
+                (double(dgp.total_reward_fund_steem.amount.value) / dgp.total_vesting_shares.amount.value);
             amount_gests.symbol = VESTS_SYMBOL;
 
             format_value(body, "amount_gests", amount_gests);
@@ -848,6 +893,10 @@ namespace mongo_db {
 
             auto &body = doc.doc;
 
+            document seller_index;
+            seller_index << "seller_id" << 1;
+            doc.indexes_to_create.push_back(std::move(seller_index));
+
             body << "$set" << open_document;
 
             format_oid(body, oid);
@@ -855,6 +904,7 @@ namespace mongo_db {
             format_value(body, "created", loo.created);
             format_value(body, "expiration", loo.expiration);
             format_value(body, "seller", loo.seller);
+            format_oid(body, "seller_id", loo.seller);
             format_value(body, "orderid", loo.orderid);
             format_value(body, "for_sale", loo.for_sale);
             format_value(body, "sell_price", loo.sell_price);
@@ -890,12 +940,17 @@ namespace mongo_db {
 
                 auto& body = cro.doc;
 
+                document owner_index;
+                owner_index << "owner_id" << 1;
+                cro.indexes_to_create.push_back(std::move(owner_index));
+
                 body << "$set" << open_document;
 
                 format_oid(body, oid);
 
                 format_value(body, "filled", false);
                 format_value(body, "owner", std::string(op.owner));
+                format_oid(body, "owner_id", std::string(op.owner));
                 format_value(body, "requestid", op.requestid);
                 format_value(body, "amount", op.amount);
                 format_value(body, "conversion_date", itr->conversion_date);
@@ -962,12 +1017,17 @@ namespace mongo_db {
 
                 auto &body = doc.doc;
 
+                document account_index;
+                account_index << "account_id" << 1;
+                doc.indexes_to_create.push_back(std::move(account_index));
+
                 body << "$set" << open_document;
 
                 format_oid(body, oid);
 
                 format_value(body, "witness", op.witness);
                 format_value(body, "account", op.account);
+                format_oid(body, "account_id", op.account);
 
                 body << close_document;
 
@@ -1040,13 +1100,23 @@ namespace mongo_db {
 
             auto &body = doc.doc;
 
+            document from_account_index;
+            from_account_index << "from_account_id" << 1;
+            doc.indexes_to_create.push_back(std::move(from_account_index));
+
+            document to_account_index;
+            to_account_index << "to_account_id" << 1;
+            doc.indexes_to_create.push_back(std::move(to_account_index));
+
             body << "$set" << open_document;
 
             format_oid(body, oid);
 
             format_value(body, "filled", false);
             format_value(body, "from_account", std::string(from_account.name));
+            format_oid(body, "from_account_id", std::string(from_account.name));
             format_value(body, "to_account", std::string(to_account.name));
+            format_oid(body, "to_account_id", std::string(to_account.name));
             format_value(body, "percent", wvro.percent);
             format_value(body, "auto_vest", wvro.auto_vest);
 
@@ -1071,6 +1141,10 @@ namespace mongo_db {
 
             auto &body = doc.doc;
 
+            document seller_index;
+            seller_index << "seller_id" << 1;
+            doc.indexes_to_create.push_back(std::move(seller_index));
+
             body << "$set" << open_document;
 
             format_oid(body, oid);
@@ -1078,6 +1152,7 @@ namespace mongo_db {
             format_value(body, "created", loo.created);
             format_value(body, "expiration", loo.expiration);
             format_value(body, "seller", loo.seller);
+            format_oid(body, "seller_id", loo.seller);
             format_value(body, "orderid", loo.orderid);
             format_value(body, "for_sale", loo.for_sale);
             format_value(body, "sell_price", loo.sell_price);
@@ -1259,13 +1334,23 @@ namespace mongo_db {
 
             auto& body = doc.doc;
 
+            document from_index;
+            from_index << "from_id" << 1;
+            doc.indexes_to_create.push_back(std::move(from_index));
+
+            document to_index;
+            to_index << "to_id" << 1;
+            doc.indexes_to_create.push_back(std::move(to_index));
+
             body << "$set" << open_document;
 
             format_oid(body, oid); 
 
             format_value(body, "removed", false);
             format_value(body, "from", op.from);
+            format_oid(body, "from_id", op.from);
             format_value(body, "to", op.to);
+            format_oid(body, "to_id", op.to);
             if (db_.store_memo_in_savings_withdraws()) {
                 format_value(body, "memo", op.memo);
             }
@@ -1502,11 +1587,11 @@ namespace mongo_db {
         format_liquidity_reward_balance(op.current_owner);
         format_liquidity_reward_balance(op.open_owner);
         try {
-            auto doc = create_document("fill_order_id", "", "");
+            auto doc = create_document("fill_order_object", "", "");
             auto& body = doc.doc;
 
             document current_owner_index;
-            current_owner_index << "current_owner" << 1;
+            current_owner_index << "current_owner_id" << 1;
             doc.indexes_to_create.push_back(std::move(current_owner_index));
 
             document open_owner_index;
@@ -1568,12 +1653,17 @@ namespace mongo_db {
             auto doc = create_document("author_reward", "_id", comment_oid_hash);
             auto &body = doc.doc;
 
+            document author_index;
+            author_index << "author_id" << 1;
+            doc.indexes_to_create.push_back(std::move(author_index));
+
             body << "$set" << open_document;
 
             format_value(body, "removed", false);
             format_oid(body, comment_oid);
             format_oid(body, "comment", comment_oid);
             format_value(body, "author", op.author);
+            format_oid(body, "author_id", op.author);
             format_value(body, "permlink", op.permlink);
             format_value(body, "timestamp", state_block.timestamp);
             format_value(body, "sbd_payout", op.sbd_payout);
@@ -1596,10 +1686,15 @@ namespace mongo_db {
             auto vote_oid_hash = hash_oid(vote_oid);
 
             auto doc = create_document("curation_reward", "_id", vote_oid_hash);
+            auto &body = doc.doc;
+
             document comment_index;
             comment_index << "comment" << 1;
             doc.indexes_to_create.push_back(std::move(comment_index));
-            auto &body = doc.doc;
+
+            document author_index;
+            author_index << "author_id" << 1;
+            doc.indexes_to_create.push_back(std::move(author_index));
 
             body << "$set" << open_document;
 
@@ -1608,6 +1703,7 @@ namespace mongo_db {
             format_oid(body, "comment", comment_oid);
             format_oid(body, "vote", vote_oid);
             format_value(body, "author", op.comment_author);
+            format_oid(body, "author_id", op.comment_author);
             format_value(body, "permlink", op.comment_permlink);
             format_value(body, "timestamp", state_block.timestamp);
             format_value(body, "reward", op.reward);
@@ -1629,12 +1725,17 @@ namespace mongo_db {
             auto doc = create_document("comment_reward", "_id", comment_oid_hash);
             auto &body = doc.doc;
 
+            document author_index;
+            author_index << "author_id" << 1;
+            doc.indexes_to_create.push_back(std::move(author_index));
+
             body << "$set" << open_document;
 
             format_value(body, "removed", false);
             format_oid(body, comment_oid);
             format_oid(body, "comment", comment_oid);
             format_value(body, "author", op.author);
+            format_oid(body, "author_id", op.author);
             format_value(body, "permlink", op.permlink);
             format_value(body, "timestamp", state_block.timestamp);
             format_value(body, "payout", op.payout);
@@ -1653,11 +1754,16 @@ namespace mongo_db {
             auto benefactor_oid = comment_oid + "/" + op.benefactor;
             auto benefactor_oid_hash = hash_oid(benefactor_oid);
 
-            auto doc = create_document("benefactor_reward", "_id", benefactor_oid_hash);       
+            auto doc = create_document("benefactor_reward", "_id", benefactor_oid_hash);   
+            auto &body = doc.doc;
+    
             document comment_index;
             comment_index << "comment" << 1;
             doc.indexes_to_create.push_back(std::move(comment_index));
-            auto &body = doc.doc;
+
+            document author_index;
+            author_index << "author_id" << 1;
+            doc.indexes_to_create.push_back(std::move(author_index));
 
             body << "$set" << open_document;
 
@@ -1665,6 +1771,7 @@ namespace mongo_db {
             format_oid(body, benefactor_oid);
             format_oid(body, "comment", comment_oid);
             format_value(body, "author", op.author);
+            format_oid(body, "author_id", op.author);
             format_value(body, "permlink", op.permlink);
             format_value(body, "timestamp", state_block.timestamp);
             format_value(body, "reward", op.reward);
