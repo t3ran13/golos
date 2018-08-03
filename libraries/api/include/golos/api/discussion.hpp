@@ -39,6 +39,9 @@ namespace golos { namespace api {
         std::vector<account_name_type> reblogged_by;
         optional <account_name_type> first_reblogged_by;
         optional <time_point_sec> first_reblogged_on;
+        std::string reblog_title;
+        std::string reblog_body;
+        std::string reblog_json_metadata;
     };
 
 } } // golos::api
@@ -49,4 +52,5 @@ FC_REFLECT_DERIVED( (golos::api::discussion), ((golos::api::comment_api_object))
         (pending_benefactor_payout_value)(pending_benefactor_payout_gests_value)
         (pending_curator_payout_value)(pending_curator_payout_gests_value)
         (pending_payout_value)(total_pending_payout_value)(active_votes)(active_votes_count)(replies)
-        (author_reputation)(promoted)(body_length)(reblogged_by)(first_reblogged_by)(first_reblogged_on))
+        (author_reputation)(promoted)(body_length)(reblogged_by)(first_reblogged_by)(first_reblogged_on)
+        (reblog_title)(reblog_body)(reblog_json_metadata))

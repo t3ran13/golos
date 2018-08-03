@@ -560,9 +560,9 @@ namespace golos { namespace plugins { namespace tags {
                 query,
                 [&](discussion& d, const follow::blog_object& b) {
                     d.first_reblogged_on = b.reblogged_on;
-                    d.title = to_string(b.title);
-                    d.body = to_string(b.body);
-                    d.json_metadata = to_string(b.json_metadata);
+                    d.reblog_title = to_string(b.title);
+                    d.reblog_body = to_string(b.body);
+                    d.reblog_json_metadata = to_string(b.json_metadata);
                 });
         });
     }
