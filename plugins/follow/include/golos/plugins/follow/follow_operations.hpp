@@ -24,6 +24,9 @@ namespace golos {
                 protocol::account_name_type account;
                 protocol::account_name_type author;
                 std::string permlink;
+                string title;
+                string body;
+                string json_metadata;
 
                 void validate() const;
                 void get_required_posting_authorities(flat_set<account_name_type>& a) const {

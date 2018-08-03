@@ -31,6 +31,9 @@ namespace golos {
                 std::string blog;
                 time_point_sec reblog_on;
                 uint32_t entry_id = 0;
+                std::string title;
+                std::string body;
+                std::string json_metadata;
             };
 
             struct comment_blog_entry {
@@ -38,6 +41,9 @@ namespace golos {
                 std::string blog;
                 time_point_sec reblog_on;
                 uint32_t entry_id = 0;
+                std::string title;
+                std::string body;
+                std::string json_metadata;
             };
 
             struct account_reputation {
@@ -86,9 +92,9 @@ FC_REFLECT((golos::plugins::follow::feed_entry), (author)(permlink)(reblog_by)(r
 
 FC_REFLECT((golos::plugins::follow::comment_feed_entry), (comment)(reblog_by)(reblog_on)(entry_id));
 
-FC_REFLECT((golos::plugins::follow::blog_entry), (author)(permlink)(blog)(reblog_on)(entry_id));
+FC_REFLECT((golos::plugins::follow::blog_entry), (author)(permlink)(blog)(reblog_on)(entry_id)(title)(body)(json_metadata));
 
-FC_REFLECT((golos::plugins::follow::comment_blog_entry), (comment)(blog)(reblog_on)(entry_id));
+FC_REFLECT((golos::plugins::follow::comment_blog_entry), (comment)(blog)(reblog_on)(entry_id)(title)(body)(json_metadata));
 
 FC_REFLECT((golos::plugins::follow::account_reputation), (account)(reputation));
 

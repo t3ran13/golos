@@ -619,6 +619,9 @@ namespace golos {
                     entry.blog = account;
                     entry.reblog_on = itr->reblogged_on;
                     entry.entry_id = itr->blog_feed_id;
+                    entry.title = to_string(itr->title);
+                    entry.body = to_string(itr->body);
+                    entry.json_metadata = to_string(itr->json_metadata);
 
                     result.push_back(entry);
 
@@ -652,6 +655,9 @@ namespace golos {
                     entry.blog = account;
                     entry.reblog_on = itr->reblogged_on;
                     entry.entry_id = itr->blog_feed_id;
+                    entry.title = to_string(itr->title);
+                    entry.body = to_string(itr->body);
+                    entry.json_metadata = to_string(itr->json_metadata);
 
                     result.push_back(entry);
 
