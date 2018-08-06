@@ -10,19 +10,22 @@ namespace golos {
         namespace follow {
             using golos::api::comment_api_object;
 
-            struct feed_entry {
-                std::string author;
-                std::string permlink;
+            struct base_feed_entry {
                 std::vector<std::string> reblog_by;
+                std::vector<std::string> reblog_titles;
+                std::vector<std::string> reblog_bodies;
+                std::vector<std::string> reblog_jsons;
                 time_point_sec reblog_on;
                 uint32_t entry_id = 0;
             };
+          
+            struct feed_entry : base_feed_entry {
+                std::string author;
+                std::string permlink;
+            };
 
-            struct comment_feed_entry {
+            struct comment_feed_entry : base_feed_entry {
                 comment_api_object comment;
-                std::vector<std::string> reblog_by;
-                time_point_sec reblog_on;
-                uint32_t entry_id = 0;
             };
 
             struct blog_entry {
@@ -88,9 +91,14 @@ namespace golos {
             using blog_authors_r = std::vector<std::pair<std::string, uint32_t>>;
         }}}
 
-FC_REFLECT((golos::plugins::follow::feed_entry), (author)(permlink)(reblog_by)(reblog_on)(entry_id));
+FC_REFLECT((golos::plugins::follow::base_feed_entry), (reblog_by)
+    (reblog_titles)(reblog_bodies)(reblog_jsons)(reblog_on)(entry_id));
 
-FC_REFLECT((golos::plugins::follow::comment_feed_entry), (comment)(reblog_by)(reblog_on)(entry_id));
+FC_REFLECT_DERIVED((golos::plugins::follow::feed_entry), ((golos::plugins::follow::base_feed_entry)),
+    (author)(permlink));
+
+FC_REFLECT_DERIVED((golos::plugins::follow::comment_feed_entry), ((golos::plugins::follow::base_feed_entry)), 
+    (comment));
 
 FC_REFLECT((golos::plugins::follow::blog_entry), (author)(permlink)(blog)(reblog_on)(entry_id)(title)(body)(json_metadata));
 

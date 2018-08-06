@@ -53,6 +53,27 @@ namespace golos {
                 }
             }
 
+            void fill_reblog(
+                const golos::chain::database& db,
+                const feed_object& feed,
+                const account_name_type& reblogger,
+                base_feed_entry& fe
+            ) {
+               const auto& blog_idx = db.get_index<blog_index>().indices().get<by_comment>();
+               auto itr = blog_idx.find(std::make_tuple(feed.comment, reblogger));
+               for (; itr != blog_idx.end(); ++itr) {
+                   if (!itr->body.empty()) {
+                       fe.reblog_titles.push_back(to_string(itr->title));
+                       fe.reblog_bodies.push_back(to_string(itr->body));
+                       fe.reblog_jsons.push_back(to_string(itr->json_metadata));
+                       return;
+                   }
+               }
+               fe.reblog_titles.push_back("");
+               fe.reblog_bodies.push_back("");
+               fe.reblog_jsons.push_back("");
+            }
+
             struct pre_operation_visitor {
                 plugin& _plugin;
                 golos::chain::database& db;
@@ -544,8 +565,8 @@ namespace golos {
                         entry.reblog_by.reserve(itr->reblogged_by.size());
                         for (const auto& a : itr->reblogged_by) {
                             entry.reblog_by.push_back(a);
+                            fill_reblog(db, *itr, a, entry);
                         }
-                        //entry.reblog_by = itr->first_reblogged_by;
                         entry.reblog_on = itr->first_reblogged_on;
                     }
                     result.push_back(entry);
@@ -579,10 +600,10 @@ namespace golos {
                     entry.comment = helper->create_comment_api_object(comment);
                     entry.entry_id = itr->account_feed_id;
                     if (itr->first_reblogged_by != account_name_type()) {
-                        //entry.reblog_by = itr->first_reblogged_by;
                         entry.reblog_by.reserve(itr->reblogged_by.size());
                         for (const auto& a : itr->reblogged_by) {
                             entry.reblog_by.push_back(a);
+                            fill_reblog(db, *itr, a, entry);
                         }
                         entry.reblog_on = itr->first_reblogged_on;
                     }
