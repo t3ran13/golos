@@ -1876,7 +1876,7 @@ namespace golos { namespace chain {
                 active.push_back(&get_witness(wso.current_shuffled_witnesses[i]));
             }
 
-            chain_properties_18 median_props;
+            chain_properties_19 median_props;
 
             auto calc_median = [&](auto&& param) {
                 std::nth_element(
@@ -1895,6 +1895,7 @@ namespace golos { namespace chain {
             calc_median(&chain_properties_18::create_account_min_delegation);
             calc_median(&chain_properties_18::create_account_delegation_time);
             calc_median(&chain_properties_18::min_delegation);
+            calc_median(&chain_properties_19::reverse_auction_window_size);
 
             modify(wso, [&](witness_schedule_object &_wso) {
                 _wso.median_props = median_props;

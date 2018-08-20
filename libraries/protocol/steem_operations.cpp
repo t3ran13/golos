@@ -226,6 +226,11 @@ namespace golos { namespace protocol {
                 (GOLOS_CREATE_ACCOUNT_DELEGATION_TIME).to_seconds() / 2);
         }
 
+        void chain_properties_19::validate() const {
+            chain_properties_18::validate();
+            GOLOS_CHECK_VALUE_GT(reverse_auction_window_size, 0);
+        }
+
         void witness_update_operation::validate() const {
             GOLOS_CHECK_PARAM_ACCOUNT(owner);
             GOLOS_CHECK_PARAM(url, {
