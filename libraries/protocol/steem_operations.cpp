@@ -228,7 +228,7 @@ namespace golos { namespace protocol {
 
         void chain_properties_19::validate() const {
             chain_properties_18::validate();
-            GOLOS_CHECK_VALUE_GT(reverse_auction_window_size, 0);
+            GOLOS_CHECK_VALUE_GT(auction_window_size, 0);
         }
 
         void witness_update_operation::validate() const {

@@ -493,7 +493,7 @@ namespace golos { namespace protocol {
                 sbd_interest_rate = src.sbd_interest_rate;
                 return *this;
             }
-            
+
             chain_properties_18& operator=(const chain_properties_18&) = default;
 
             chain_properties_18& operator=(const chain_properties_19& src);
@@ -504,7 +504,7 @@ namespace golos { namespace protocol {
             /**
              *  Голосуемый параметр. Штрафное окно голосования
              */
-            uint32_t reverse_auction_window_size = STEEMIT_REVERSE_AUCTION_WINDOW_SECONDS;
+            uint32_t auction_window_size = STEEMIT_REVERSE_AUCTION_WINDOW_SECONDS;
 
 
             void validate() const;
@@ -517,13 +517,15 @@ namespace golos { namespace protocol {
             }
 
             chain_properties_19& operator=(const chain_properties_18& src) {
+                // 18
                 create_account_min_golos_fee = src.create_account_min_golos_fee;
                 create_account_min_delegation = src.create_account_min_delegation;
                 create_account_delegation_time = src.create_account_delegation_time;
                 min_delegation = src.min_delegation;
-                // account_creation_fee = src.account_creation_fee;
-                // maximum_block_size = src.maximum_block_size;
-                // sbd_interest_rate = src.sbd_interest_rate;
+                // 17
+                account_creation_fee = src.account_creation_fee;
+                maximum_block_size = src.maximum_block_size;
+                sbd_interest_rate = src.sbd_interest_rate;
                 return *this;
             }
 
@@ -1189,7 +1191,7 @@ FC_REFLECT_DERIVED(
     (create_account_delegation_time)(min_delegation))
 FC_REFLECT_DERIVED(
     (golos::protocol::chain_properties_19),((golos::protocol::chain_properties_18)),
-    (reverse_auction_window_size))
+    (auction_window_size))
 
 FC_REFLECT_TYPENAME((golos::protocol::versioned_chain_properties))
 

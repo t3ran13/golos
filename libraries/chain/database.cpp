@@ -1895,7 +1895,7 @@ namespace golos { namespace chain {
             calc_median(&chain_properties_18::create_account_min_delegation);
             calc_median(&chain_properties_18::create_account_delegation_time);
             calc_median(&chain_properties_18::min_delegation);
-            calc_median(&chain_properties_19::reverse_auction_window_size);
+            calc_median(&chain_properties_19::auction_window_size);
 
             modify(wso, [&](witness_schedule_object &_wso) {
                 _wso.median_props = median_props;
@@ -2283,6 +2283,14 @@ namespace golos { namespace chain {
                     });
 
                     unclaimed_rewards = 0;
+                }
+
+                if (c.total_vote_weight > 0 && c.allow_curation_rewards) {
+                    auto reward_fund_claim = ((max_rewards.value * c.auction_window_weight) / total_weight).to_uint64();
+                    unclaimed_rewards -= reward_fund_claim;
+                    modify(get_dynamic_global_properties(), [&](dynamic_global_property_object &props) {
+                        props.total_reward_fund_steem += asset(reward_fund_claim, STEEM_SYMBOL);
+                    });
                 }
 
                 return unclaimed_rewards;
