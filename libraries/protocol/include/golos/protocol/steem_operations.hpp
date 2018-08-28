@@ -532,6 +532,37 @@ namespace golos { namespace protocol {
             chain_properties_19& operator=(const chain_properties_19&) = default;
         };
 
+        /**
+         * Users can invite referrals, and they will pay some percent of rewards to their referrers.
+         * Referral can break paying for some fee.
+         */
+        struct chain_properties_19: public chain_properties_18 {
+
+            /**
+             * Maximum percent of referral deductions
+             */
+            uint16_t max_referral_interest_rate = GOLOS_DEFAULT_REFERRAL_INTEREST_RATE;
+
+            /**
+             * Maximum term of referral deductions
+             */
+            uint32_t max_referral_term_sec = GOLOS_DEFAULT_REFERRAL_TERM_SEC;
+
+            /**
+             * Fee for breaking referral deductions by referral
+             */
+            asset max_referral_break_fee = GOLOS_DEFAULT_REFERRAL_BREAK_FEE;
+
+            void validate() const;
+
+            chain_properties_19& operator=(const chain_properties_17& src) {
+                chain_properties_18::operator=(src);
+                return *this;
+            }
+
+            chain_properties_19& operator=(const chain_properties_19&) = default;
+        };
+
         inline chain_properties_17& chain_properties_17::operator=(const chain_properties_18& src) {
             account_creation_fee = src.account_creation_fee;
             maximum_block_size = src.maximum_block_size;
@@ -1186,12 +1217,12 @@ FC_REFLECT(
     (golos::protocol::chain_properties_17),
     (account_creation_fee)(maximum_block_size)(sbd_interest_rate))
 FC_REFLECT_DERIVED(
-    (golos::protocol::chain_properties_18),((golos::protocol::chain_properties_17)),
+    (golos::protocol::chain_properties_18), ((golos::protocol::chain_properties_17)),
     (create_account_min_golos_fee)(create_account_min_delegation)
     (create_account_delegation_time)(min_delegation))
 FC_REFLECT_DERIVED(
-    (golos::protocol::chain_properties_19),((golos::protocol::chain_properties_18)),
-    (auction_window_size))
+    (golos::protocol::chain_properties_19), ((golos::protocol::chain_properties_18)),
+    (max_referral_interest_rate)(max_referral_term_sec)(max_referral_break_fee)(auction_window_size))
 
 FC_REFLECT_TYPENAME((golos::protocol::versioned_chain_properties))
 

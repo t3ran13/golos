@@ -1145,7 +1145,7 @@ namespace golos { namespace chain {
 
             signed_block pending_block;
 
-            with_strong_write_lock([&]() {
+            with_strong_write_lock([&]() { detail::with_generating(*this, [&]() {
                 //
                 // The following code throws away existing pending_tx_session and
                 // rebuilds it by re-applying pending transactions.
@@ -1198,7 +1198,7 @@ namespace golos { namespace chain {
                 }
 
                 _pending_tx_session.reset();
-            });
+            }); });
 
             // We have temporarily broken the invariant that
             // _pending_tx_session is the result of applying _pending_tx, as
@@ -1867,10 +1867,10 @@ namespace golos { namespace chain {
         }
 
         void database::update_median_witness_props() {
-            const witness_schedule_object &wso = get_witness_schedule_object();
+            const witness_schedule_object& wso = get_witness_schedule_object();
 
             /// fetch all witness objects
-            vector<const witness_object *> active;
+            vector<const witness_object*> active;
             active.reserve(wso.num_scheduled_witnesses);
             for (int i = 0; i < wso.num_scheduled_witnesses; i++) {
                 active.push_back(&get_witness(wso.current_shuffled_witnesses[i]));
@@ -1896,12 +1896,15 @@ namespace golos { namespace chain {
             calc_median(&chain_properties_18::create_account_delegation_time);
             calc_median(&chain_properties_18::min_delegation);
             calc_median(&chain_properties_19::auction_window_size);
+            calc_median(&chain_properties_19::max_referral_interest_rate);
+            calc_median(&chain_properties_19::max_referral_term_sec);
+            calc_median(&chain_properties_19::max_referral_break_fee);
 
             modify(wso, [&](witness_schedule_object &_wso) {
                 _wso.median_props = median_props;
             });
 
-            modify(get_dynamic_global_properties(), [&](dynamic_global_property_object &_dgpo) {
+            modify(get_dynamic_global_properties(), [&](dynamic_global_property_object& _dgpo) {
                 _dgpo.maximum_block_size = median_props.maximum_block_size;
                 _dgpo.sbd_interest_rate = median_props.sbd_interest_rate;
             });
@@ -4371,6 +4374,9 @@ namespace golos { namespace chain {
             FC_ASSERT(STEEMIT_HARDFORK_0_18 == 18, "Invalid hardfork configuration");
             _hardfork_times[STEEMIT_HARDFORK_0_18] = fc::time_point_sec(STEEMIT_HARDFORK_0_18_TIME);
             _hardfork_versions[STEEMIT_HARDFORK_0_18] = STEEMIT_HARDFORK_0_18_VERSION;
+            FC_ASSERT(STEEMIT_HARDFORK_0_19 == 19, "Invalid hardfork configuration");
+            _hardfork_times[STEEMIT_HARDFORK_0_19] = fc::time_point_sec(STEEMIT_HARDFORK_0_19_TIME);
+            _hardfork_versions[STEEMIT_HARDFORK_0_19] = STEEMIT_HARDFORK_0_19_VERSION;
 
             const auto &hardforks = get_hardfork_property_object();
             FC_ASSERT(
@@ -4623,6 +4629,8 @@ namespace golos { namespace chain {
                     }}
                     break;
                 case STEEMIT_HARDFORK_0_18:
+                    break;
+                case STEEMIT_HARDFORK_0_19:
                     break;
                 default:
                     break;
