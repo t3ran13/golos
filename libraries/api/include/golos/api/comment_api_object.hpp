@@ -62,7 +62,7 @@ namespace golos { namespace api {
 
         comment_object::id_type root_comment;
 
-        uint64_t auction_window_weight = 0;
+        uint128_t auction_window_weight = 0;
         
         string root_title;
 

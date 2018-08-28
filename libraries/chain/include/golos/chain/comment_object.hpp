@@ -89,7 +89,7 @@ namespace golos {
 
             id_type root_comment;
 
-            uint64_t auction_window_weight = 0;
+            uint128_t auction_window_weight = 0;
 
             comment_mode mode = first_payout;
 
