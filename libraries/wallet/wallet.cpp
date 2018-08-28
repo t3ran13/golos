@@ -327,6 +327,7 @@ namespace golos { namespace wallet {
                         result["min_delegation"] = median_props.min_delegation;
                     }
                     if (hf >= hardfork_version(0, STEEMIT_HARDFORK_0_19)) {
+                        result["auction_window_size"] = median_props.auction_window_size;
                         result["max_referral_interest_rate"] = median_props.max_referral_interest_rate;
                         result["max_referral_term_sec"] = median_props.max_referral_term_sec;
                         result["max_referral_break_fee"] = median_props.max_referral_break_fee;
@@ -2194,6 +2195,7 @@ fc::ecc::private_key wallet_api::derive_private_key(const std::string& prefix_st
             SET_PROP(max_referral_interest_rate);
             SET_PROP(max_referral_term_sec);
             SET_PROP(max_referral_break_fee);
+            SET_PROP(auction_window_size);
 #undef SET_PROP
 
             op.owner = witness_account_name;

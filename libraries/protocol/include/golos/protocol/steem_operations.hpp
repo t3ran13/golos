@@ -499,44 +499,16 @@ namespace golos { namespace protocol {
             chain_properties_18& operator=(const chain_properties_19& src);
         };
 
-        struct chain_properties_19: public chain_properties_18 {
-
-            /**
-             *  Голосуемый параметр. Штрафное окно голосования
-             */
-            uint32_t auction_window_size = STEEMIT_REVERSE_AUCTION_WINDOW_SECONDS;
-
-
-            void validate() const;
-
-            chain_properties_19& operator=(const chain_properties_17& src) {
-                account_creation_fee = src.account_creation_fee;
-                maximum_block_size = src.maximum_block_size;
-                sbd_interest_rate = src.sbd_interest_rate;
-                return *this;
-            }
-
-            chain_properties_19& operator=(const chain_properties_18& src) {
-                // 18
-                create_account_min_golos_fee = src.create_account_min_golos_fee;
-                create_account_min_delegation = src.create_account_min_delegation;
-                create_account_delegation_time = src.create_account_delegation_time;
-                min_delegation = src.min_delegation;
-                // 17
-                account_creation_fee = src.account_creation_fee;
-                maximum_block_size = src.maximum_block_size;
-                sbd_interest_rate = src.sbd_interest_rate;
-                return *this;
-            }
-
-            chain_properties_19& operator=(const chain_properties_19&) = default;
-        };
-
         /**
          * Users can invite referrals, and they will pay some percent of rewards to their referrers.
          * Referral can break paying for some fee.
          */
         struct chain_properties_19: public chain_properties_18 {
+
+            /**
+             * Auction window size
+             */
+            uint32_t auction_window_size = STEEMIT_REVERSE_AUCTION_WINDOW_SECONDS;
 
             /**
              * Maximum percent of referral deductions
@@ -557,6 +529,19 @@ namespace golos { namespace protocol {
 
             chain_properties_19& operator=(const chain_properties_17& src) {
                 chain_properties_18::operator=(src);
+                return *this;
+            }
+    
+            chain_properties_19& operator=(const chain_properties_18& src) {
+                // 18
+                create_account_min_golos_fee = src.create_account_min_golos_fee;
+                create_account_min_delegation = src.create_account_min_delegation;
+                create_account_delegation_time = src.create_account_delegation_time;
+                min_delegation = src.min_delegation;
+                // 17
+                account_creation_fee = src.account_creation_fee;
+                maximum_block_size = src.maximum_block_size;
+                sbd_interest_rate = src.sbd_interest_rate;
                 return *this;
             }
 

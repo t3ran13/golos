@@ -48,6 +48,8 @@ namespace golos { namespace wallet {
             fc::optional<uint16_t> max_referral_interest_rate;
             fc::optional<uint32_t> max_referral_term_sec;
             fc::optional<asset> max_referral_break_fee;
+            fc::optional<uint32_t> auction_window_size;
+
         };
 
         struct optional_private_box_query {
