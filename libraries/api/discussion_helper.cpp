@@ -193,8 +193,10 @@ namespace golos { namespace api {
                         }
                     }
 
-                    auto reward_fund_claim = ((max_rewards.value * d.auction_window_weight) / total_weight).to_uint64();
-                    unclaimed_rewards -= reward_fund_claim;
+                    if (db.has_hardfork(STEEMIT_HARDFORK_0_19__898)) {
+                        auto reward_fund_claim = ((max_rewards.value * d.auction_window_weight) / total_weight).to_uint64();
+                        unclaimed_rewards -= reward_fund_claim;
+                    }
                 }
             } else {
                 unclaimed_rewards = 0;

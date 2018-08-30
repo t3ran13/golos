@@ -2287,7 +2287,7 @@ namespace golos { namespace chain {
 
                     unclaimed_rewards = 0;
                 }
-                else if (c.total_vote_weight > 0) {
+                else if (has_hardfork(STEEMIT_HARDFORK_0_19__898) && c.total_vote_weight > 0) {
                     auto reward_fund_claim = (max_rewards.value * c.auction_window_weight) / total_weight;
                     unclaimed_rewards -= reward_fund_claim.to_uint64();
                     modify(get_dynamic_global_properties(), [&](dynamic_global_property_object &props) {

@@ -495,8 +495,6 @@ namespace golos { namespace protocol {
             }
 
             chain_properties_18& operator=(const chain_properties_18&) = default;
-
-            chain_properties_18& operator=(const chain_properties_19& src);
         };
 
         /**
@@ -531,19 +529,6 @@ namespace golos { namespace protocol {
                 chain_properties_18::operator=(src);
                 return *this;
             }
-    
-            chain_properties_19& operator=(const chain_properties_18& src) {
-                // 18
-                create_account_min_golos_fee = src.create_account_min_golos_fee;
-                create_account_min_delegation = src.create_account_min_delegation;
-                create_account_delegation_time = src.create_account_delegation_time;
-                min_delegation = src.min_delegation;
-                // 17
-                account_creation_fee = src.account_creation_fee;
-                maximum_block_size = src.maximum_block_size;
-                sbd_interest_rate = src.sbd_interest_rate;
-                return *this;
-            }
 
             chain_properties_19& operator=(const chain_properties_19&) = default;
         };
@@ -552,14 +537,6 @@ namespace golos { namespace protocol {
             account_creation_fee = src.account_creation_fee;
             maximum_block_size = src.maximum_block_size;
             sbd_interest_rate = src.sbd_interest_rate;
-            return *this;
-        }
-
-        inline chain_properties_18& chain_properties_18::operator=(const chain_properties_19& src) {
-            create_account_min_golos_fee = src.create_account_min_golos_fee;
-            create_account_min_delegation = src.create_account_min_delegation;
-            create_account_delegation_time = src.create_account_delegation_time;
-            min_delegation = src.min_delegation;
             return *this;
         }
 
