@@ -190,6 +190,16 @@ namespace golos { namespace chain {
                 total_vote_payouts_ += payout;
             }
 
+            if (db_.has_hardfork(STEEMIT_HARDFORK_0_19__898) && comment_.total_vote_weight > 0) {
+                auto reward_fund_claim = (vote_rewards_fund_ * comment_.auction_window_weight) / total_weight;
+
+                comment_rewards_ -= reward_fund_claim.to_uint64();
+                db_.modify(db_.get_dynamic_global_properties(), [&](dynamic_global_property_object &props) {
+                    props.total_reward_fund_steem += asset(reward_fund_claim.to_uint64(), STEEM_SYMBOL);
+                });
+            }
+
+
             comment_rewards_ -= total_vote_rewards_;
         }
 
