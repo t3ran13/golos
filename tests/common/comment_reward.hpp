@@ -59,7 +59,7 @@ namespace golos { namespace chain {
             return vesting;
         }
 
-        void return_auction_window_tokens(asset value) {
+        void modify_reward_fund(asset& value) {
             reward_fund_ += value;
         }
 
@@ -200,7 +200,7 @@ namespace golos { namespace chain {
                 comment_rewards_ -= reward_fund_claim.to_uint64();
 
                 auto tokes_back_to_reward_fund = asset(reward_fund_claim.to_uint64(), STEEM_SYMBOL);
-                fund_.return_auction_window_tokens(tokes_back_to_reward_fund);
+                fund_.modify_reward_fund(tokes_back_to_reward_fund);
             }
 
 
