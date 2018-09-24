@@ -24,6 +24,7 @@ namespace golos { namespace api {
             votes_window = src.votes_window;
             votes_per_window = src.votes_per_window;
             auction_window_size = src.auction_window_size;
+            custom_ops_bandwidth_multiplier = src.custom_ops_bandwidth_multiplier;
         }
     }
 
