@@ -40,6 +40,7 @@ namespace golos {
             archived
         };
 
+
         class comment_object
                 : public object<comment_object_type, comment_object> {
         public:

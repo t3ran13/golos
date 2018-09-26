@@ -197,9 +197,9 @@ namespace golos { namespace chain {
             if (db_.has_hardfork(STEEMIT_HARDFORK_0_19__898) && comment_.total_vote_weight > 0) {
                 auto reward_fund_claim = (vote_rewards_fund_ * comment_.auction_window_weight) / total_weight;
 
-                comment_rewards_ -= reward_fund_claim.to_uint64();
+                comment_rewards_ -= reward_fund_claim;
 
-                auto tokes_back_to_reward_fund = asset(reward_fund_claim.to_uint64(), STEEM_SYMBOL);
+                auto tokes_back_to_reward_fund = asset(reward_fund_claim, STEEM_SYMBOL);
                 fund_.modify_reward_fund(tokes_back_to_reward_fund);
             }
 
