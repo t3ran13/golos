@@ -59,10 +59,12 @@ namespace golos { namespace api {
         int32_t net_votes = 0;
 
         comment_mode mode = not_set;
+        protocol::auction_window_reward_destination_type auction_window_reward_destination = protocol::destination_not_set;
+        uint32_t auction_window_size;
 
         comment_object::id_type root_comment;
 
-        uint128_t auction_window_weight = 0;
+        uint64_t auction_window_weight = 0;
         
         string root_title;
 
@@ -84,7 +86,7 @@ FC_REFLECT(
     (vote_rshares)(children_abs_rshares)(cashout_time)(max_cashout_time)(total_vote_weight)
     (reward_weight)(total_payout_value)(beneficiary_payout_value)(beneficiary_gests_payout_value)(curator_payout_value)(curator_gests_payout_value)
     (author_rewards)(author_gbg_payout_value)(author_golos_payout_value)(author_gests_payout_value)(net_votes)
-    (mode)(root_comment)(root_title)(max_accepted_payout)(percent_steem_dollars)(allow_replies)(allow_votes)
+    (mode)(auction_window_reward_destination)(auction_window_size)(root_comment)(root_title)(max_accepted_payout)(percent_steem_dollars)(allow_replies)(allow_votes)
     (allow_curation_rewards)(beneficiaries))
 
 #endif //GOLOS_COMMENT_API_OBJ_H

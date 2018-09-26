@@ -535,6 +535,12 @@ namespace golos { namespace chain {
                         "Cannot allocate more than 100% of rewards to a comment");
                 });
             }
+
+            void operator()( const comment_auction_window_reward_destination& cawrd ) const {
+                _db.modify(_c, [&](comment_object& c) {
+                    c.auction_window_reward_destination = cawrd.destination;
+                });
+            }
         };
 
         void comment_options_evaluator::do_apply(const comment_options_operation &o) {
@@ -701,6 +707,9 @@ namespace golos { namespace chain {
                         com.last_payout = fc::time_point_sec::min();
                         com.max_cashout_time = fc::time_point_sec::maximum();
                         com.reward_weight = reward_weight;
+
+                        const witness_schedule_object& wso = _db.get_witness_schedule_object();
+                        com.auction_window_size = wso.median_props.auction_window_size;
 
                         if (o.parent_author == STEEMIT_ROOT_POST_PARENT) {
                             com.parent_author = "";

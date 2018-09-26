@@ -2255,12 +2255,59 @@ namespace golos { namespace chain {
                 share_type unclaimed_rewards = max_rewards;
 
                 if (c.total_vote_weight > 0 && c.allow_curation_rewards) {
+
+                    uint32_t votes_after_auction_window_count = 0;
+                    uint32_t total_votes_count = 0;
+                    uint128_t additional_claim; //< Needed when auction window reward goes to curators
+
+                    // If auction window reward is chosen to go to curators,
+                    // then total_votes_count and votes_after_auction_window_count
+                    // should be calculated before calculating curation rewards
+
+                    if (has_hardfork(STEEMIT_HARDFORK_0_19__898) && 
+                        c.auction_window_reward_destination == protocol::to_curators
+                    ) {
+                        // separate votes
+                        const auto &cvlupdidx = get_index<comment_vote_index>().indices().get<by_vote_last_update>();
+
+
+                        auto itr = cvlupdidx.lower_bound(boost::make_tuple(0, c.created));
+                        // auto itr = cvlupdidx.begin();
+                        auto itr_after_auw = cvlupdidx.lower_bound( // auw -- auctcion window 
+                            boost::make_tuple(0, c.created + c.auction_window_size)
+                        );
+                        
+                        while (itr != itr_after_auw && itr->comment == c.id) {
+                            ++total_votes_count;
+                        }
+
+                        itr = itr_after_auw;
+                        
+                        // calculate count of votes after auction window,
+                        while (itr != cvlupdidx.end() && itr->comment == c.id) {
+                            ++total_votes_count;
+                            ++votes_after_auction_window_count;
+                        }
+
+                        additional_claim = (max_rewards.value * c.auction_window_weight) / total_weight;
+                        unclaimed_rewards -= additional_claim.to_uint64();
+                    }
+
                     const auto &cvidx = get_index<comment_vote_index>().indices().get<by_comment_weight_voter>();
                     auto itr = cvidx.lower_bound(c.id);
                     while (itr != cvidx.end() && itr->comment == c.id) {
                         uint128_t weight(itr->weight);
+
                         auto claim = ((max_rewards.value * weight) /
                                       total_weight).to_uint64();
+
+                        if (has_hardfork(STEEMIT_HARDFORK_0_19__898) && 
+                            c.auction_window_reward_destination == protocol::to_curators
+                        ) {
+                            claim += ((additional_claim * weight) /
+                                      total_weight).to_uint64();
+                        }
+
                         if (claim > 0) // min_amt is non-zero satoshis
                         {
                             unclaimed_rewards -= claim;
@@ -2287,9 +2334,15 @@ namespace golos { namespace chain {
 
                     unclaimed_rewards = 0;
                 }
-                else if (has_hardfork(STEEMIT_HARDFORK_0_19__898) && c.total_vote_weight > 0) {
+                // Case: auction window destination is reward fund
+                else if (has_hardfork(STEEMIT_HARDFORK_0_19__898) &&
+                        c.total_vote_weight > 0 && c.auction_window_reward_destination == protocol::to_reward_fund
+                    ) {
+
                     auto reward_fund_claim = (max_rewards.value * c.auction_window_weight) / total_weight;
                     unclaimed_rewards -= reward_fund_claim.to_uint64();
+                    // Add virtual operation
+                    push_virtual_operation(auction_window_reward_operation(asset(reward_fund_claim.to_uint64(), STEEM_SYMBOL), c.author, to_string(c.permlink)));
                     modify(get_dynamic_global_properties(), [&](dynamic_global_property_object &props) {
                         props.total_reward_fund_steem += asset(reward_fund_claim.to_uint64(), STEEM_SYMBOL);
                     });
