@@ -60,6 +60,8 @@ namespace golos { namespace protocol {
                 reset_account_operation,
                 set_reset_account_operation,
                 delegate_vesting_shares_operation,
+                delegate_vesting_shares_with_interest_operation,
+                reject_vesting_shares_delegation_operation,
                 account_create_with_delegation_operation,
                 account_metadata_operation,
                 proposal_create_operation,

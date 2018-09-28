@@ -2342,89 +2342,134 @@ namespace golos { namespace chain {
 */
         }
 
+void delegate_vesting_shares(database& _db, const chain_properties& median_props, const auto& op,
+        std::function<void(vesting_delegation_object& o)> add_fields_to_vdo) {
+    const auto& delegator = _db.get_account(op.delegator);
+    const auto& delegatee = _db.get_account(op.delegatee);
+    auto delegation = _db.find<vesting_delegation_object, by_delegation>(std::make_tuple(op.delegator, op.delegatee));
+
+    const auto v_share_price = _db.get_dynamic_global_properties().get_vesting_share_price();
+    auto min_delegation = median_props.min_delegation * v_share_price;
+    auto min_update = median_props.create_account_min_golos_fee * v_share_price;
+
+    auto now = _db.head_block_time();
+    auto delta = delegation ?
+        op.vesting_shares - delegation->vesting_shares :
+        op.vesting_shares;
+    auto increasing = delta.amount > 0;
+
+    GOLOS_CHECK_OP_PARAM(op, vesting_shares, {
+        GOLOS_CHECK_LOGIC((increasing ? delta : -delta) >= min_update,
+            logic_exception::delegation_difference_too_low,
+            "Delegation difference is not enough. min_update: ${min}", ("min", min_update));
+#ifdef STEEMIT_BUILD_TESTNET
+        // min_update depends on account_creation_fee, which can be 0 on testnet
+        GOLOS_CHECK_LOGIC(delta.amount != 0,
+            logic_exception::delegation_difference_too_low,
+            "Delegation difference can't be 0");
+#endif
+    });
+
+    if (increasing) {
+        auto delegated = delegator.delegated_vesting_shares;
+        GOLOS_CHECK_BALANCE(delegator, AVAILABLE_VESTING, delta);
+        auto elapsed_seconds = (now - delegator.last_vote_time).to_seconds();
+        auto regenerated_power = (STEEMIT_100_PERCENT * elapsed_seconds) / STEEMIT_VOTE_REGENERATION_SECONDS;
+        auto current_power = std::min<int64_t>(delegator.voting_power + regenerated_power, STEEMIT_100_PERCENT);
+        auto max_allowed = delegator.vesting_shares * current_power / STEEMIT_100_PERCENT;
+        GOLOS_CHECK_LOGIC(delegated + delta <= max_allowed,
+            logic_exception::delegation_limited_by_voting_power,
+            "Account allowed to delegate a maximum of ${v} with current voting power = ${p}",
+            ("v",max_allowed)("p",current_power)("delegated",delegated)("delta",delta));
+
+        if (!delegation) {
+            GOLOS_CHECK_OP_PARAM(op, vesting_shares, {
+                GOLOS_CHECK_LOGIC(op.vesting_shares >= min_delegation,
+                    logic_exception::cannot_delegate_below_minimum,
+                    "Account must delegate a minimum of ${v}",
+                    ("v",min_delegation)("vesting_shares",op.vesting_shares));
+            });
+            _db.create<vesting_delegation_object>([&](vesting_delegation_object& o) {
+                o.delegator = op.delegator;
+                o.delegatee = op.delegatee;
+                o.vesting_shares = op.vesting_shares;
+                o.min_delegation_time = now;
+                add_fields_to_vdo(o);
+            });
+        }
+        _db.modify(delegator, [&](account_object& a) {
+            a.delegated_vesting_shares += delta;
+        });
+    } else {
+        GOLOS_CHECK_OP_PARAM(op, vesting_shares, {
+            GOLOS_CHECK_LOGIC(op.vesting_shares.amount == 0 || op.vesting_shares >= min_delegation,
+                logic_exception::cannot_delegate_below_minimum,
+                "Delegation must be removed or leave minimum delegation amount of ${v}",
+                ("v",min_delegation)("vesting_shares",op.vesting_shares));
+        });
+        _db.create<vesting_delegation_expiration_object>([&](vesting_delegation_expiration_object& o) {
+            o.delegator = op.delegator;
+            o.vesting_shares = -delta;
+            o.expiration = std::max(now + STEEMIT_CASHOUT_WINDOW_SECONDS, delegation->min_delegation_time);
+        });
+    }
+
+    _db.modify(delegatee, [&](account_object& a) {
+        a.received_vesting_shares += delta;
+    });
+    if (delegation) {
+        if (op.vesting_shares.amount > 0) {
+            _db.modify(*delegation, [&](vesting_delegation_object& o) {
+                o.vesting_shares = op.vesting_shares;
+            });
+        } else {
+            _db.remove(*delegation);
+        }
+    }
+}
+
         void delegate_vesting_shares_evaluator::do_apply(const delegate_vesting_shares_operation& op) {
-            const auto& delegator = _db.get_account(op.delegator);
-            const auto& delegatee = _db.get_account(op.delegatee);
-            auto delegation = _db.find<vesting_delegation_object, by_delegation>(std::make_tuple(op.delegator, op.delegatee));
 
             const auto& median_props = _db.get_witness_schedule_object().median_props;
-            const auto v_share_price = _db.get_dynamic_global_properties().get_vesting_share_price();
-            auto min_delegation = median_props.min_delegation * v_share_price;
-            auto min_update = median_props.create_account_min_golos_fee * v_share_price;
 
-            auto now = _db.head_block_time();
-            auto delta = delegation ?
-                op.vesting_shares - delegation->vesting_shares :
-                op.vesting_shares;
-            auto increasing = delta.amount > 0;
+            auto add_fields_to_vdo = [&](vesting_delegation_object& o) {
 
-            GOLOS_CHECK_OP_PARAM(op, vesting_shares, {
-                GOLOS_CHECK_LOGIC((increasing ? delta : -delta) >= min_update,
-                    logic_exception::delegation_difference_too_low,
-                    "Delegation difference is not enough. min_update: ${min}", ("min", min_update));
-#ifdef STEEMIT_BUILD_TESTNET
-                // min_update depends on account_creation_fee, which can be 0 on testnet
-                GOLOS_CHECK_LOGIC(delta.amount != 0,
-                    logic_exception::delegation_difference_too_low,
-                    "Delegation difference can't be 0");
-#endif
-            });
+            };
+            delegate_vesting_shares(_db, median_props, op, add_fields_to_vdo);
+        }
 
-            if (increasing) {
-                auto delegated = delegator.delegated_vesting_shares;
-                GOLOS_CHECK_BALANCE(delegator, AVAILABLE_VESTING, delta);
-                auto elapsed_seconds = (now - delegator.last_vote_time).to_seconds();
-                auto regenerated_power = (STEEMIT_100_PERCENT * elapsed_seconds) / STEEMIT_VOTE_REGENERATION_SECONDS;
-                auto current_power = std::min<int64_t>(delegator.voting_power + regenerated_power, STEEMIT_100_PERCENT);
-                auto max_allowed = delegator.vesting_shares * current_power / STEEMIT_100_PERCENT;
-                GOLOS_CHECK_LOGIC(delegated + delta <= max_allowed,
-                    logic_exception::delegation_limited_by_voting_power,
-                    "Account allowed to delegate a maximum of ${v} with current voting power = ${p}",
-                    ("v",max_allowed)("p",current_power)("delegated",delegated)("delta",delta));
+        void delegate_vesting_shares_with_interest_evaluator::do_apply(const delegate_vesting_shares_with_interest_operation& op) {
+            ASSERT_REQ_HF(STEEMIT_HARDFORK_0_19__756, "delegate_vesting_shares_with_interest_operation");
 
-                if (!delegation) {
-                    GOLOS_CHECK_OP_PARAM(op, vesting_shares, {
-                        GOLOS_CHECK_LOGIC(op.vesting_shares >= min_delegation,
-                            logic_exception::cannot_delegate_below_minimum,
-                            "Account must delegate a minimum of ${v}",
-                            ("v",min_delegation)("vesting_shares",op.vesting_shares));
-                    });
-                    _db.create<vesting_delegation_object>([&](vesting_delegation_object& o) {
-                        o.delegator = op.delegator;
-                        o.delegatee = op.delegatee;
-                        o.vesting_shares = op.vesting_shares;
-                        o.min_delegation_time = now;
-                    });
-                }
-                _db.modify(delegator, [&](account_object& a) {
-                    a.delegated_vesting_shares += delta;
-                });
-            } else {
-                GOLOS_CHECK_OP_PARAM(op, vesting_shares, {
-                    GOLOS_CHECK_LOGIC(op.vesting_shares.amount == 0 || op.vesting_shares >= min_delegation,
-                        logic_exception::cannot_delegate_below_minimum,
-                        "Delegation must be removed or leave minimum delegation amount of ${v}",
-                        ("v",min_delegation)("vesting_shares",op.vesting_shares));
-                });
-                _db.create<vesting_delegation_expiration_object>([&](vesting_delegation_expiration_object& o) {
-                    o.delegator = op.delegator;
-                    o.vesting_shares = -delta;
-                    o.expiration = std::max(now + STEEMIT_CASHOUT_WINDOW_SECONDS, delegation->min_delegation_time);
-                });
+            const auto& median_props = _db.get_witness_schedule_object().median_props;
+
+            auto add_fields_to_vdo = [&](vesting_delegation_object& o) {
+                o.interest_rate = std::min(op.interest_rate, median_props.max_delegated_vesting_interest_rate);
+            };
+            delegate_vesting_shares(_db, median_props, op, add_fields_to_vdo);
+        }
+
+        void reject_vesting_shares_delegation_evaluator::do_apply(const reject_vesting_shares_delegation_operation& op) {
+            ASSERT_REQ_HF(STEEMIT_HARDFORK_0_19__756, "reject_vesting_shares_delegation_operation");
+
+            const auto& delegator = _db.get_account(op.delegator);
+            const auto& delegatee = _db.get_account(op.delegatee);
+
+            auto delegation = _db.find<vesting_delegation_object, by_delegation>(std::make_tuple(op.delegator, op.delegatee));
+
+            if (delegation == nullptr) {
+                GOLOS_THROW_MISSING_OBJECT("vesting_delegation_object", op.delegator);
             }
+
+            _db.modify(delegator, [&](account_object& a) {
+                a.delegated_vesting_shares -= delegation->vesting_shares;
+            });
 
             _db.modify(delegatee, [&](account_object& a) {
-                a.received_vesting_shares += delta;
+                a.received_vesting_shares -= delegation->vesting_shares;
             });
-            if (delegation) {
-                if (op.vesting_shares.amount > 0) {
-                    _db.modify(*delegation, [&](vesting_delegation_object& o) {
-                        o.vesting_shares = op.vesting_shares;
-                    });
-                } else {
-                    _db.remove(*delegation);
-                }
-            }
+
+            _db.remove(*delegation);
         }
 
         void break_free_referral_evaluator::do_apply(const break_free_referral_operation& op) {
