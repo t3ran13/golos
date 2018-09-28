@@ -2264,8 +2264,6 @@ namespace golos { namespace chain {
                 auto auw_time = c.created + c.auction_window_size;
 
                 if (c.total_vote_weight > 0 && c.allow_curation_rewards) {
-                    uint128_t additional_claim; //< Needed when auction window reward goes to curators
-
                     // If auction window reward is chosen to go to curators, we need to
                     // separated votes for 2 sets: 
                     // c.created     auction_window               cashout

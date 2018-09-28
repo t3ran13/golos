@@ -183,8 +183,69 @@ namespace golos { namespace api {
 
             if (d.allow_curation_rewards) {
                 if (d.total_vote_weight > 0) {
+
+                    uint128_t votes_in_auction_window_weight;
+                    uint128_t votes_after_auction_window_weight;
+
+                    share_type votes_in_auction_window_reward;
+                    share_type votes_after_auction_window_reward;
+                    share_type auction_window_reward;
+
+                    auto auw_time = d.created + d.auction_window_size;
+
+                    if (db.has_hardfork(STEEMIT_HARDFORK_0_19__898) && 
+                        d.auction_window_reward_destination == protocol::to_curators
+                    ) {
+                        // separate votes
+                        const auto &cvlupdidx = db.get_index<comment_vote_index>().indices().get<by_vote_last_update>();
+                        auto itr = cvlupdidx.lower_bound(boost::make_tuple(0, d.created));
+                        auto itr_after_auw = cvlupdidx.lower_bound( // auw -- auctcion window 
+                            boost::make_tuple(0, d.created + d.auction_window_size)
+                        );
+
+                        while (itr != itr_after_auw && itr->comment == d.id) {
+                            uint128_t weight(itr->weight);
+                            if (itr->last_update >= d.created &&
+                                itr->last_update < auw_time &&
+                                weight > 0
+                            ) {
+                                votes_in_auction_window_weight += weight;
+                            }
+                        }
+
+                        votes_after_auction_window_weight = total_weight - 
+                            votes_in_auction_window_weight - d.auction_window_weight;
+
+                        votes_in_auction_window_reward = ((max_rewards.value * votes_in_auction_window_weight) /
+                                      total_weight).to_uint64();
+
+                        auction_window_reward = ((max_rewards.value * d.auction_window_weight) /
+                                      total_weight).to_uint64();
+
+                        votes_after_auction_window_reward = ((max_rewards.value * votes_after_auction_window_weight) /
+                                      total_weight).to_uint64();
+                    }
+
+
                     const auto &cvidx = db.get_index<comment_vote_index>().indices().get<by_comment_weight_voter>();
                     for (auto itr = cvidx.lower_bound(d.id); itr != cvidx.end() && itr->comment == d.id; ++itr) {
+                        if (db.has_hardfork(STEEMIT_HARDFORK_0_19__898) && 
+                            d.auction_window_reward_destination == protocol::to_curators) {
+                            uint128_t weight(itr->weight);
+                            uint64_t claim;
+                            if (itr->last_update >= d.created && itr->last_update < auw_time) {
+                                claim = ((votes_in_auction_window_reward.value * weight) /
+                                          votes_in_auction_window_weight).to_uint64();
+                            }
+
+                            if (itr->last_update >= auw_time) {
+                                claim = ((votes_after_auction_window_reward.value * weight) /
+                                          votes_after_auction_window_weight).to_uint64();
+
+                                claim += ((auction_window_reward.value * weight) /
+                                          d.auction_window_weight).to_uint64();
+                            }
+                        }
                         auto claim = ((max_rewards.value * uint128_t(itr->weight)) / total_weight).to_uint64();
                         if (claim > 0) { // min_amt is non-zero satoshis
                             unclaimed_rewards -= claim;
@@ -193,7 +254,9 @@ namespace golos { namespace api {
                         }
                     }
 
-                    if (db.has_hardfork(STEEMIT_HARDFORK_0_19__898)) {
+                    if (db.has_hardfork(STEEMIT_HARDFORK_0_19__898) &&
+                        d.auction_window_reward_destination == protocol::to_reward_fund
+                    ) {
                         auto reward_fund_claim = ((max_rewards.value * d.auction_window_weight) / total_weight).to_uint64();
                         unclaimed_rewards -= reward_fund_claim;
                     }
