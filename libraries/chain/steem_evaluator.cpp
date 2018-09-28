@@ -537,9 +537,23 @@ namespace golos { namespace chain {
             }
 
             void operator()( const comment_auction_window_reward_destination& cawrd ) const {
-                _db.modify(_c, [&](comment_object& c) {
-                    c.auction_window_reward_destination = cawrd.destination;
-                });
+                if (_db.has_hardfork(STEEMIT_HARDFORK_0_19__898)) {
+                    GOLOS_CHECK_PARAM(cawrd.destination, {
+                        GOLOS_CHECK_VALUE(cawrd.destination == to_reward_fund || cawrd.destination == to_curators,
+                            "Auction window reward must go either to reward_fund or to curators."
+                        );
+                    });
+                    _db.modify(_c, [&](comment_object& c) {
+                        c.auction_window_reward_destination = cawrd.destination;
+                    });
+                }
+                else {
+                    GOLOS_CHECK_PARAM(cawrd.destination, {
+                        GOLOS_CHECK_VALUE(cawrd.destination == to_author,
+                            "There are no options for auction window reward destination yet."
+                        );
+                    });
+                }
             }
         };
 

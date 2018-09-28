@@ -40,7 +40,9 @@ namespace golos {
             archived
         };
 
+        using auc_win_destination = protocol::auction_window_reward_destination_type;
 
+        
         class comment_object
                 : public object<comment_object_type, comment_object> {
         public:
@@ -93,7 +95,7 @@ namespace golos {
 
             comment_mode mode = first_payout;
 
-            protocol::auction_window_reward_destination_type auction_window_reward_destination = protocol::destination_not_set;
+            auc_win_destination auction_window_reward_destination = protocol::to_reward_fund;
             uint32_t auction_window_size;
 
             asset max_accepted_payout = asset(1000000000, SBD_SYMBOL);       /// SBD value of the maximum payout this post will receive

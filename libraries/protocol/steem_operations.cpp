@@ -160,12 +160,11 @@ namespace golos { namespace protocol {
         }
 
         void comment_auction_window_reward_destination::validate() const {
-            // TODO: Figure out how to write it correct
-            // GOLOS_CHECK_PARAM(destination, {
-            //     GOLOS_CHECK_VALUE(destination == to_reward_fund || destination == to_curators,
-            //         "Auction window reward must go either to reward_fund or to curators"
-            //     );
-            // });
+            GOLOS_CHECK_PARAM(destination, {
+                GOLOS_CHECK_VALUE(destination == to_reward_fund || destination == to_curators,
+                    "Auction window reward must go either to reward_fund or to curators"
+                );
+            });
         }
 
         void comment_options_operation::validate() const {

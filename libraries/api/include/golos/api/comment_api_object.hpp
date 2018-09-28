@@ -9,6 +9,7 @@ namespace golos { namespace api {
 
     using namespace golos::chain;
     using namespace golos::protocol;
+    using auc_win_destination = protocol::auction_window_reward_destination_type;
 
     struct comment_api_object {
         comment_object::id_type id;
@@ -59,7 +60,7 @@ namespace golos { namespace api {
         int32_t net_votes = 0;
 
         comment_mode mode = not_set;
-        protocol::auction_window_reward_destination_type auction_window_reward_destination = protocol::destination_not_set;
+        auc_win_destination auction_window_reward_destination;
         uint32_t auction_window_size;
 
         comment_object::id_type root_comment;
