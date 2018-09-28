@@ -178,6 +178,7 @@ namespace golos { namespace chain {
             auto& vote_idx = db_.get_index<comment_vote_index>().indices().get<by_comment_weight_voter>();
             auto itr = vote_idx.lower_bound(comment_.id);
             auto total_weight = comment_.total_vote_weight;
+            const auto &vdo_idx = db_.get_index<vesting_delegation_index>().indices().get<by_received>();
 
             total_vote_rewards_ = 0;
             total_vote_payouts_ = asset(0, VESTS_SYMBOL);
@@ -185,6 +186,20 @@ namespace golos { namespace chain {
                 BOOST_REQUIRE(vote_payout_map_.find(itr->voter) == vote_payout_map_.end());
                 auto weight = u256(itr->weight);
                 int64_t reward = static_cast<int64_t>(weight * vote_rewards_fund_ / total_weight);
+
+                if (db_.has_hardfork(STEEMIT_HARDFORK_0_19__756)) {
+                    const auto& voter = db_.get(itr->voter);
+                    auto vdo_itr = vdo_idx.lower_bound(voter.name);
+                    for (; vdo_itr != vdo_idx.end() && vdo_itr->delegatee == voter.name; ++vdo_itr) {
+                         if (vdo_itr->interest_rate == 0) {
+                             continue;
+                         }
+
+                         auto delegator_reward = (reward * vdo_itr->interest_rate) / STEEMIT_100_PERCENT;
+
+                         reward -= delegator_reward;
+                    }
+                }
 
                 total_vote_rewards_ += reward;
                 BOOST_REQUIRE_LE(total_vote_rewards_, vote_rewards_fund_);

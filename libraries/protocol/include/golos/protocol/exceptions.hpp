@@ -280,7 +280,7 @@ namespace golos {
             // break_free_referral_operation
             no_right_to_break_referral,
 
-            // delegate_vesting_shares
+            // delegate vesting shares operations
             cannot_delegate_to_yourself,
             delegation_difference_too_low,
             delegation_limited_by_voting_power,

@@ -556,6 +556,18 @@ namespace mongo_db {
         return body;
     }
 
+    auto operation_writer::operator()(const delegate_vesting_shares_with_interest_operation& op) -> result_type {
+        result_type body;
+
+        return body;
+    }
+
+    auto operation_writer::operator()(const reject_vesting_shares_delegation_operation& op) -> result_type {
+        result_type body;
+
+        return body;
+    }
+
     auto operation_writer::operator()(const account_create_with_delegation_operation& op) -> result_type {
         result_type body;
 

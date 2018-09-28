@@ -1916,6 +1916,7 @@ namespace golos { namespace chain {
             calc_median(&chain_properties_19::max_referral_break_fee);
             calc_median_battery(&chain_properties_19::comments_window, &chain_properties_19::comments_per_window);
             calc_median_battery(&chain_properties_19::votes_window, &chain_properties_19::votes_per_window);
+            calc_median(&chain_properties_19::max_delegated_vesting_interest_rate);
 
             modify(wso, [&](witness_schedule_object &_wso) {
                 _wso.median_props = median_props;
@@ -2273,6 +2274,7 @@ namespace golos { namespace chain {
 
                 if (c.total_vote_weight > 0 && c.allow_curation_rewards) {
                     const auto &cvidx = get_index<comment_vote_index>().indices().get<by_comment_weight_voter>();
+                    const auto &vdo_idx = get_index<vesting_delegation_index>().indices().get<by_received>();
                     auto itr = cvidx.lower_bound(c.id);
                     while (itr != cvidx.end() && itr->comment == c.id) {
                         uint128_t weight(itr->weight);
@@ -2283,6 +2285,23 @@ namespace golos { namespace chain {
                             unclaimed_rewards -= claim;
 
                             const auto &voter = get(itr->voter);
+
+                            if (has_hardfork(STEEMIT_HARDFORK_0_19__756)) {
+                                auto vdo_itr = vdo_idx.lower_bound(voter.name);
+                                for (; vdo_itr != vdo_idx.end() && vdo_itr->delegatee == voter.name; ++vdo_itr) {
+                                    if (vdo_itr->interest_rate == 0) {
+                                        continue;
+                                    }
+
+                                    auto delegator_claim = (claim * vdo_itr->interest_rate) / STEEMIT_100_PERCENT;
+
+                                    const auto& delegator = get_account(vdo_itr->delegator);
+                                    create_vesting(delegator, asset(delegator_claim, STEEM_SYMBOL));
+
+                                    claim -= delegator_claim;
+                                }
+                            }
+
                             auto reward = create_vesting(voter, asset(claim, STEEM_SYMBOL));
 
                             push_virtual_operation(curation_reward_operation(voter.name, reward, c.author, to_string(c.permlink)));
@@ -2951,6 +2970,8 @@ namespace golos { namespace chain {
             _my->_evaluator_registry.register_evaluator<set_reset_account_evaluator>();
             _my->_evaluator_registry.register_evaluator<account_create_with_delegation_evaluator>();
             _my->_evaluator_registry.register_evaluator<delegate_vesting_shares_evaluator>();
+            _my->_evaluator_registry.register_evaluator<delegate_vesting_shares_with_interest_evaluator>();
+            _my->_evaluator_registry.register_evaluator<reject_vesting_shares_delegation_evaluator>();
             _my->_evaluator_registry.register_evaluator<proposal_create_evaluator>();
             _my->_evaluator_registry.register_evaluator<proposal_update_evaluator>();
             _my->_evaluator_registry.register_evaluator<proposal_delete_evaluator>();

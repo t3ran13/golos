@@ -558,6 +558,11 @@ namespace golos { namespace protocol {
              */
             uint32_t auction_window_size = STEEMIT_REVERSE_AUCTION_WINDOW_SECONDS;
 
+            /**
+             * Maximum interest rate for delegated vesting shares
+             */
+            uint16_t max_delegated_vesting_interest_rate = STEEMIT_DEFAULT_DELEGATED_VESTING_INTEREST_RATE;
+
             void validate() const;
 
             chain_properties_19& operator=(const chain_properties_17& src) {
@@ -1197,6 +1202,32 @@ namespace golos { namespace protocol {
             }
         };
 
+        class delegate_vesting_shares_with_interest_operation : public base_operation {
+        public:
+            account_name_type delegator;    ///< The account delegating vesting shares
+            account_name_type delegatee;    ///< The account receiving vesting shares
+            asset vesting_shares;           ///< The amount of vesting shares delegated
+            uint16_t interest_rate = STEEMIT_MAX_DELEGATED_VESTING_INTEREST_RATE; ///< The interest rate wanted by delegator
+            extensions_type extensions;     ///< Extensions. Not currently used.
+
+            void validate() const;
+            void get_required_active_authorities(flat_set<account_name_type>& a) const {
+                a.insert(delegator);
+            }
+        };
+
+        class reject_vesting_shares_delegation_operation : public base_operation {
+        public:
+            account_name_type delegator;    ///< The account delegating vesting shares
+
+            account_name_type delegatee;    ///< The account receiving vesting shares
+
+            void validate() const;
+            void get_required_active_authorities(flat_set<account_name_type>& a) const {
+                a.insert(delegatee);
+            }
+        };
+
         class break_free_referral_operation : public base_operation {
         public:
             account_name_type referral;
@@ -1237,7 +1268,8 @@ FC_REFLECT_DERIVED(
 FC_REFLECT_DERIVED(
     (golos::protocol::chain_properties_19), ((golos::protocol::chain_properties_18)),
     (max_referral_interest_rate)(max_referral_term_sec)(max_referral_break_fee)
-    (comments_window)(comments_per_window)(votes_window)(votes_per_window)(auction_window_size))
+    (comments_window)(comments_per_window)(votes_window)(votes_per_window)(auction_window_size)
+    (max_delegated_vesting_interest_rate))
 
 FC_REFLECT_TYPENAME((golos::protocol::versioned_chain_properties))
 
@@ -1304,5 +1336,7 @@ FC_REFLECT((golos::protocol::recover_account_operation), (account_to_recover)(ne
 FC_REFLECT((golos::protocol::change_recovery_account_operation), (account_to_recover)(new_recovery_account)(extensions));
 FC_REFLECT((golos::protocol::decline_voting_rights_operation), (account)(decline));
 FC_REFLECT((golos::protocol::delegate_vesting_shares_operation), (delegator)(delegatee)(vesting_shares));
+FC_REFLECT((golos::protocol::delegate_vesting_shares_with_interest_operation), (delegator)(delegatee)(vesting_shares)(interest_rate)(extensions));
+FC_REFLECT((golos::protocol::reject_vesting_shares_delegation_operation), (delegator)(delegatee));
 FC_REFLECT((golos::protocol::chain_properties_update_operation), (owner)(props));
 FC_REFLECT((golos::protocol::break_free_referral_operation), (referral)(extensions));
