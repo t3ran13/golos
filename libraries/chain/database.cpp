@@ -2252,7 +2252,6 @@ namespace golos { namespace chain {
             try {
                 uint128_t total_weight(c.total_vote_weight);
                 //edump( (total_weight)(max_rewards) );
-                uint128_t votes_in_auction_window_weight;
                 uint128_t votes_after_auction_window_weight;
                 
                 share_type unclaimed_rewards = max_rewards;
@@ -2281,27 +2280,12 @@ namespace golos { namespace chain {
                     if (has_hardfork(STEEMIT_HARDFORK_0_19__898) && 
                         c.auction_window_reward_destination == protocol::to_curators
                     ) {
-                        // separate votes
-                        const auto &cvlupdidx = get_index<comment_vote_index>().indices().get<by_vote_last_update>();
-                        auto itr = cvlupdidx.lower_bound(boost::make_tuple(0, c.created));
-                        auto itr_after_auw = cvlupdidx.lower_bound( // auw -- auctcion window 
-                            boost::make_tuple(0, c.created + c.auction_window_size)
-                        );
 
-                        while (itr != itr_after_auw && itr->comment == c.id) {
-                            uint128_t weight(itr->weight);
-                            if (itr->last_update >= c.created &&
-                                itr->last_update < auw_time &&
-                                weight > 0
-                            ) {
-                                votes_in_auction_window_weight += weight;
-                            }
-                        }
 
                         votes_after_auction_window_weight = total_weight - 
-                            votes_in_auction_window_weight - c.auction_window_weight;
+                            c.votes_in_auction_window_weight - c.auction_window_weight;
 
-                        votes_in_auction_window_reward = ((max_rewards.value * votes_in_auction_window_weight) /
+                        votes_in_auction_window_reward = ((max_rewards.value * c.votes_in_auction_window_weight) /
                                       total_weight).to_uint64();
 
                         auction_window_reward = ((max_rewards.value * c.auction_window_weight) /
@@ -2322,7 +2306,7 @@ namespace golos { namespace chain {
                             c.auction_window_reward_destination == protocol::to_curators) {
                             if (itr->last_update >= c.created && itr->last_update < auw_time) {
                                 claim = ((votes_in_auction_window_reward.value * weight) /
-                                          votes_in_auction_window_weight).to_uint64();
+                                          c.votes_in_auction_window_weight).to_uint64();
                             }
 
                             if (itr->last_update >= auw_time) {
@@ -2368,6 +2352,8 @@ namespace golos { namespace chain {
                 // Case: auction window destination is reward fund
                 else if (has_hardfork(STEEMIT_HARDFORK_0_19__898) &&
                         c.total_vote_weight > 0 && c.auction_window_reward_destination == protocol::to_reward_fund
+                        || // Also in case when there are no votes after end of auction window,
+                        votes_after_auction_window_weight == 0 // tokens must go to reward fund
                     ) {
 
                     auto reward_fund_claim = (max_rewards.value * c.auction_window_weight) / total_weight;

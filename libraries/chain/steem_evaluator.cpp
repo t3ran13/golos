@@ -1550,7 +1550,9 @@ namespace golos { namespace chain {
                                 if (_db.has_hardfork(STEEMIT_HARDFORK_0_19__898)) {
                                     _db.modify(comment, [&](comment_object &o) {
                                         o.auction_window_weight += max_vote_weight - w.to_uint64();
+                                        o.votes_in_auction_window_weight += w.to_uint64();
                                     });
+
                                 }
 
                             }

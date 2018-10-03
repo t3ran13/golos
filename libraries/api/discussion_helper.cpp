@@ -233,7 +233,7 @@ namespace golos { namespace api {
                             d.auction_window_reward_destination == protocol::to_curators) {
                             uint128_t weight(itr->weight);
                             uint64_t claim;
-                            if (itr->last_update >= d.created && itr->last_update < auw_time) {
+                            if (itr->last_update < auw_time) {
                                 claim = ((votes_in_auction_window_reward.value * weight) /
                                           votes_in_auction_window_weight).to_uint64();
                             }
@@ -256,6 +256,8 @@ namespace golos { namespace api {
 
                     if (db.has_hardfork(STEEMIT_HARDFORK_0_19__898) &&
                         d.auction_window_reward_destination == protocol::to_reward_fund
+                        || // Also in case when there are no votes after end of auction window,
+                        votes_after_auction_window_weight == 0 // tokens must go to reward fund
                     ) {
                         auto reward_fund_claim = ((max_rewards.value * d.auction_window_weight) / total_weight).to_uint64();
                         unclaimed_rewards -= reward_fund_claim;
