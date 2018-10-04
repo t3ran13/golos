@@ -2332,7 +2332,9 @@ namespace golos { namespace chain {
                                         continue;
                                     }
 
-                                    auto delegator_claim = (claim * vdo_itr->interest_rate) / STEEMIT_100_PERCENT;
+                                    auto delegator_claim = claim / (voter.effective_vesting_shares().amount.value / vdo_itr->vesting_shares.amount.value);
+
+                                    delegator_claim = (delegator_claim * vdo_itr->interest_rate) / STEEMIT_100_PERCENT;
 
                                     const auto& delegator = get_account(vdo_itr->delegator);
                                     create_delegated_vesting(delegator, asset(delegator_claim, STEEM_SYMBOL));

@@ -195,7 +195,9 @@ namespace golos { namespace chain {
                              continue;
                          }
 
-                         auto delegator_reward = (reward * vdo_itr->interest_rate) / STEEMIT_100_PERCENT;
+                         auto delegator_reward = reward / (voter.effective_vesting_shares().amount.value / vdo_itr->vesting_shares.amount.value);
+
+                         delegator_reward = (delegator_reward * vdo_itr->interest_rate) / STEEMIT_100_PERCENT;
 
                          reward -= delegator_reward;
                     }
