@@ -1202,6 +1202,18 @@ namespace golos { namespace protocol {
             }
         };
 
+        class break_free_referral_operation : public base_operation {
+        public:
+            account_name_type referral;
+
+            extensions_type extensions;             ///< Extensions. Not currently used.
+
+            void validate() const;
+            void get_required_active_authorities(flat_set<account_name_type>& a) const {
+                a.insert(referral);
+            }
+        };
+
         class delegate_vesting_shares_with_interest_operation : public base_operation {
         public:
             account_name_type delegator;    ///< The account delegating vesting shares
@@ -1225,18 +1237,6 @@ namespace golos { namespace protocol {
             void validate() const;
             void get_required_active_authorities(flat_set<account_name_type>& a) const {
                 a.insert(delegatee);
-            }
-        };
-
-        class break_free_referral_operation : public base_operation {
-        public:
-            account_name_type referral;
-
-            extensions_type extensions;             ///< Extensions. Not currently used.
-
-            void validate() const;
-            void get_required_active_authorities(flat_set<account_name_type>& a) const {
-                a.insert(referral);
             }
         };
 } } // golos::protocol
@@ -1336,7 +1336,7 @@ FC_REFLECT((golos::protocol::recover_account_operation), (account_to_recover)(ne
 FC_REFLECT((golos::protocol::change_recovery_account_operation), (account_to_recover)(new_recovery_account)(extensions));
 FC_REFLECT((golos::protocol::decline_voting_rights_operation), (account)(decline));
 FC_REFLECT((golos::protocol::delegate_vesting_shares_operation), (delegator)(delegatee)(vesting_shares));
-FC_REFLECT((golos::protocol::delegate_vesting_shares_with_interest_operation), (delegator)(delegatee)(vesting_shares)(interest_rate)(extensions));
-FC_REFLECT((golos::protocol::reject_vesting_shares_delegation_operation), (delegator)(delegatee));
 FC_REFLECT((golos::protocol::chain_properties_update_operation), (owner)(props));
 FC_REFLECT((golos::protocol::break_free_referral_operation), (referral)(extensions));
+FC_REFLECT((golos::protocol::delegate_vesting_shares_with_interest_operation), (delegator)(delegatee)(vesting_shares)(interest_rate)(extensions));
+FC_REFLECT((golos::protocol::reject_vesting_shares_delegation_operation), (delegator)(delegatee));

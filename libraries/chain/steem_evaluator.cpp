@@ -2438,6 +2438,28 @@ void delegate_vesting_shares(database& _db, const chain_properties& median_props
             delegate_vesting_shares(_db, median_props, op, add_fields_to_vdo);
         }
 
+        void break_free_referral_evaluator::do_apply(const break_free_referral_operation& op) {
+            ASSERT_REQ_HF(STEEMIT_HARDFORK_0_19__295, "break_free_referral_operation");
+
+            const auto& referral = _db.get_account(op.referral);
+            const auto& referrer = _db.get_account(referral.referrer_account);
+
+            GOLOS_CHECK_LOGIC(referral.referral_break_fee.amount != 0,
+                logic_exception::no_right_to_break_referral,
+                "This referral account has no right to break referral");
+
+            GOLOS_CHECK_BALANCE(referral, MAIN_BALANCE, referral.referral_break_fee);
+            _db.adjust_balance(referral, -referral.referral_break_fee);
+            _db.adjust_balance(referrer, referral.referral_break_fee);
+
+            _db.modify(referral, [&](account_object& a) {
+                a.referrer_account = account_name_type();
+                a.referrer_interest_rate = 0;
+                a.referral_end_date = time_point_sec::min();
+                a.referral_break_fee.amount = 0;
+            });
+        }
+
         void delegate_vesting_shares_with_interest_evaluator::do_apply(const delegate_vesting_shares_with_interest_operation& op) {
             ASSERT_REQ_HF(STEEMIT_HARDFORK_0_19__756, "delegate_vesting_shares_with_interest_operation");
 
@@ -2470,28 +2492,6 @@ void delegate_vesting_shares(database& _db, const chain_properties& median_props
             });
 
             _db.remove(*delegation);
-        }
-
-        void break_free_referral_evaluator::do_apply(const break_free_referral_operation& op) {
-            ASSERT_REQ_HF(STEEMIT_HARDFORK_0_19__295, "break_free_referral_operation");
-
-            const auto& referral = _db.get_account(op.referral);
-            const auto& referrer = _db.get_account(referral.referrer_account);
-
-            GOLOS_CHECK_LOGIC(referral.referral_break_fee.amount != 0,
-                logic_exception::no_right_to_break_referral,
-                "This referral account has no right to break referral");
-
-            GOLOS_CHECK_BALANCE(referral, MAIN_BALANCE, referral.referral_break_fee);
-            _db.adjust_balance(referral, -referral.referral_break_fee);
-            _db.adjust_balance(referrer, referral.referral_break_fee);
-
-            _db.modify(referral, [&](account_object& a) {
-                a.referrer_account = account_name_type();
-                a.referrer_interest_rate = 0;
-                a.referral_end_date = time_point_sec::min();
-                a.referral_break_fee.amount = 0;
-            });
         }
 
 } } // golos::chain
