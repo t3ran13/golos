@@ -380,6 +380,8 @@ namespace golos { namespace chain {
 
             asset create_vesting(const account_object &to_account, asset steem);
 
+            asset create_delegated_vesting(const account_object& to_account, asset steem);
+
             void update_witness_schedule();
 
             void adjust_liquidity_reward(const account_object &owner, const asset &volume, bool is_bid);

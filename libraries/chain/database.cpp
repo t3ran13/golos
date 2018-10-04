@@ -1451,6 +1451,45 @@ namespace golos { namespace chain {
             FC_CAPTURE_AND_RETHROW((to_account.name)(steem))
         }
 
+        /**
+         * @param to_account - the account to receive the new delegated vesting shares
+         * @param STEEM - STEEM to be converted to vesting shares
+         */
+        asset database::create_delegated_vesting(const account_object& to_account, asset steem) {
+            try {
+                const auto& cprops = get_dynamic_global_properties();
+
+                /**
+                 *  The ratio of total_vesting_shares / total_vesting_fund_steem should not
+                 *  change as the result of the user adding funds
+                 *
+                 *  V / C = (V+Vn) / (C+Cn)
+                 *
+                 *  Simplifies to Vn = (V * Cn ) / C
+                 *
+                 *  If Cn equals o.amount, then we must solve for Vn to know how many new vesting shares
+                 *  the user should receive.
+                 *
+                 *  128 bit math is requred due to multiplying of 64 bit numbers. This is done in asset and price.
+                 */
+                asset new_vesting = steem * cprops.get_vesting_share_price();
+
+                modify(to_account, [&](account_object& to) {
+                    to.delegated_vesting_shares += new_vesting;
+                });
+
+                modify(cprops, [&](dynamic_global_property_object& props) {
+                    props.total_vesting_fund_steem += steem;
+                    props.total_vesting_shares += new_vesting;
+                });
+
+                adjust_proxied_witness_votes(to_account, new_vesting.amount);
+
+                return new_vesting;
+            }
+            FC_CAPTURE_AND_RETHROW((to_account.name)(steem))
+        }
+
         fc::sha256 database::get_pow_target() const {
             const auto &dgp = get_dynamic_global_properties();
             fc::sha256 target;
@@ -2286,7 +2325,7 @@ namespace golos { namespace chain {
 
                             const auto &voter = get(itr->voter);
 
-                            if (has_hardfork(STEEMIT_HARDFORK_0_19__756)) {
+                            if (has_hardfork(STEEMIT_HARDFORK_0_19__756) && voter.received_vesting_shares > asset(0, VESTS_SYMBOL)) {
                                 auto vdo_itr = vdo_idx.lower_bound(voter.name);
                                 for (; vdo_itr != vdo_idx.end() && vdo_itr->delegatee == voter.name; ++vdo_itr) {
                                     if (vdo_itr->interest_rate == 0) {
@@ -2296,7 +2335,7 @@ namespace golos { namespace chain {
                                     auto delegator_claim = (claim * vdo_itr->interest_rate) / STEEMIT_100_PERCENT;
 
                                     const auto& delegator = get_account(vdo_itr->delegator);
-                                    create_vesting(delegator, asset(delegator_claim, STEEM_SYMBOL));
+                                    create_delegated_vesting(delegator, asset(delegator_claim, STEEM_SYMBOL));
 
                                     claim -= delegator_claim;
                                 }
