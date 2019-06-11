@@ -4,7 +4,7 @@
 #include <golos/chain/steem_objects.hpp>
 #include <golos/chain/account_object.hpp>
 #include <golos/chain/comment_object.hpp>
-#include <golos/plugins/follow/follow_objects.hpp>
+#include "../follow/include/golos/plugins/follow/follow_objects.hpp"
 #include <boost/filesystem/fstream.hpp>
 #include <fc/crypto/sha256.hpp>
 
@@ -294,20 +294,25 @@ void plugin::serialize_state(const bfs::path& output) {
         // custom_pack::_current_str_type = custom_pack::other;
         // STORE(proposal_index);                       // not supported
         // STORE(required_approval_index);              // not supported
-        auto reputation_flag = output;
-        reputation_flag += ".reputation";
-        if (db_.has_index<golos::plugins::follow::reputation_index>()) {
-            bfs::ofstream(reputation_flag);
-            serialize_table<golos::plugins::follow::reputation_index>(db_, out, _serialize_reputation_type, [](auto& h, auto& i){}, [](const auto& i){return true;});
-        } else {
-            bfs::remove(reputation_flag);
-        }
+
+        // if adding new objects, do not forgot update type ids in optional state parts
 #undef STORE
 
         auto end = fc::time_point::now();
         wlog("Done in ${t} sec.", ("t", double((end - start).count()) / 1000000.0));
         wlog("Data SHA256 hash: ${h}", ("h", out.hash().str()));
         out.close();
+
+        auto rep_file = output;
+        rep_file += ".reputation";
+        if (db_.has_index<golos::plugins::follow::reputation_index>()) {
+            ofstream_sha256 rep_out(rep_file);
+            serialize_table<golos::plugins::follow::reputation_index>(db_, rep_out, required_approval_object_type+1, [](auto& h, auto& i){}, [](const auto& i){return true;});
+            wlog("Reputation SHA256 hash: ${h}", ("h", rep_out.hash().str()));
+            rep_out.close();
+        } else {
+            bfs::remove(rep_file);
+        }
 
         auto map_file = output;
         map_file += ".map";
