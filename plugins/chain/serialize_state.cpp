@@ -4,6 +4,7 @@
 #include <golos/chain/steem_objects.hpp>
 #include <golos/chain/account_object.hpp>
 #include <golos/chain/comment_object.hpp>
+#include <golos/plugins/follow/follow_objects.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include <fc/crypto/sha256.hpp>
 
@@ -184,7 +185,7 @@ struct table_header {
 };
 
 template<typename Idx, typename Lambda1, typename Lambda2>
-void serialize_table(const database& db, ofstream_sha256& out, Lambda1&& fix_hdr, Lambda2&& check_item) {
+void serialize_table(const database& db, ofstream_sha256& out, uint32_t type_id, Lambda1&& fix_hdr, Lambda2&& check_item) {
     auto start = fc::time_point::now();
     size_t n = 0, l = 0;
     uint32_t min = -1, max = 0;
@@ -192,7 +193,10 @@ void serialize_table(const database& db, ofstream_sha256& out, Lambda1&& fix_hdr
     const auto& generic = db.get_index<Idx>();
     const auto& indices = generic.indicies();
     const auto& idx = indices.template get<by_id>();
-    table_header hdr({chainbase::generic_index<Idx>::value_type::type_id, static_cast<uint32_t>(indices.size())});
+    if (type_id == 0) {
+        type_id = chainbase::generic_index<Idx>::value_type::type_id;
+    }
+    table_header hdr({type_id, static_cast<uint32_t>(indices.size())});
     fix_hdr(hdr, idx);
     wlog("Saving ${name}, ${n} record(s), type: ${t}",
         ("name", generic.name())("n", hdr.records_count)("t", hdr.type_id));
@@ -219,7 +223,7 @@ void serialize_table(const database& db, ofstream_sha256& out, Lambda1&& fix_hdr
 }
 
 void serialize_vote_table(const database& db, ofstream_sha256& out) {
-    serialize_table<comment_vote_index>(db, out, [](auto& hdr, auto& idx) {
+    serialize_table<comment_vote_index>(db, out, 0, [](auto& hdr, auto& idx) {
         auto itr = idx.begin();
         auto etr = idx.end();
         int bad = 0;
@@ -257,7 +261,7 @@ void plugin::serialize_state(const bfs::path& output) {
         out.write(hdr);
         ilog("---------------------------------------------------------------------------");
 
-#define STORE(T) serialize_table<T>(db_, out, [](auto& h, auto& i){}, [](const auto& i){return true;});
+#define STORE(T) serialize_table<T>(db_, out, 0, [](auto& h, auto& i){}, [](const auto& i){return true;});
         STORE(account_index);
         STORE(account_authority_index);
         STORE(account_bandwidth_index);
@@ -290,6 +294,14 @@ void plugin::serialize_state(const bfs::path& output) {
         // custom_pack::_current_str_type = custom_pack::other;
         // STORE(proposal_index);                       // not supported
         // STORE(required_approval_index);              // not supported
+        auto reputation_flag = output;
+        reputation_flag += ".reputation";
+        if (db_.has_index<golos::plugins::follow::reputation_index>()) {
+            bfs::ofstream(reputation_flag);
+            serialize_table<golos::plugins::follow::reputation_index>(db_, out, _serialize_reputation_type, [](auto& h, auto& i){}, [](const auto& i){return true;});
+        } else {
+            bfs::remove(reputation_flag);
+        }
 #undef STORE
 
         auto end = fc::time_point::now();

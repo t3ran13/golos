@@ -31,6 +31,7 @@ target_link_libraries(
         fc
         appbase
         golos::json_rpc
+        golos::follow
 )
 target_include_directories(golos_${CURRENT_TARGET}
                            PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_SOURCE_DIR}/../../")

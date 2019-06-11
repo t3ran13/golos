@@ -70,7 +70,9 @@ namespace golos { namespace chain {
             vesting_delegation_expiration_object_type,
             account_metadata_object_type,
             proposal_object_type,
-            required_approval_object_type
+            required_approval_object_type,
+            // serialize state
+            _serialize_reputation_type
         };
 
         class dynamic_global_property_object;
@@ -233,6 +235,7 @@ FC_REFLECT_ENUM(golos::chain::object_type,
                 (account_metadata_object_type)
                 (proposal_object_type)
                 (required_approval_object_type)
+                (_serialize_reputation_type)
 )
 
 FC_REFLECT_TYPENAME((golos::chain::shared_string))
