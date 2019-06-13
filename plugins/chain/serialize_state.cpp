@@ -307,6 +307,7 @@ void plugin::serialize_state(const bfs::path& output) {
         rep_file += ".reputation";
         if (db_.has_index<golos::plugins::follow::reputation_index>()) {
             ofstream_sha256 rep_out(rep_file);
+            rep_out.write(hdr);
             serialize_table<golos::plugins::follow::reputation_index>(db_, rep_out, required_approval_object_type+1, [](auto& h, auto& i){}, [](const auto& i){return true;});
             wlog("Reputation SHA256 hash: ${h}", ("h", rep_out.hash().str()));
             rep_out.close();
