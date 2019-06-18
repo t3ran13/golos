@@ -122,9 +122,13 @@ public:
         fc::raw::pack(b, _block.timestamp);
     }
 
-    // Not logs if operation failed in plugin, but logs if plugin not exists
+    // Not logs if operation failed in plugin or if plugin not exists and cannot check operation
     auto operator()(const custom_json_operation& op) -> result_type {
         if (op.id != "follow") { // follows, reblogs, delete_reblogs
+            return;
+        }
+
+        if (!_db.has_index<follow_index>()) {
             return;
         }
 
@@ -153,6 +157,10 @@ public:
     }
 
     auto operator()(const follow_operation& op) -> result_type {
+        if (!_db.find_account(op.follower) || !_db.find_account(op.following)) {
+            return;
+        }
+
         auto& b = write_op_header("follows", std::string(op.follower) + "/" + op.following);
 
         fc::raw::pack(b, op.follower);
