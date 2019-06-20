@@ -184,8 +184,11 @@ struct table_header {
     uint32_t records_count;
 };
 
-template<typename Idx, typename Lambda1, typename Lambda2>
-void serialize_table(const database& db, ofstream_sha256& out, uint32_t type_id, Lambda1&& fix_hdr, Lambda2&& check_item) {
+using remap_t = fc::flat_map<int64_t,int64_t>;
+template<typename Idx, typename LFix, typename LChk, typename LMap>
+void serialize_table(
+    const database& db, ofstream_sha256& out, LFix&& fix_hdr, LChk&& check_item, LMap&& remap, remap_t* outmap = nullptr
+) {
     auto start = fc::time_point::now();
     size_t n = 0, l = 0;
     uint32_t min = -1, max = 0;
@@ -193,21 +196,25 @@ void serialize_table(const database& db, ofstream_sha256& out, uint32_t type_id,
     const auto& generic = db.get_index<Idx>();
     const auto& indices = generic.indicies();
     const auto& idx = indices.template get<by_id>();
-    if (type_id == 0) {
-        type_id = chainbase::generic_index<Idx>::value_type::type_id;
-    }
+    auto type_id = chainbase::generic_index<Idx>::value_type::type_id;
     table_header hdr({type_id, static_cast<uint32_t>(indices.size())});
     fix_hdr(hdr, idx);
     wlog("Saving ${name}, ${n} record(s), type: ${t}",
         ("name", generic.name())("n", hdr.records_count)("t", hdr.type_id));
     out.write(hdr);
 
+    int64_t id = 0;
     auto itr = idx.begin();
     auto etr = idx.end();
     for (; itr != etr; itr++) {
-        auto& item = *itr;
+        auto item = *itr;
         if (!check_item(item))
             continue;
+        if (outmap != nullptr && id != item.id) {
+            outmap->emplace(item.id._id, id);
+        }
+        item.id = id++;
+        remap(item);
         auto data = fc::raw::pack(item);
         auto sz = data.size();
         if (sz < min) min = sz;
@@ -222,8 +229,9 @@ void serialize_table(const database& db, ofstream_sha256& out, uint32_t type_id,
         ("t", double((end - start).count()) / 1000000.0));
 }
 
-void serialize_vote_table(const database& db, ofstream_sha256& out) {
-    serialize_table<comment_vote_index>(db, out, 0, [](auto& hdr, auto& idx) {
+template<typename L>
+void serialize_vote_table(const database& db, ofstream_sha256& out, L&& remap) {
+    serialize_table<comment_vote_index>(db, out, [](auto& hdr, auto& idx) {
         auto itr = idx.begin();
         auto etr = idx.end();
         int bad = 0;
@@ -236,12 +244,12 @@ void serialize_vote_table(const database& db, ofstream_sha256& out) {
         hdr.records_count -= bad;
     }, [](const auto& item) {
         return item.num_changes >= 0;
-    });
+    }, remap);
 }
 
 
 void plugin::serialize_state(const bfs::path& output) {
-    // can't throw here, because if will be false-detected as db opening error, which can kill state
+    // can't throw here, because it will be false-detected as db opening error, which can kill state
     try {
         ofstream_sha256 out(output);
         auto start = fc::time_point::now();
@@ -261,42 +269,46 @@ void plugin::serialize_state(const bfs::path& output) {
         out.write(hdr);
         ilog("---------------------------------------------------------------------------");
 
-#define STORE(T) serialize_table<T>(db_, out, 0, [](auto& h, auto& i){}, [](const auto& i){return true;});
-        STORE(account_index);
+#define STORE_REMAP(T,R,...) \
+    serialize_table<T>(db_, out, [](auto& h, auto& i){}, [](const auto& i){return true;}, R, ##__VA_ARGS__);
+#define STORE(T,...) STORE_REMAP(T, [](auto& x){}, ##__VA_ARGS__)
+#define REMAP_ID(F, M) { auto v = x.F._id; if (M.count(v)) x.F = M[v]; }
+#define REMAP_LAMBDA1(FIELD, MAP)   [&](auto& x) { REMAP_ID(FIELD, MAP); }
+#define REMAP_LAMBDA2(F1,M1, F2,M2) [&](auto& x) { REMAP_ID(F1, M1); REMAP_ID(F2, M2); }
+
+        remap_t account_ids;
+        remap_t post_ids;
+        remap_t witness_ids;
+        STORE(account_index, &account_ids);
         STORE(account_authority_index);
         STORE(account_bandwidth_index);
         STORE(dynamic_global_property_index);
-        STORE(witness_index);
+        STORE(witness_index, &witness_ids);
         // STORE(transaction_index);                    // not needed
         // STORE(block_summary_index);                  // not needed
         STORE(witness_schedule_index);
         custom_pack::_current_str_type = custom_pack::permlink;
-        STORE(comment_index);
-        serialize_vote_table(db_, out);
+        STORE_REMAP(comment_index, REMAP_LAMBDA1(root_comment, post_ids), &post_ids);
+        serialize_vote_table(db_, out, REMAP_LAMBDA2(voter, account_ids, comment, post_ids));
         custom_pack::_current_str_type = custom_pack::other;
-        STORE(witness_vote_index);
+        STORE_REMAP(witness_vote_index, REMAP_LAMBDA2(witness, witness_ids, account, account_ids));
         STORE(limit_order_index);
         // STORE(feed_history_index);                   // not needed
         STORE(convert_request_index);
-        // STORE(liquidity_reward_balance_index);       // not supported
+        // STORE(liquidity_reward_balance_index);       // not supported    !map account_id_type owner;
         // STORE(hardfork_property_index);
-        STORE(withdraw_vesting_route_index);
+        STORE_REMAP(withdraw_vesting_route_index, REMAP_LAMBDA2(from_account, account_ids, to_account, account_ids));
         // STORE(owner_authority_history_index);        // not needed
         // STORE(account_recovery_request_index);       // not needed
         STORE(change_recovery_account_request_index);
         STORE(escrow_index);
         STORE(savings_withdraw_index);
-        // STORE(decline_voting_rights_request_index);  // not supported
+        // STORE(decline_voting_rights_request_index);  // not supported    !map account_id_type account;
         STORE(vesting_delegation_index);
         STORE(vesting_delegation_expiration_index);
-        // custom_pack::_current_str_type = custom_pack::meta;
         // STORE(account_metadata_index);               // not needed
-        // custom_pack::_current_str_type = custom_pack::other;
         // STORE(proposal_index);                       // not supported
         // STORE(required_approval_index);              // not supported
-
-        // if adding new objects, do not forgot update type ids in optional state parts
-#undef STORE
 
         auto end = fc::time_point::now();
         wlog("Done in ${t} sec.", ("t", double((end - start).count()) / 1000000.0));
@@ -306,14 +318,15 @@ void plugin::serialize_state(const bfs::path& output) {
         auto rep_file = output;
         rep_file += ".reputation";
         if (db_.has_index<golos::plugins::follow::reputation_index>()) {
-            ofstream_sha256 rep_out(rep_file);
-            rep_out.write(hdr);
-            serialize_table<golos::plugins::follow::reputation_index>(db_, rep_out, required_approval_object_type+1, [](auto& h, auto& i){}, [](const auto& i){return true;});
-            wlog("Reputation SHA256 hash: ${h}", ("h", rep_out.hash().str()));
-            rep_out.close();
+            ofstream_sha256 out(rep_file);  // create var with the same name to reuse macro
+            out.write(hdr);
+            STORE(golos::plugins::follow::reputation_index);
+            wlog("Reputation SHA256 hash: ${h}", ("h", out.hash().str()));
+            out.close();
         } else {
             bfs::remove(rep_file);
         }
+#undef STORE
 
         auto map_file = output;
         map_file += ".map";
@@ -330,7 +343,6 @@ void plugin::serialize_state(const bfs::path& output) {
 
         store_map_table('A', custom_pack::_accs_stats);
         store_map_table('P', custom_pack::_stats[custom_pack::permlink]);
-        store_map_table('M', custom_pack::_stats[custom_pack::meta]);
 
         wlog("Map SHA256 hash: ${h}", ("h", om.hash().str()));
         om.close();
