@@ -211,7 +211,7 @@ void serialize_table(
         if (!check_item(item))
             continue;
         if (outmap != nullptr && id != item.id) {
-            outmap->emplace(id, item.id._id);
+            outmap->emplace(item.id._id, id);
         }
         item.id = id++;
         remap(item);
