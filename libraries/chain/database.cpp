@@ -2318,7 +2318,7 @@ namespace golos { namespace chain {
                     }
                 }
 
-                push_virtual_operation(delegation_reward_operation(delegator.name, delegatee.name, dvir.payout_strategy, delegator_vesting));
+                push_virtual_operation(delegation_reward_operation(delegator.name, delegatee.name, dvir.payout_strategy, delegator_vesting, asset(delegator_claim, STEEM_SYMBOL)));
 
                 modify(delegator, [&](account_object& a) {
                     a.delegation_rewards += delegator_claim;
@@ -2337,7 +2337,7 @@ namespace golos { namespace chain {
 
             auto voter_reward = create_vesting(voter, asset(voter_claim, STEEM_SYMBOL));
 
-            push_virtual_operation(curation_reward_operation(voter.name, voter_reward, author, permlink));
+            push_virtual_operation(curation_reward_operation(voter.name, voter_reward, author, permlink, asset(voter_claim, STEEM_SYMBOL)));
 
             modify(voter, [&](account_object &a) {
                 a.curation_rewards += voter_claim;
@@ -2461,7 +2461,7 @@ namespace golos { namespace chain {
                         // stats only.. TODO: Move to plugin...
                         total_payout = to_sbd(asset(reward_tokens.to_uint64(), STEEM_SYMBOL));
 
-                        push_virtual_operation(author_reward_operation(comment.author, to_string(comment.permlink), sbd_payout.first, sbd_payout.second, vest_created));
+                        push_virtual_operation(author_reward_operation(comment.author, to_string(comment.permlink), sbd_payout.first, sbd_payout.second, vest_created, asset(sbd_steem, STEEM_SYMBOL), asset(vesting_steem, STEEM_SYMBOL)));
                         push_virtual_operation(comment_reward_operation(comment.author, to_string(comment.permlink), total_payout));
 
                         modify(get_account(comment.author), [&](account_object &a) {
