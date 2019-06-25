@@ -84,34 +84,40 @@ public:
         write_op_header("delete_comments", COMMENT_ID(op));
     }
 
-    auto operator()(const comment_benefactor_reward_operation& op) -> result_type {
-        auto& b = write_op_header("benefactor_rewards", COMMENT_ID(op));
-
-        fc::raw::pack(b, op);
-    }
-
     auto operator()(const author_reward_operation& op) -> result_type {
         auto& b = write_op_header("author_rewards", COMMENT_ID(op));
 
-        fc::raw::pack(b, op);
+        fc::raw::pack(b, op.author);
+        fc::raw::pack(b, op.permlink);
+        fc::raw::pack(b, op.sbd_and_steem_in_golos);
+        fc::raw::pack(b, op.vesting_payout_in_golos);
+        fc::raw::pack(b, _block.timestamp);
     }
 
     auto operator()(const curation_reward_operation& op) -> result_type {
         auto& b = write_op_header("curation_rewards", std::string(op.comment_author) + "/" + op.comment_permlink);
 
-        fc::raw::pack(b, op);
-    }
-
-    auto operator()(const auction_window_reward_operation& op) -> result_type {
-        auto& b = write_op_header("auction_window_rewards", std::string(op.comment_author) + "/" + op.comment_permlink);
-
-        fc::raw::pack(b, op);
+        fc::raw::pack(b, op.curator);
+        fc::raw::pack(b, op.reward_in_golos);
+        fc::raw::pack(b, op.comment_author);
+        fc::raw::pack(b, op.comment_permlink);
+        fc::raw::pack(b, _block.timestamp);
     }
 
     auto operator()(const total_comment_reward_operation& op) -> result_type {
         auto& b = write_op_header("total_comment_rewards", COMMENT_ID(op));
 
         fc::raw::pack(b, op);
+    }
+
+    auto operator()(const delegation_reward_operation& op) -> result_type {
+        auto& b = write_op_header("delegation_rewards");
+
+        fc::raw::pack(b, op.delegator);
+        fc::raw::pack(b, op.delegatee);
+        fc::raw::pack(b, op.payout_strategy);
+        fc::raw::pack(b, op.vesting_shares_in_golos);
+        fc::raw::pack(b, _block.timestamp);
     }
 
     auto operator()(const vote_operation& op) -> result_type {
