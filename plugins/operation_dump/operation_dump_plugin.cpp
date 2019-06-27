@@ -47,6 +47,12 @@ struct post_operation_clarifier {
 
         add_clarification(_plugin.not_deleted_comments, not_deleted);
     }
+
+    result_type operator()(const transfer_operation& op) const {
+        auto golos_amount = (op.amount.symbol == STEEM_SYMBOL) ? op.amount : _db.to_steem(op.amount);
+
+        add_clarification(_plugin.transfer_golos_amounts, golos_amount);
+    }
 };
 
 class operation_dump_plugin::operation_dump_plugin_impl final {
@@ -62,6 +68,7 @@ public:
         virtual_ops.erase(block_num);
         _plugin.vote_rshares.erase(block_num);
         _plugin.not_deleted_comments.erase(block_num);
+        _plugin.transfer_golos_amounts.erase(block_num);
     }
 
     void on_block(const signed_block& block) {
