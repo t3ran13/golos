@@ -59,7 +59,22 @@ public:
     auto operator()(const transfer_operation& op) -> result_type {
         auto& b = write_op_header("transfers");
 
-        fc::raw::pack(b, op);
+        fc::raw::pack(b, op.from);
+        fc::raw::pack(b, op.to);
+        fc::raw::pack(b, pop_clarification(_plugin.transfer_golos_amounts));
+        fc::raw::pack(b, op.memo);
+        fc::raw::pack(b, false); // to vesting
+        fc::raw::pack(b, _block.timestamp);
+    }
+
+    auto operator()(const transfer_to_vesting_operation& op) -> result_type {
+        auto& b = write_op_header("transfers");
+
+        fc::raw::pack(b, op.from);
+        fc::raw::pack(b, op.to);
+        fc::raw::pack(b, op.amount);
+        fc::raw::pack(b, ""); // memo
+        fc::raw::pack(b, true); // to vesting
         fc::raw::pack(b, _block.timestamp);
     }
 

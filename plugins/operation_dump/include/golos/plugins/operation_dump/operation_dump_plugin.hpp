@@ -36,6 +36,7 @@ public:
     dump_buffers buffers;
     clarifications<int64_t> vote_rshares;
     clarifications<bool> not_deleted_comments;
+    clarifications<asset> transfer_golos_amounts;
 private:
     class operation_dump_plugin_impl;
 
