@@ -78,6 +78,19 @@ public:
         fc::raw::pack(b, _block.timestamp);
     }
 
+    auto operator()(const fill_vesting_withdraw_operation& op) -> result_type {
+        if (op.deposited.symbol != STEEM_SYMBOL || op.deposited.amount == 0) {
+            return;
+        }
+
+        auto& b = write_op_header("vesting_withdraws");
+
+        fc::raw::pack(b, op.from_account);
+        fc::raw::pack(b, op.to_account);
+        fc::raw::pack(b, op.deposited);
+        fc::raw::pack(b, _block.timestamp);
+    }
+
     auto operator()(const comment_operation& op) -> result_type {
         auto& b = write_op_header("comments", COMMENT_ID(op));
 
