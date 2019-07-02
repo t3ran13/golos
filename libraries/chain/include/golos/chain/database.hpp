@@ -429,7 +429,7 @@ namespace golos { namespace chain {
 
             uint64_t pay_delegators(const account_object& delegatee, const comment_vote_object& cvo, uint64_t claim);
 
-            share_type pay_curators(const comment_curation_info& c, share_type max_rewards);
+            share_type pay_curators(const comment_curation_info& c, share_type max_rewards, share_type& actual_rewards);
 
             void cashout_comment_helper(const comment_object &comment);
 
@@ -607,7 +607,7 @@ namespace golos { namespace chain {
 
             bool _resize(uint32_t block_num);
 
-            void pay_curator(const comment_vote_object& cvo, const uint64_t& claim, const account_name_type& author, const std::string& permlink);
+            uint64_t pay_curator(const comment_vote_object& cvo, const uint64_t& claim, const account_name_type& author, const std::string& permlink);
 
             void adjust_sbd_balance(const account_object &a, const asset &delta);
 
