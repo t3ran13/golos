@@ -2327,7 +2327,7 @@ namespace golos { namespace chain {
             return delegators_reward;
         }
 
-        void database::pay_curator(const comment_vote_object& cvo, const uint64_t& claim, const account_name_type& author, const std::string& permlink) {
+        uint64_t database::pay_curator(const comment_vote_object& cvo, const uint64_t& claim, const account_name_type& author, const std::string& permlink) {
             const auto &voter = get(cvo.voter);
             auto voter_claim = claim;
 
@@ -2342,6 +2342,8 @@ namespace golos { namespace chain {
             modify(voter, [&](account_object &a) {
                 a.curation_rewards += voter_claim;
             });
+
+            return voter_claim;
         }
 /**
  *  This method will iterate through all comment_vote_objects and give them
@@ -2349,7 +2351,7 @@ namespace golos { namespace chain {
  *
  *  @returns unclaimed rewards.
  */
-        share_type database::pay_curators(const comment_curation_info& c, share_type max_rewards) {
+        share_type database::pay_curators(const comment_curation_info& c, share_type max_rewards, share_type& actual_rewards) {
             try {
                 share_type unclaimed_rewards = max_rewards;
 
@@ -2380,7 +2382,7 @@ namespace golos { namespace chain {
 
                         if (claim > 0) { // min_amt is non-zero satoshis
                             unclaimed_rewards -= claim;
-                            pay_curator(*itr->vote, claim, c.comment.author, to_string(c.comment.permlink));
+                            actual_rewards += pay_curator(*itr->vote, claim, c.comment.author, to_string(c.comment.permlink));
                         } else {
                             break;
                         }
@@ -2389,7 +2391,7 @@ namespace golos { namespace chain {
                         // pay needed claim + rest unclaimed tokens (close to zero value) to curator with greates weight
                         // BTW: it has to be unclaimed_rewards.value not heaviest_vote_after_auw_weight + unclaimed_rewards.value, coz
                         //      unclaimed_rewards already contains this.
-                        pay_curator(*heaviest_itr->vote, unclaimed_rewards.value, c.comment.author, to_string(c.comment.permlink));
+                        actual_rewards = pay_curator(*heaviest_itr->vote, unclaimed_rewards.value, c.comment.author, to_string(c.comment.permlink));
                         unclaimed_rewards = 0;
                     }
                 }
@@ -2431,9 +2433,11 @@ namespace golos { namespace chain {
 
                         share_type author_tokens = reward_tokens.to_uint64() - curation_tokens;
 
+                        share_type total_curator = 0;
+
                         comment_curation_info curation_info(*this, comment, false);
                         curve = curation_info.curve;
-                        author_tokens += pay_curators(curation_info, curation_tokens);
+                        author_tokens += pay_curators(curation_info, curation_tokens, total_curator);
 
                         share_type total_beneficiary = 0;
 
@@ -2470,7 +2474,7 @@ namespace golos { namespace chain {
 
                         auto author_golos = asset(author_tokens, STEEM_SYMBOL);
                         auto benefactor_golos = asset(total_beneficiary, STEEM_SYMBOL);
-                        auto curator_golos = asset(reward_tokens.to_uint64() - (author_tokens + total_beneficiary), STEEM_SYMBOL);
+                        auto curator_golos = asset(total_curator, STEEM_SYMBOL);
                         push_virtual_operation(total_comment_reward_operation(comment.author, to_string(comment.permlink), author_golos, benefactor_golos, curator_golos, comment.net_rshares.value));
                     }
 
