@@ -193,14 +193,15 @@ namespace golos { namespace protocol {
             comment_benefactor_reward_operation() {
             }
 
-            comment_benefactor_reward_operation(const account_name_type &b, const account_name_type &a, const string &p, const asset &r)
-                    : benefactor(b), author(a), permlink(p), reward(r) {
+            comment_benefactor_reward_operation(const account_name_type &b, const account_name_type &a, const string &p, const asset &r, const asset& rig)
+                    : benefactor(b), author(a), permlink(p), reward(r), reward_in_golos(rig) {
             }
 
             account_name_type benefactor;
             account_name_type author;
             string permlink;
             asset reward;
+            asset reward_in_golos; // not reflected
         };
 
         struct producer_reward_operation : public virtual_operation {

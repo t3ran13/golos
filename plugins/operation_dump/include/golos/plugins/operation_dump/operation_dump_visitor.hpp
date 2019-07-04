@@ -122,6 +122,16 @@ public:
         fc::raw::pack(b, _block.timestamp);
     }
 
+    auto operator()(const comment_benefactor_reward_operation& op) -> result_type {
+        auto& b = write_op_header("benefactor_rewards", COMMENT_ID(op));
+
+        fc::raw::pack(b, op.benefactor);
+        fc::raw::pack(b, op.author);
+        fc::raw::pack(b, op.permlink);
+        fc::raw::pack(b, op.reward_in_golos);
+        fc::raw::pack(b, _block.timestamp);
+    }
+
     auto operator()(const curation_reward_operation& op) -> result_type {
         auto& b = write_op_header("curation_rewards", std::string(op.comment_author) + "/" + op.comment_permlink);
 
