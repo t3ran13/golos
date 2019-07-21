@@ -1328,6 +1328,16 @@ namespace golos { namespace protocol {
                 a.insert(delegatee);
             }
         };
+
+        class transit_to_cyberway_operation : public base_operation {
+        public:
+            account_name_type owner;
+
+            void validate() const;
+            void get_required_active_authorities(flat_set<account_name_type> &a) const {
+                a.insert(owner);
+            }
+        };
 } } // golos::protocol
 
 
@@ -1435,3 +1445,4 @@ FC_REFLECT((golos::protocol::break_free_referral_operation), (referral)(extensio
 FC_REFLECT_ENUM(golos::protocol::delegator_payout_strategy, (to_delegator)(to_delegated_vesting)(_size))
 FC_REFLECT((golos::protocol::delegate_vesting_shares_with_interest_operation), (delegator)(delegatee)(vesting_shares)(interest_rate)(extensions));
 FC_REFLECT((golos::protocol::reject_vesting_shares_delegation_operation), (delegator)(delegatee)(extensions));
+FC_REFLECT((golos::protocol::transit_to_cyberway_operation), (owner));

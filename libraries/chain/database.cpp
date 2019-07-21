@@ -3057,6 +3057,7 @@ namespace golos { namespace chain {
             _my->_evaluator_registry.register_evaluator<delegate_vesting_shares_evaluator>();
             _my->_evaluator_registry.register_evaluator<delegate_vesting_shares_with_interest_evaluator>();
             _my->_evaluator_registry.register_evaluator<reject_vesting_shares_delegation_evaluator>();
+            _my->_evaluator_registry.register_evaluator<transit_to_cyberway_evaluator>();
             _my->_evaluator_registry.register_evaluator<proposal_create_evaluator>();
             _my->_evaluator_registry.register_evaluator<proposal_update_evaluator>();
             _my->_evaluator_registry.register_evaluator<proposal_delete_evaluator>();

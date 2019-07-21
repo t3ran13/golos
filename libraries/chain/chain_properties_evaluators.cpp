@@ -79,4 +79,15 @@ namespace golos { namespace chain {
         }
     }
 
+    void transit_to_cyberway_evaluator::do_apply(const transit_to_cyberway_operation& o) {
+        ASSERT_REQ_HF(STEEMIT_HARDFORK_0_21__1348, "transit_to_cyberway");
+
+        _db.get_account(o.owner); // verify owner exists
+        auto& witness = _db.get_witness(o.owner);
+
+        _db.modify(witness, [&](witness_object& w) {
+            w.transit_to_cyberway_vote = _db.head_block_time();
+        });
+    }
+
 } } // golos::chain

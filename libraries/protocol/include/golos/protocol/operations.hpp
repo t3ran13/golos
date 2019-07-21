@@ -69,6 +69,7 @@ namespace golos { namespace protocol {
                 break_free_referral_operation,
                 delegate_vesting_shares_with_interest_operation,
                 reject_vesting_shares_delegation_operation,
+                transit_to_cyberway_operation,
 
                 /// virtual operations below this point
                 fill_convert_request_operation,
