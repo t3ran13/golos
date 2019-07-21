@@ -83,6 +83,7 @@ namespace golos { namespace plugins { namespace chain {
         void replay_db(const bfs::path& data_dir, bool force_replay);
 
         void on_block (const protocol::signed_block& b);
+        void transit_to_cyberway(uint32_t);
     };
 
 
@@ -99,6 +100,22 @@ namespace golos { namespace plugins { namespace chain {
             ++itr;
             db.remove(vote);
         }
+    }
+
+    void plugin::impl::transit_to_cyberway(uint32_t n) {
+        if (!serialize_state) {
+            return;
+        }
+
+        // revert to last LIB
+        auto lib = db.last_non_undoable_block_num();
+        while (db.head_block_num() != lib) {
+            db.pop_block();
+        }
+        db.flush();
+
+        state_serializer().serialize(db, serialize_state_path);
+        appbase::app().quit();
     }
 
     void plugin::impl::check_time_in_block(const protocol::signed_block& block) {
@@ -295,6 +312,10 @@ namespace golos { namespace plugins { namespace chain {
             my->on_block(b);
         });
 
+        my->db.transit_to_cyberway.connect([&](const uint32_t n) {
+            my->transit_to_cyberway(n);
+        });
+
         auto sfd = options.at("shared-file-dir").as<bfs::path>();
         if (sfd.is_relative()) {
             my->shared_memory_dir = appbase::app().data_dir() / sfd;
@@ -433,11 +454,7 @@ namespace golos { namespace plugins { namespace chain {
             auto head_block_log = my->db.get_block_log().head();
             my->replay |= head_block_log && my->db.revision() != head_block_log->block_num();
 
-            if (my->serialize_state) {
-                serialize_state(my->serialize_state_path);
-                std::exit(0); // TODO Migrate to appbase::app().quit()
-                return;
-            } else if (my->replay) {
+            if (my->replay) {
                 my->replay_db(data_dir, my->force_replay);
             }
         } catch (const golos::chain::database_revision_exception&) {

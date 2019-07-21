@@ -85,8 +85,17 @@ namespace golos { namespace chain {
         _db.get_account(o.owner); // verify owner exists
         auto& witness = _db.get_witness(o.owner);
 
+        GOLOS_CHECK_OP_PARAM(o, vote_to_transit, {
+            GOLOS_CHECK_VALUE(o.vote_to_transit != (witness.transit_to_cyberway_vote != STEEMIT_GENESIS_TIME),
+                "You should change your vote.");
+        });
+
         _db.modify(witness, [&](witness_object& w) {
-            w.transit_to_cyberway_vote = _db.head_block_time();
+            if (o.vote_to_transit) {
+                w.transit_to_cyberway_vote = _db.head_block_time();
+            } else {
+                w.transit_to_cyberway_vote = STEEMIT_GENESIS_TIME;
+            }
         });
     }
 

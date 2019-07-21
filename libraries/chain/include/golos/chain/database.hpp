@@ -58,6 +58,8 @@ namespace golos { namespace chain {
                 _is_generating = p;
             }
 
+            bool is_transit_enabled() const;
+
             bool _is_producing = false;
             bool _is_generating = false;
             bool _is_testing = false;           ///< set for tests to avoid low free memory spam
@@ -329,6 +331,11 @@ namespace golos { namespace chain {
             fc::signal<void(const signed_transaction &)> on_applied_transaction;
 
             /**
+             * This signal is emitted when required number of votes is reached to transit to CyberWay
+             */
+            fc::signal<void(const uint32_t)> transit_to_cyberway;
+
+            /**
              *  Emitted After a block has been applied and committed.  The callback
              *  should not yield and should execute quickly.
              */
@@ -580,6 +587,8 @@ namespace golos { namespace chain {
             void create_block_summary(const signed_block &next_block);
 
             void update_witness_schedule4();
+
+            void process_transit_to_cyberway(const signed_block& b);
 
             void update_median_witness_props();
 

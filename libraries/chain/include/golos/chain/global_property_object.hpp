@@ -144,6 +144,10 @@ namespace golos {
             uint32_t vote_regeneration_per_day = 40;
 
             uint16_t custom_ops_bandwidth_multiplier = STEEMIT_CUSTOM_OPS_BANDWIDTH_MULTIPLIER;
+
+            time_point_sec transit_block_time = STEEMIT_GENESIS_TIME;
+            uint32_t transit_block_num = std::numeric_limits<uint32_t>::max();
+            fc::array<account_name_type, STEEMIT_MAX_WITNESSES> transit_witnesses;
         };
 
         typedef multi_index_container <
@@ -189,5 +193,8 @@ FC_REFLECT((golos::chain::dynamic_global_property_object),
                 (vote_regeneration_per_day)
                 (custom_ops_bandwidth_multiplier)
                 (is_forced_min_price)
+                (transit_block_time)
+                (transit_block_num)
+                (transit_witnesses)
 )
 CHAINBASE_SET_INDEX_TYPE(golos::chain::dynamic_global_property_object, golos::chain::dynamic_global_property_index)

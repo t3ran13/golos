@@ -248,14 +248,13 @@ void serialize_vote_table(const database& db, ofstream_sha256& out, L&& remap) {
 }
 
 
-void plugin::serialize_state(const bfs::path& output) {
+void plugin::state_serializer::serialize(golos::chain::database &db_, const bfs::path& output) const {
     // can't throw here, because it will be false-detected as db opening error, which can kill state
     try {
         ofstream_sha256 out(output);
         auto start = fc::time_point::now();
         wlog("---------------------------------------------------------------------------");
         wlog("Serializing state to ${dst}", ("dst",output.string()));
-        auto& db_ = db();
         auto hdr = state_header{};
         hdr.version = 2;
 

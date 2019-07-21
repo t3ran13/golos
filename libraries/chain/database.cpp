@@ -1073,6 +1073,8 @@ namespace golos { namespace chain {
                 GOLOS_ASSERT(fc::raw::pack_size(trx) <= (get_dynamic_global_properties().maximum_block_size - 256),
                         golos::protocol::tx_too_long, "Transaction data is too long. Maximum transaction size ${max} bytes",
                         ("max",get_dynamic_global_properties().maximum_block_size - 256));
+                GOLOS_ASSERT(!is_transit_enabled(), golos::transit_enabled_exception,
+                        "Migrating to CyberWay disabled transaction accepting to prevent user actions lost.");
                 with_weak_write_lock([&]() {
                     detail::with_producing(*this, [&]() {
                         _push_transaction(trx, skip);
@@ -1472,6 +1474,58 @@ namespace golos { namespace chain {
                 return (0xFE00 - 0x0040 * dgp.num_pow_witnesses) << 0x10;
             } else {
                 return (0xFC00 - 0x0040 * dgp.num_pow_witnesses) << 0x10;
+            }
+        }
+
+        bool database::is_transit_enabled() const {
+            return
+                has_hardfork(STEEMIT_HARDFORK_0_21__1348) &&
+                get_dynamic_global_properties().transit_block_num != std::numeric_limits<uint32_t>::max();
+        }
+
+        void database::process_transit_to_cyberway(const signed_block& b) {
+            if (!has_hardfork(STEEMIT_HARDFORK_0_21__1348)) {
+                return;
+            }
+
+            const auto& gpo = get_dynamic_global_properties();
+            if (gpo.transit_block_time != STEEMIT_GENESIS_TIME) {
+                return;
+            }
+
+            if (is_transit_enabled()) {
+                if (gpo.transit_block_num <= gpo.last_irreversible_block_num) {
+                    modify(gpo, [&](auto& o) {
+                        o.transit_block_time = b.timestamp;
+                    });
+
+                    STEEMIT_TRY_NOTIFY(transit_to_cyberway, b.block_num());
+                }
+                return;
+            }
+
+            vector<account_name_type> transit_witnesses;
+            transit_witnesses.reserve(STEEMIT_MAX_WITNESSES);
+
+            uint32_t i;
+            const auto& wso = get_witness_schedule_object();
+            for (i = 0; i < wso.num_scheduled_witnesses; ++i) {
+                auto& witness = get_witness(wso.current_shuffled_witnesses[i]);
+                if (witness.schedule != witness_object::top19) {
+                    //skip
+                } else if (witness.transit_to_cyberway_vote != STEEMIT_GENESIS_TIME) {
+                     transit_witnesses.push_back(witness.owner);
+                }
+            }
+
+            if (transit_witnesses.size() >= STEEMIT_TRANSIT_REQUIRED_WITNESSES) {
+                modify(gpo, [&](auto& o) {
+                    i = 0;
+                    o.transit_block_num = b.block_num();
+                    for (auto owner: transit_witnesses) {
+                        o.transit_witnesses[i++] = owner;
+                    }
+                });
             }
         }
 
@@ -3590,6 +3644,11 @@ namespace golos { namespace chain {
                     );
                 }
 
+                if (is_transit_enabled()) {
+                    FC_ASSERT(next_block.transactions.empty(),
+                        "Migrating to CyberWay disabled accepting blocks with transactions.");
+                }
+
                 for (const auto &trx : next_block.transactions) {
                     /* We do not need to push the undo state for each transaction
                      * because they either all apply and are valid or the
@@ -3637,6 +3696,8 @@ namespace golos { namespace chain {
 
                 // notify observers that the block has been applied
                 notify_applied_block(next_block);
+
+                process_transit_to_cyberway(next_block);
 
                 notify_changed_objects();
 
