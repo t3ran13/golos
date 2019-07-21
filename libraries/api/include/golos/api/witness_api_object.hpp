@@ -32,6 +32,7 @@ namespace golos { namespace api {
         version running_version;
         hardfork_version hardfork_version_vote;
         time_point_sec hardfork_time_vote;
+        time_point_sec transit_to_cyberway_vote = STEEMIT_GENESIS_TIME;
     };
 
 } } // golos::api
