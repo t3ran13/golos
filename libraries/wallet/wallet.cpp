@@ -2298,6 +2298,23 @@ fc::ecc::private_key wallet_api::derive_private_key(const std::string& prefix_st
             return my->sign_transaction(tx, broadcast);
         }
 
+        annotated_signed_transaction wallet_api::transit_to_cyberway(
+            string witness_account_name,
+            bool broadcast
+        ) {
+            WALLET_CHECK_UNLOCKED();
+
+            transit_to_cyberway_operation op;
+            op.owner = witness_account_name;
+            op.vote_to_transit = true;
+
+            signed_transaction tx;
+            tx.operations.push_back( op );
+            tx.validate();
+
+            return my->sign_transaction( tx, broadcast );
+        }
+
         annotated_signed_transaction wallet_api::vote_for_witness(string voting_account, string witness_to_vote_for, bool approve, bool broadcast )
         { try {
                 WALLET_CHECK_UNLOCKED();
