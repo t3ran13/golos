@@ -1164,7 +1164,9 @@ namespace golos { namespace chain {
 
                 uint64_t postponed_tx_count = 0;
                 // pop pending state (reset to head block state)
-                for (const signed_transaction &tx : _pending_tx) {
+                if (is_transit_enabled()) {
+                    wlog("Migrating to CyberWay disables generating blocks with transactions.");
+                } else for (const signed_transaction &tx : _pending_tx) {
                     // Only include transactions that have not expired yet for currently generating block,
                     // this should clear problem transactions and allow block production to continue
 
@@ -3670,27 +3672,35 @@ namespace golos { namespace chain {
                 update_last_irreversible_block(skip);
 
                 create_block_summary(next_block);
-                clear_expired_proposals();
-                clear_expired_transactions();
-                clear_expired_orders();
-                clear_expired_delegations();
+
+                if (is_transit_enabled()) {
+                    wlog("Migrating to Cyberway disables the processes to prevent lost of account balances");
+                } else {
+                    clear_expired_proposals();
+                    clear_expired_transactions();
+                    clear_expired_orders();
+                    clear_expired_delegations();
+                }
+
                 update_witness_schedule();
 
-                update_median_feed();
-                update_virtual_supply();
+                if (!is_transit_enabled()) {
+                    update_median_feed();
+                    update_virtual_supply();
 
-                clear_null_account_balance();
-                process_funds();
-                process_conversions();
-                process_comment_cashout();
-                process_vesting_withdrawals();
-                process_savings_withdraws();
-                pay_liquidity_reward();
-                update_virtual_supply();
+                    clear_null_account_balance();
+                    process_funds();
+                    process_conversions();
+                    process_comment_cashout();
+                    process_vesting_withdrawals();
+                    process_savings_withdraws();
+                    pay_liquidity_reward();
+                    update_virtual_supply();
 
-                account_recovery_processing();
-                expire_escrow_ratification();
-                process_decline_voting_rights();
+                    account_recovery_processing();
+                    expire_escrow_ratification();
+                    process_decline_voting_rights();
+                }
 
                 process_hardforks();
 
@@ -3953,6 +3963,7 @@ namespace golos { namespace chain {
                 const dynamic_global_property_object &_dgp =
                         get_dynamic_global_properties();
 
+                bool is_transit = is_transit_enabled();
                 uint32_t missed_blocks = 0;
                 if (head_block_time() != fc::time_point_sec()) {
                     missed_blocks = get_slot_at_time(b.timestamp);
@@ -3968,8 +3979,10 @@ namespace golos { namespace chain {
                                     if (head_block_num() -
                                         w.last_confirmed_block_num >
                                         STEEMIT_BLOCKS_PER_DAY) {
-                                        w.signing_key = public_key_type();
-                                        push_virtual_operation(shutdown_witness_operation(w.owner));
+                                        if (!is_transit) {
+                                            w.signing_key = public_key_type();
+                                            push_virtual_operation(shutdown_witness_operation(w.owner));
+                                        }
                                     }
                                 }
                             });
