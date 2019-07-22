@@ -1491,12 +1491,9 @@ namespace golos { namespace chain {
             }
 
             const auto& gpo = get_dynamic_global_properties();
-            if (gpo.transit_block_time != STEEMIT_GENESIS_TIME) {
-                return;
-            }
 
             if (is_transit_enabled()) {
-                if (gpo.transit_block_num <= gpo.last_irreversible_block_num) {
+                if (gpo.transit_block_num == gpo.last_irreversible_block_num) {
                     modify(gpo, [&](auto& o) {
                         o.transit_block_time = b.timestamp;
                     });
@@ -4153,8 +4150,13 @@ namespace golos { namespace chain {
 
                     uint32_t new_last_irreversible_block_num = wit_objs[offset]->last_confirmed_block_num;
 
-                    if (new_last_irreversible_block_num >
-                        dpo.last_irreversible_block_num) {
+                    if (new_last_irreversible_block_num > dpo.last_irreversible_block_num) {
+                        if (is_transit_enabled() &&
+                            dpo.transit_block_num != dpo.last_irreversible_block_num &&
+                            dpo.transit_block_num <= new_last_irreversible_block_num
+                        ) {
+                            new_last_irreversible_block_num = dpo.transit_block_num;
+                        }
                         modify(dpo, [&](dynamic_global_property_object &_dpo) {
                             _dpo.last_irreversible_block_num = new_last_irreversible_block_num;
                         });
