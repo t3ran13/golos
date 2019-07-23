@@ -251,6 +251,11 @@ void serialize_vote_table(const database& db, ofstream_sha256& out, L&& remap) {
 void plugin::state_serializer::serialize(golos::chain::database &db_, const bfs::path& output) const {
     // can't throw here, because it will be false-detected as db opening error, which can kill state
     try {
+        auto dir = output.parent_path();
+        if (!bfs::is_directory(dir)) {
+            bfs::create_directory(dir);
+        }
+
         ofstream_sha256 out(output);
         auto start = fc::time_point::now();
         wlog("---------------------------------------------------------------------------");
