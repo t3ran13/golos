@@ -261,7 +261,7 @@ void plugin::state_serializer::serialize(golos::chain::database &db_, const bfs:
         wlog("---------------------------------------------------------------------------");
         wlog("Serializing state to ${dst}", ("dst",output.string()));
         auto hdr = state_header{};
-        hdr.version = 2;
+        hdr.version = 3;
 
         for (auto i = db_.index_list_begin(), e = db_.index_list_end(); e != i; ++i) {
             auto idx = *i;
