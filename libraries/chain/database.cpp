@@ -1492,35 +1492,42 @@ namespace golos { namespace chain {
 
             const auto& gpo = get_dynamic_global_properties();
 
+            if (!is_transit_enabled()) {
+                vector<account_name_type> transit_witnesses;
+                transit_witnesses.reserve(STEEMIT_MAX_WITNESSES);
+
+                uint32_t i;
+                const auto& wso = get_witness_schedule_object();
+                for (i = 0; i < wso.num_scheduled_witnesses; ++i) {
+                    auto& witness = get_witness(wso.current_shuffled_witnesses[i]);
+                    if (witness.schedule != witness_object::top19) {
+                        //skip
+                    } else if (witness.transit_to_cyberway_vote != STEEMIT_GENESIS_TIME) {
+                        transit_witnesses.push_back(witness.owner);
+                    }
+                }
+
+                if (transit_witnesses.size() >= STEEMIT_TRANSIT_REQUIRED_WITNESSES) {
+                    modify(gpo, [&](auto& o) {
+                        i = 0;
+                        o.transit_block_num = b.block_num();
+                        for (auto owner: transit_witnesses) {
+                            o.transit_witnesses[i++] = owner;
+                        }
+                    });
+                } else {
+                    return;
+                }
+            }
+
             if (is_transit_enabled()) {
+                if (skip & skip_block_log) {
+                    set_revision(gpo.head_block_number);
+                }
+
                 if (gpo.transit_block_num == gpo.last_irreversible_block_num) {
                     STEEMIT_TRY_NOTIFY(transit_to_cyberway, b.block_num(), skip);
                 }
-                return;
-            }
-
-            vector<account_name_type> transit_witnesses;
-            transit_witnesses.reserve(STEEMIT_MAX_WITNESSES);
-
-            uint32_t i;
-            const auto& wso = get_witness_schedule_object();
-            for (i = 0; i < wso.num_scheduled_witnesses; ++i) {
-                auto& witness = get_witness(wso.current_shuffled_witnesses[i]);
-                if (witness.schedule != witness_object::top19) {
-                    //skip
-                } else if (witness.transit_to_cyberway_vote != STEEMIT_GENESIS_TIME) {
-                     transit_witnesses.push_back(witness.owner);
-                }
-            }
-
-            if (transit_witnesses.size() >= STEEMIT_TRANSIT_REQUIRED_WITNESSES) {
-                modify(gpo, [&](auto& o) {
-                    i = 0;
-                    o.transit_block_num = b.block_num();
-                    for (auto owner: transit_witnesses) {
-                        o.transit_witnesses[i++] = owner;
-                    }
-                });
             }
         }
 
@@ -3956,7 +3963,6 @@ namespace golos { namespace chain {
                 const dynamic_global_property_object &_dgp =
                         get_dynamic_global_properties();
 
-                bool is_transit = is_transit_enabled();
                 uint32_t missed_blocks = 0;
                 if (head_block_time() != fc::time_point_sec()) {
                     missed_blocks = get_slot_at_time(b.timestamp);
@@ -3969,13 +3975,9 @@ namespace golos { namespace chain {
                             modify(witness_missed, [&](witness_object &w) {
                                 w.total_missed++;
                                 if (has_hardfork(STEEMIT_HARDFORK_0_14__278)) {
-                                    if (head_block_num() -
-                                        w.last_confirmed_block_num >
-                                        STEEMIT_BLOCKS_PER_DAY) {
-                                        if (!is_transit) {
-                                            w.signing_key = public_key_type();
-                                            push_virtual_operation(shutdown_witness_operation(w.owner));
-                                        }
+                                    if (head_block_num() - w.last_confirmed_block_num > STEEMIT_BLOCKS_PER_DAY) {
+                                        w.signing_key = public_key_type();
+                                        push_virtual_operation(shutdown_witness_operation(w.owner));
                                     }
                                 }
                             });
@@ -4154,7 +4156,6 @@ namespace golos { namespace chain {
                             dpo.transit_block_num <= new_last_irreversible_block_num
                         ) {
                             new_last_irreversible_block_num = dpo.transit_block_num;
-                            wlog("Migrating to CyberWay starts.");
                         }
 
                         modify(dpo, [&](dynamic_global_property_object &_dpo) {
