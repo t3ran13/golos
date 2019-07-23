@@ -1485,7 +1485,7 @@ namespace golos { namespace chain {
                 get_dynamic_global_properties().transit_block_num != std::numeric_limits<uint32_t>::max();
         }
 
-        void database::process_transit_to_cyberway(const signed_block& b) {
+        void database::process_transit_to_cyberway(const signed_block& b, uint32_t skip) {
             if (!has_hardfork(STEEMIT_HARDFORK_0_21__1348)) {
                 return;
             }
@@ -1494,11 +1494,7 @@ namespace golos { namespace chain {
 
             if (is_transit_enabled()) {
                 if (gpo.transit_block_num == gpo.last_irreversible_block_num) {
-                    modify(gpo, [&](auto& o) {
-                        o.transit_block_time = b.timestamp;
-                    });
-
-                    STEEMIT_TRY_NOTIFY(transit_to_cyberway, b.block_num());
+                    STEEMIT_TRY_NOTIFY(transit_to_cyberway, b.block_num(), skip);
                 }
                 return;
             }
@@ -3704,7 +3700,7 @@ namespace golos { namespace chain {
                 // notify observers that the block has been applied
                 notify_applied_block(next_block);
 
-                process_transit_to_cyberway(next_block);
+                process_transit_to_cyberway(next_block, skip);
 
                 notify_changed_objects();
 
@@ -4148,15 +4144,19 @@ namespace golos { namespace chain {
                                        b->last_confirmed_block_num;
                             });
 
-                    uint32_t new_last_irreversible_block_num = wit_objs[offset]->last_confirmed_block_num;
+                    uint32_t new_last_irreversible_block_num = std::min(
+                        uint32_t(wit_objs[offset]->last_confirmed_block_num),
+                        _fixed_irreversible_block_num);
 
                     if (new_last_irreversible_block_num > dpo.last_irreversible_block_num) {
                         if (is_transit_enabled() &&
-                            dpo.transit_block_num != dpo.last_irreversible_block_num &&
+                            dpo.transit_block_num > dpo.last_irreversible_block_num &&
                             dpo.transit_block_num <= new_last_irreversible_block_num
                         ) {
                             new_last_irreversible_block_num = dpo.transit_block_num;
+                            wlog("Migrating to CyberWay starts.");
                         }
+
                         modify(dpo, [&](dynamic_global_property_object &_dpo) {
                             _dpo.last_irreversible_block_num = new_last_irreversible_block_num;
                         });
