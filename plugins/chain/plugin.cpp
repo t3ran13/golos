@@ -31,7 +31,7 @@ namespace golos { namespace plugins { namespace chain {
 
         bool serialize_state = false;
         bfs::path serialize_state_path;
-        long serialize_wait_sec = 0;
+        long serialize_delay_sec = 0;
 
         uint32_t flush_interval = 0;
         flat_map<uint32_t, block_id_type> loaded_checkpoints;
@@ -122,9 +122,9 @@ namespace golos { namespace plugins { namespace chain {
         } else {
             db._fixed_irreversible_block_num = db.last_non_undoable_block_num();
 
-            if (serialize_wait_sec) {
-                wlog("Starts the timer for ${sec} seconds to generate genesis for CyberWay.", ("sec", serialize_wait_sec));
-                transit_timer.expires_from_now(boost::posix_time::seconds(serialize_wait_sec));
+            if (serialize_delay_sec) {
+                wlog("Starts the timer for ${sec} seconds to generate genesis for CyberWay.", ("sec", serialize_delay_sec));
+                transit_timer.expires_from_now(boost::posix_time::seconds(serialize_delay_sec));
                 transit_timer.async_wait([this, n](const boost::system::error_code&) {
                     this->db.with_strong_write_lock([&]() {
                         this->transit_to_cyberway();
@@ -316,8 +316,8 @@ namespace golos { namespace plugins { namespace chain {
                 "The location of the file to serialize state to (abs path or relative to application data dir). "
                 "If set then app will exit after serialization."
             ) (
-                "serialize-wait-sec", bpo::value<long>()->default_value(5*60),
-                "Seconds to wait starting of serialize state, which will be used for CyberWay genesis."
+                "serialize-delay-sec", bpo::value<long>()->default_value(5*60),
+                "The delay in seconds before the state is serialized, which will be used for CyberWay genesis."
             );
         //  Do not use bool_switch() in cfg!
         cli.add_options()
@@ -406,8 +406,8 @@ namespace golos { namespace plugins { namespace chain {
         }
         my->serialize_state = serialize;
 
-        if (options.count("serialize-wait-sec")) {
-            my->serialize_wait_sec = options.at("serialize-wait-sec").as<long>();
+        if (options.count("serialize-delay-sec")) {
+            my->serialize_delay_sec = options.at("serialize-delay-sec").as<long>();
         }
 
         if (options.count("flush-state-interval")) {
