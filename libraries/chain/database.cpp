@@ -1073,6 +1073,8 @@ namespace golos { namespace chain {
                 GOLOS_ASSERT(fc::raw::pack_size(trx) <= (get_dynamic_global_properties().maximum_block_size - 256),
                         golos::protocol::tx_too_long, "Transaction data is too long. Maximum transaction size ${max} bytes",
                         ("max",get_dynamic_global_properties().maximum_block_size - 256));
+                GOLOS_ASSERT(!is_transit_enabled(), golos::transit_enabled_exception,
+                        "Migrating to CyberWay disabled transaction accepting to prevent user actions lost.");
                 with_weak_write_lock([&]() {
                     detail::with_producing(*this, [&]() {
                         _push_transaction(trx, skip);
@@ -1162,7 +1164,9 @@ namespace golos { namespace chain {
 
                 uint64_t postponed_tx_count = 0;
                 // pop pending state (reset to head block state)
-                for (const signed_transaction &tx : _pending_tx) {
+                if (is_transit_enabled()) {
+                    wlog("Migrating to CyberWay disables generating blocks with transactions.");
+                } else for (const signed_transaction &tx : _pending_tx) {
                     // Only include transactions that have not expired yet for currently generating block,
                     // this should clear problem transactions and allow block production to continue
 
@@ -1472,6 +1476,58 @@ namespace golos { namespace chain {
                 return (0xFE00 - 0x0040 * dgp.num_pow_witnesses) << 0x10;
             } else {
                 return (0xFC00 - 0x0040 * dgp.num_pow_witnesses) << 0x10;
+            }
+        }
+
+        bool database::is_transit_enabled() const {
+            return
+                has_hardfork(STEEMIT_HARDFORK_0_21__1348) &&
+                get_dynamic_global_properties().transit_block_num != std::numeric_limits<uint32_t>::max();
+        }
+
+        void database::process_transit_to_cyberway(const signed_block& b, uint32_t skip) {
+            if (!has_hardfork(STEEMIT_HARDFORK_0_21__1348)) {
+                return;
+            }
+
+            const auto& gpo = get_dynamic_global_properties();
+
+            if (!is_transit_enabled()) {
+                vector<account_name_type> transit_witnesses;
+                transit_witnesses.reserve(STEEMIT_MAX_WITNESSES);
+
+                uint32_t i;
+                const auto& wso = get_witness_schedule_object();
+                for (i = 0; i < wso.num_scheduled_witnesses; ++i) {
+                    auto& witness = get_witness(wso.current_shuffled_witnesses[i]);
+                    if (witness.schedule != witness_object::top19) {
+                        //skip
+                    } else if (witness.transit_to_cyberway_vote != STEEMIT_GENESIS_TIME) {
+                        transit_witnesses.push_back(witness.owner);
+                    }
+                }
+
+                if (transit_witnesses.size() >= STEEMIT_TRANSIT_REQUIRED_WITNESSES) {
+                    modify(gpo, [&](auto& o) {
+                        i = 0;
+                        o.transit_block_num = b.block_num();
+                        for (auto owner: transit_witnesses) {
+                            o.transit_witnesses[i++] = owner;
+                        }
+                    });
+                } else {
+                    return;
+                }
+            }
+
+            if (is_transit_enabled()) {
+                if (skip & skip_block_log) {
+                    set_revision(gpo.head_block_number);
+                }
+
+                if (gpo.transit_block_num == gpo.last_irreversible_block_num) {
+                    STEEMIT_TRY_NOTIFY(transit_to_cyberway, b.block_num(), skip);
+                }
             }
         }
 
@@ -3057,6 +3113,7 @@ namespace golos { namespace chain {
             _my->_evaluator_registry.register_evaluator<delegate_vesting_shares_evaluator>();
             _my->_evaluator_registry.register_evaluator<delegate_vesting_shares_with_interest_evaluator>();
             _my->_evaluator_registry.register_evaluator<reject_vesting_shares_delegation_evaluator>();
+            _my->_evaluator_registry.register_evaluator<transit_to_cyberway_evaluator>();
             _my->_evaluator_registry.register_evaluator<proposal_create_evaluator>();
             _my->_evaluator_registry.register_evaluator<proposal_update_evaluator>();
             _my->_evaluator_registry.register_evaluator<proposal_delete_evaluator>();
@@ -3589,6 +3646,11 @@ namespace golos { namespace chain {
                     );
                 }
 
+                if (is_transit_enabled()) {
+                    FC_ASSERT(next_block.transactions.empty(),
+                        "Migrating to CyberWay disabled accepting blocks with transactions.");
+                }
+
                 for (const auto &trx : next_block.transactions) {
                     /* We do not need to push the undo state for each transaction
                      * because they either all apply and are valid or the
@@ -3610,32 +3672,42 @@ namespace golos { namespace chain {
                 update_last_irreversible_block(skip);
 
                 create_block_summary(next_block);
-                clear_expired_proposals();
-                clear_expired_transactions();
-                clear_expired_orders();
-                clear_expired_delegations();
+
+                if (is_transit_enabled()) {
+                    wlog("Migrating to Cyberway disables the processes to prevent lost of account balances");
+                } else {
+                    clear_expired_proposals();
+                    clear_expired_transactions();
+                    clear_expired_orders();
+                    clear_expired_delegations();
+                }
+
                 update_witness_schedule();
 
-                update_median_feed();
-                update_virtual_supply();
+                if (!is_transit_enabled()) {
+                    update_median_feed();
+                    update_virtual_supply();
 
-                clear_null_account_balance();
-                process_funds();
-                process_conversions();
-                process_comment_cashout();
-                process_vesting_withdrawals();
-                process_savings_withdraws();
-                pay_liquidity_reward();
-                update_virtual_supply();
+                    clear_null_account_balance();
+                    process_funds();
+                    process_conversions();
+                    process_comment_cashout();
+                    process_vesting_withdrawals();
+                    process_savings_withdraws();
+                    pay_liquidity_reward();
+                    update_virtual_supply();
 
-                account_recovery_processing();
-                expire_escrow_ratification();
-                process_decline_voting_rights();
+                    account_recovery_processing();
+                    expire_escrow_ratification();
+                    process_decline_voting_rights();
+                }
 
                 process_hardforks();
 
                 // notify observers that the block has been applied
                 notify_applied_block(next_block);
+
+                process_transit_to_cyberway(next_block, skip);
 
                 notify_changed_objects();
 
@@ -3903,9 +3975,7 @@ namespace golos { namespace chain {
                             modify(witness_missed, [&](witness_object &w) {
                                 w.total_missed++;
                                 if (has_hardfork(STEEMIT_HARDFORK_0_14__278)) {
-                                    if (head_block_num() -
-                                        w.last_confirmed_block_num >
-                                        STEEMIT_BLOCKS_PER_DAY) {
+                                    if (head_block_num() - w.last_confirmed_block_num > STEEMIT_BLOCKS_PER_DAY) {
                                         w.signing_key = public_key_type();
                                         push_virtual_operation(shutdown_witness_operation(w.owner));
                                     }
@@ -4076,10 +4146,18 @@ namespace golos { namespace chain {
                                        b->last_confirmed_block_num;
                             });
 
-                    uint32_t new_last_irreversible_block_num = wit_objs[offset]->last_confirmed_block_num;
+                    uint32_t new_last_irreversible_block_num = std::min(
+                        uint32_t(wit_objs[offset]->last_confirmed_block_num),
+                        _fixed_irreversible_block_num);
 
-                    if (new_last_irreversible_block_num >
-                        dpo.last_irreversible_block_num) {
+                    if (new_last_irreversible_block_num > dpo.last_irreversible_block_num) {
+                        if (is_transit_enabled() &&
+                            dpo.transit_block_num > dpo.last_irreversible_block_num &&
+                            dpo.transit_block_num <= new_last_irreversible_block_num
+                        ) {
+                            new_last_irreversible_block_num = dpo.transit_block_num;
+                        }
+
                         modify(dpo, [&](dynamic_global_property_object &_dpo) {
                             _dpo.last_irreversible_block_num = new_last_irreversible_block_num;
                         });
