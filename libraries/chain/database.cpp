@@ -1073,8 +1073,6 @@ namespace golos { namespace chain {
                 GOLOS_ASSERT(fc::raw::pack_size(trx) <= (get_dynamic_global_properties().maximum_block_size - 256),
                         golos::protocol::tx_too_long, "Transaction data is too long. Maximum transaction size ${max} bytes",
                         ("max",get_dynamic_global_properties().maximum_block_size - 256));
-                GOLOS_ASSERT(!is_transit_enabled(), golos::transit_enabled_exception,
-                        "Migrating to CyberWay disabled transaction accepting to prevent user actions lost.");
                 with_weak_write_lock([&]() {
                     detail::with_producing(*this, [&]() {
                         _push_transaction(trx, skip);
@@ -1164,9 +1162,7 @@ namespace golos { namespace chain {
 
                 uint64_t postponed_tx_count = 0;
                 // pop pending state (reset to head block state)
-                if (is_transit_enabled()) {
-                    wlog("Migrating to CyberWay disables generating blocks with transactions.");
-                } else for (const signed_transaction &tx : _pending_tx) {
+                for (const signed_transaction &tx : _pending_tx) {
                     // Only include transactions that have not expired yet for currently generating block,
                     // this should clear problem transactions and allow block production to continue
 
@@ -1437,7 +1433,9 @@ namespace golos { namespace chain {
                  *
                  *  128 bit math is requred due to multiplying of 64 bit numbers. This is done in asset and price.
                  */
+                elog("calculate new vesting steem = ${steem}, cprops.get_vesting_share_price() = ${price} ", ("steem", steem)("price", cprops.get_vesting_share_price()));
                 asset new_vesting = steem * cprops.get_vesting_share_price();
+                elog("calculated new_vesting = ${nvesting} ", ("nvesting", new_vesting));
 
                 modify(to_account, [&](account_object &to) {
                     to.vesting_shares += new_vesting;
@@ -1527,6 +1525,7 @@ namespace golos { namespace chain {
 
                 if (gpo.transit_block_num == gpo.last_irreversible_block_num) {
                     STEEMIT_TRY_NOTIFY(transit_to_cyberway, b.block_num(), skip);
+                    liberate_golos_classic();
                 }
             }
         }
@@ -3291,6 +3290,8 @@ namespace golos { namespace chain {
                         a.name = name;
                         a.memo_key = init_public_key;
                         a.balance = asset(i ? 0 : init_supply, STEEM_SYMBOL);
+                        elog("set balance to ${amount}",("amount", a.balance.amount));
+
                     });
 
                     if (store_metadata_for_account(name)) {
@@ -3322,7 +3323,6 @@ namespace golos { namespace chain {
                     p.virtual_supply = p.current_supply;
                     p.maximum_block_size = STEEMIT_MAX_BLOCK_SIZE;
                 });
-
                 auto snapshot_path = string("./snapshot5392323.json");
                 auto snapshot_file = fc::path(snapshot_path);
                 auto snapshot_exists = fc::exists(snapshot_file);
@@ -3348,6 +3348,9 @@ namespace golos { namespace chain {
                 }
                 FC_ASSERT(memcmp(md5hash, snapshot_checksum, 32) ==
                           0, "Checksum of snapshot [${h}] is not equal [${s}]", ("h", md5hash)("s", snapshot_checksum));
+#else
+                share_type snapshot_supply = int64_t( init_supply );
+                share_type initial_vesting = int64_t( 0 );
 #endif
 
                 snapshot_state snapshot = fc::json::from_file(snapshot_file).as<snapshot_state>();
@@ -3356,6 +3359,27 @@ namespace golos { namespace chain {
                         a.name = account.name;
                         a.memo_key = account.keys.memo_key;
                         a.recovery_account = STEEMIT_INIT_MINER_NAME;
+#ifdef STEEMIT_BUILD_TESTNET
+                        for(asset &amount : account.balances.assets) {
+                            switch (amount.symbol) {
+                                case STEEM_SYMBOL:
+                                    a.balance.amount = amount.amount;
+                                    break;
+                                case SBD_SYMBOL:
+                                    a.sbd_balance.amount = amount.amount;
+                                    break;
+                                case VESTS_SYMBOL:
+                                    a.vesting_shares.amount = amount.amount;
+                                    break;
+                                default:
+                                    FC_ASSERT(false, "Unknown asset in snapshot");
+                            }
+                        }
+                        //assume price of GOLOS = GBG, just for testnet
+                        snapshot_supply -= a.balance.amount + a.sbd_balance.amount + a.vesting_shares.amount;
+                        initial_vesting += a.vesting_shares.amount;
+                        elog("initial_vesting = ${initial_vesting}, add = ${vests}",("initial_vesting",initial_vesting)("vests",a.vesting_shares.amount));
+#endif
                     });
 
                     if (store_metadata_for_account(account.name)) {
@@ -3378,6 +3402,19 @@ namespace golos { namespace chain {
                           << ".\n";
 
 #ifdef STEEMIT_BUILD_TESTNET
+
+                    const auto& initiator = get_account( STEEMIT_INIT_MINER_NAME );
+                    modify( initiator, [&]( account_object& a )
+                    {
+                        a.balance  = asset( snapshot_supply, STEEM_SYMBOL );
+                        elog("ajust balance to ${amount}",("amount", a.balance.amount));
+                    } );
+                    const auto &gpo = get_dynamic_global_properties();
+                    modify(gpo, [&](dynamic_global_property_object &p) {
+                        p.total_vesting_fund_steem = asset(initial_vesting, STEEM_SYMBOL);
+                        p.total_vesting_shares = asset(initial_vesting, VESTS_SYMBOL);
+                        elog("ajust gpo vests to ${amount}",("amount", initial_vesting));
+                    });
                 }
 #endif
 
@@ -3646,11 +3683,6 @@ namespace golos { namespace chain {
                     );
                 }
 
-                if (is_transit_enabled()) {
-                    FC_ASSERT(next_block.transactions.empty(),
-                        "Migrating to CyberWay disabled accepting blocks with transactions.");
-                }
-
                 for (const auto &trx : next_block.transactions) {
                     /* We do not need to push the undo state for each transaction
                      * because they either all apply and are valid or the
@@ -3673,34 +3705,28 @@ namespace golos { namespace chain {
 
                 create_block_summary(next_block);
 
-                if (is_transit_enabled()) {
-                    wlog("Migrating to Cyberway disables the processes to prevent lost of account balances");
-                } else {
-                    clear_expired_proposals();
-                    clear_expired_transactions();
-                    clear_expired_orders();
-                    clear_expired_delegations();
-                }
+                clear_expired_proposals();
+                clear_expired_transactions();
+                clear_expired_orders();
+                clear_expired_delegations();
 
                 update_witness_schedule();
 
-                if (!is_transit_enabled()) {
-                    update_median_feed();
-                    update_virtual_supply();
+                update_median_feed();
+                update_virtual_supply();
 
-                    clear_null_account_balance();
-                    process_funds();
-                    process_conversions();
-                    process_comment_cashout();
-                    process_vesting_withdrawals();
-                    process_savings_withdraws();
-                    pay_liquidity_reward();
-                    update_virtual_supply();
+                clear_null_account_balance();
+                process_funds();
+                process_conversions();
+                process_comment_cashout();
+                process_vesting_withdrawals();
+                process_savings_withdraws();
+                pay_liquidity_reward();
+                update_virtual_supply();
 
-                    account_recovery_processing();
-                    expire_escrow_ratification();
-                    process_decline_voting_rights();
-                }
+                account_recovery_processing();
+                expire_escrow_ratification();
+                process_decline_voting_rights();
 
                 process_hardforks();
 
@@ -4146,11 +4172,10 @@ namespace golos { namespace chain {
                                        b->last_confirmed_block_num;
                             });
 
-                    uint32_t new_last_irreversible_block_num = std::min(
-                        uint32_t(wit_objs[offset]->last_confirmed_block_num),
-                        _fixed_irreversible_block_num);
+                    uint32_t new_last_irreversible_block_num = wit_objs[offset]->last_confirmed_block_num;
 
                     if (new_last_irreversible_block_num > dpo.last_irreversible_block_num) {
+                        //this is ok, because irreversible can grow in leaps, but transit should start on particular irreversible
                         if (is_transit_enabled() &&
                             dpo.transit_block_num > dpo.last_irreversible_block_num &&
                             dpo.transit_block_num <= new_last_irreversible_block_num
@@ -5152,4 +5177,224 @@ namespace golos { namespace chain {
                 }
             }
         }
+
+        void database::transfer_gbg(const account_object &account, const account_object &receiver) {
+            elog("------- transfer gbg -${sbd}/${ssbd} ${acc}", ("sbd", account.sbd_balance)("ssbd", account.savings_sbd_balance)("acc", account.sbd_balance));
+            auto sbd_balance = account.sbd_balance;
+            adjust_balance(account, -1 * account.sbd_balance);
+            elog("------- reduce sbd_balance -${sbd} ${acc}", ("sbd", sbd_balance)("acc", account.sbd_balance));
+            //GBG interest
+            sbd_balance += account.sbd_balance;
+            adjust_balance(account, -1 * account.sbd_balance);
+            elog("------- reduce sbd_balance -${sbd} ${acc}", ("sbd", sbd_balance)("acc", account.sbd_balance));
+            //GBG from savings
+            sbd_balance += account.savings_sbd_balance;
+            adjust_savings_balance(account, -1 * account.savings_sbd_balance);
+            elog("------- reduce savings sbd_balance -${sbd} ${acc}", ("sbd", sbd_balance)("acc", account.savings_sbd_balance));
+            //GBG interest from savings
+            sbd_balance += account.savings_sbd_balance;
+            adjust_savings_balance(account, -1 * account.savings_sbd_balance);
+            elog("------- reduce savings sbd_balance -${sbd} ${acc}", ("sbd", sbd_balance)("acc", account.savings_sbd_balance));
+
+            adjust_balance(receiver, sbd_balance);
+            elog("---- add sbd balance receiver ${acc} - ${receiver}", ("acc", sbd_balance)("receiver", receiver.sbd_balance));
+        }
+
+        void database::transfer_golos(const account_object &account, const account_object &receiver) {
+            elog("---- add balance receiver ${acc}/${sacc} - ${receiver}", ("acc", account.balance)("sacc", account.savings_balance)("receiver", receiver.balance));
+            //GOLOS
+            auto balance = account.balance;
+            adjust_balance(account, -1 * account.balance);
+            //GOLOS from savings
+            balance += account.savings_balance;
+            adjust_savings_balance(account, -1 * account.savings_balance);
+
+            adjust_balance(receiver, balance);
+            elog("---- after add balance receiver ${acc} - ${receiver}", ("acc", account.balance)("receiver", receiver.balance));
+        }
+
+        void database::terminate_vesting_activities(const account_object &account) {
+            //return delegate
+            {
+                const auto& vdo_idx = get_index<vesting_delegation_index>().indices().get<by_delegation>();
+                auto itr = vdo_idx.lower_bound(std::make_tuple(account.name, std::string()));
+
+                while (itr != vdo_idx.end() && itr->delegator == account.name) {
+                    modify(get_account(itr->delegatee), [&](account_object& a) {
+                        a.received_vesting_shares -= itr->vesting_shares;
+                    });
+
+                    modify(account, [&](account_object& a) {
+                        a.delegated_vesting_shares = asset(0, VESTS_SYMBOL);
+                    });
+
+                    elog("---- remove delegation ${acc} - ${vestings}", ("acc", itr->delegator)("vestings", itr->vesting_shares));
+                    remove(*itr);
+                    itr = vdo_idx.lower_bound(std::make_tuple(account.name, std::string()));
+                }
+            }
+            //expired delegations
+            {
+                const auto& vdo_idx = get_index<vesting_delegation_expiration_index, by_account_expiration>();
+                auto itr = vdo_idx.lower_bound(std::make_tuple(account.name, time_point_sec::min()));
+
+                while (itr != vdo_idx.end() && itr->delegator == account.name) {
+                    modify(account, [&](account_object& a) {
+                        a.delegated_vesting_shares = asset(0, VESTS_SYMBOL);
+                    });
+
+                    elog("---- remove expiring delegation ${acc} - ${vestings}", ("acc", itr->delegator)("vestings", itr->vesting_shares));
+                    remove(*itr);
+                    itr = vdo_idx.lower_bound(std::make_tuple(account.name, time_point_sec::min()));
+                }
+            }
+
+            //stop withdraw
+            modify(account, [&](account_object &a) {
+                a.vesting_withdraw_rate = asset(0, VESTS_SYMBOL);
+                a.next_vesting_withdrawal = time_point_sec::maximum();
+                a.to_withdraw = 0;
+                a.withdrawn = 0;
+            });
+
+        }
+
+        void database::transfer_vestings(const account_object &account, const account_object &receiver) {
+            terminate_vesting_activities(account);
+
+            auto vesting_shares = account.vesting_shares;
+
+            modify(receiver, [&](account_object &a) {
+                a.vesting_shares += vesting_shares;
+            });
+
+            modify(account, [&](account_object &a) {
+                a.vesting_shares = asset(0, VESTS_SYMBOL);
+            });
+
+            elog("---- receiver's balance ${receiver} ${golos}", ("receiver", receiver.name)("golos", receiver.vesting_shares));
+            adjust_proxied_witness_votes(account, -1 * vesting_shares.amount);
+        }
+
+        void database::clear_authority(const account_object &account) {
+            const auto &account_auth = get_authority(account.name);
+            modify(account_auth, [&](account_authority_object &auth) {
+                auth.posting = authority();
+                auth.active = authority();
+                auth.owner = authority();
+
+                auth.posting.weight_threshold = 1;
+                auth.active.weight_threshold = 1;
+                auth.owner.weight_threshold = 1;
+
+            });
+
+            modify(account, [&](account_object &acc) {
+                acc.memo_key = public_key_type();
+            });
+
+            //stop witness
+            const witness_object *witness = find_witness(account.name);
+            if (witness) {
+                modify(*witness, [&](witness_object &w) {
+                    w.signing_key = public_key_type();
+                });
+            }
+        }
+
+        void database::freeze_account(const account_object &account, const account_object &receiver) {
+
+            elog("freeze ${name}, receiver balance = ${rbalance}", ("name", account.name)("rbalance", receiver.balance));
+
+            transfer_golos(account, receiver);
+            transfer_gbg(account, receiver);
+            transfer_vestings(account, receiver);
+
+            clear_authority(account);
+        }
+
+        void database::set_gc_authority(const account_object &account) {
+            clear_authority(account);
+            
+            const auto &account_auth = get_authority(account.name);
+            modify(account_auth, [&](account_authority_object &auth) {
+                for (const std::string &acc : liberation_hardfork::get_founders()) {	
+                    auth.active.add_authorities(acc, 1);
+                    auth.owner.add_authorities(acc, 1);
+                }             
+            });
+            modify(account_auth, [&](account_authority_object &auth) {
+                auth.active.weight_threshold = STEEMIT_HARDFORK_0_21_AUTHORITY_THRESHOLD;
+                auth.owner.weight_threshold = STEEMIT_HARDFORK_0_21_AUTHORITY_THRESHOLD;
+            });
+        }
+
+        void database::replace_recovery(const account_object &old_recovery, const account_object &new_recovery) {
+            const auto &accounts_by_name = get_index<account_index>().indices().get<by_name>();
+
+            for (auto itr = accounts_by_name.lower_bound(std::string());
+                    itr != accounts_by_name.end(); ++itr) {
+                const auto &account = *itr;
+                if(account.recovery_account == old_recovery.name) {
+                    modify(account, [&](account_object &acc) {
+                        acc.recovery_account = new_recovery.name;
+                    });
+                }
+            }
+
+        }
+
+        void database::liberate_golos_classic() {
+
+            const account_object *check = find_account(liberation_hardfork::get_acc_regfund().beneficiary);
+            if (check != nullptr) {
+                const auto &acc_referendum = get_account(liberation_hardfork::get_acc_referendum());
+                const auto &acc_regfund = get_account(liberation_hardfork::get_acc_regfund().beneficiary);
+                const auto &acc_transit = get_account(liberation_hardfork::get_acc_transit().beneficiary);
+
+                //transfer all funds from cf accounts to the new account referendum and remove authority
+
+                for (const std::string &acc : liberation_hardfork::get_accounts_for_freeze()) {	
+                    const auto &account = get_account(acc);
+                    freeze_account(account, acc_referendum);
+                    replace_recovery(account, acc_regfund);
+                }             
+
+                //Convert GESTS to GOLOS
+                const auto &cprops = get_dynamic_global_properties();
+                auto vesting_shares = acc_referendum.vesting_shares;
+                auto converted_steem = vesting_shares * cprops.get_vesting_share_price();
+                modify(acc_referendum, [&](account_object &a) {
+                    a.balance += converted_steem;
+                    a.vesting_shares -= vesting_shares;
+                });
+
+                modify(cprops, [&](dynamic_global_property_object &props) {
+                    props.total_vesting_fund_steem -= converted_steem;
+                    props.total_vesting_shares -= vesting_shares;
+                });
+
+                const auto &acc_worker = get_account(liberation_hardfork::get_acc_worker().beneficiary);
+                const auto &acc_mm = get_account(liberation_hardfork::get_acc_mm().beneficiary);
+
+                auto transfer_beneficiary = [&](const auto& reward, const auto& account) {
+                    const auto amount = asset(reward.amount);
+                    elog("---- transfer to ${acc} ${amount} ${ref}", ("acc", account.name)("amount", amount)("ref", acc_referendum.balance));
+                    if(acc_referendum.balance.amount > amount.amount) {
+                        adjust_balance(acc_referendum, -amount);
+                        adjust_balance(account, amount);
+                    }
+                };
+
+                transfer_beneficiary(liberation_hardfork::get_acc_worker(), acc_worker);
+                transfer_beneficiary(liberation_hardfork::get_acc_mm(), acc_mm);
+                transfer_beneficiary(liberation_hardfork::get_acc_regfund(), acc_regfund);
+                transfer_beneficiary(liberation_hardfork::get_acc_transit(), acc_transit);
+
+                set_gc_authority(acc_regfund);
+                set_gc_authority(acc_transit);
+                set_gc_authority(acc_referendum);
+            }
+        }
+
 } } //golos::chain
