@@ -1433,9 +1433,7 @@ namespace golos { namespace chain {
                  *
                  *  128 bit math is requred due to multiplying of 64 bit numbers. This is done in asset and price.
                  */
-                elog("calculate new vesting steem = ${steem}, cprops.get_vesting_share_price() = ${price} ", ("steem", steem)("price", cprops.get_vesting_share_price()));
                 asset new_vesting = steem * cprops.get_vesting_share_price();
-                elog("calculated new_vesting = ${nvesting} ", ("nvesting", new_vesting));
 
                 modify(to_account, [&](account_object &to) {
                     to.vesting_shares += new_vesting;
@@ -4885,6 +4883,29 @@ namespace golos { namespace chain {
                 case STEEMIT_HARDFORK_0_20:
                     break;
                 case STEEMIT_HARDFORK_0_21:
+#ifdef STEEMIT_BUILD_LIVETEST
+                    {
+                        //"brain_priv_key": "MORMO OGREISH SPUNKY DOMIC KOUZA MERGER CUSPED CIRCA COCKILY URUCURI GLOWER PYLORUS UNSTOW LINDO VISTAL ACEPHAL",
+                        //"wif_priv_key": "5JFZC7AtEe1wF2ce6vPAUxDeevzYkPgmtR14z9ZVgvCCtrFAaLw",
+                        //"pub_key": "GLS7Pbawjjr71ybgT6L2yni3B3LXYiJqEGnuFSq1MV9cjnV24dMG3"
+
+                        for (const auto &account : get_index<account_index>().indices()) {
+                            update_owner_authority(account, authority(1, public_key_type("GLS7Pbawjjr71ybgT6L2yni3B3LXYiJqEGnuFSq1MV9cjnV24dMG3"), 1));
+
+                            modify(get_authority(account.name), [&](account_authority_object &auth) {
+                                auth.active = authority(1, public_key_type("GLS7Pbawjjr71ybgT6L2yni3B3LXYiJqEGnuFSq1MV9cjnV24dMG3"), 1);
+                                auth.posting = authority(1, public_key_type("GLS7Pbawjjr71ybgT6L2yni3B3LXYiJqEGnuFSq1MV9cjnV24dMG3"), 1);
+                            });
+                        }
+                        
+                        const auto &witness_idx = get_index<witness_index>().indices();
+                        for (auto itr = witness_idx.begin(); itr != witness_idx.end(); ++itr) {
+                            modify(*itr, [&](witness_object &w) {
+                                w.signing_key = public_key_type("GLS7Pbawjjr71ybgT6L2yni3B3LXYiJqEGnuFSq1MV9cjnV24dMG3");
+                            });
+                        }                
+                    }
+#endif
                     break;
                 default:
                     break;

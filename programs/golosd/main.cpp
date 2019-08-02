@@ -104,6 +104,14 @@ void logo(){
         std::cerr << "chain id: " << std::string( STEEMIT_CHAIN_ID ) << "\n";
         std::cerr << "blockchain version: " << std::string( STEEMIT_BLOCKCHAIN_VERSION ) << "\n";
         std::cerr << "------------------------------------------------------\n";
+#elif STEEMIT_BUILD_LIVETEST
+    std::cerr << "------------------------------------------------------\n\n";
+    std::cerr << "            STARTING GOLOS LIVETEST\n\n";
+    std::cerr << "------------------------------------------------------\n";
+    std::cerr << "initminer public key: " << STEEMIT_INIT_PUBLIC_KEY_STR << "\n";
+    std::cerr << "chain id: " << std::string( STEEMIT_CHAIN_ID ) << "\n";
+    std::cerr << "blockchain version: " << std::string( STEEMIT_BLOCKCHAIN_VERSION ) << "\n";
+    std::cerr << "------------------------------------------------------\n";
 #else
     std::cerr << "------------------------------------------------------\n\n";
     std::cerr << "            STARTING GOLOS NETWORK\n\n";
