@@ -1,8 +1,9 @@
-FROM phusion/baseimage:0.9.22
+FROM phusion/baseimage:0.9.19
 
 ENV LANG=en_US.UTF-8
 
-RUN apt-get update && \
+RUN \
+    apt-get update && \
     apt-get install -y \
         autoconf \
         automake \
@@ -10,9 +11,9 @@ RUN apt-get update && \
         bsdmainutils \
         build-essential \
         cmake \
-        ccache \
         doxygen \
         git \
+        ccache\
         libboost-all-dev \
         libreadline-dev \
         libssl-dev \
@@ -38,13 +39,14 @@ RUN \
     cd build && \
     cmake \
         -DCMAKE_BUILD_TYPE=Release \
-        -DBUILD_GOLOS_TESTNET=TRUE \
+        -DBUILD_GOLOS_TESTNET=FALSE \
+        -DBUILD_GOLOS_LIVETEST=TRUE \
         -DBUILD_SHARED_LIBRARIES=FALSE \
         -DCHAINBASE_CHECK_LOCKING=FALSE \
         -DENABLE_MONGO_PLUGIN=FALSE \
         .. \
     && \
-    make -j$(nproc --ignore 1) && \
+    make -j$(nproc) && \
     make install && \
     rm -rf /usr/local/src/golos
 
@@ -110,7 +112,7 @@ RUN mkdir /var/cache/golosd && \
 ENV HOME /var/lib/golosd
 RUN chown golosd:golosd -R /var/lib/golosd
 
-ADD share/golosd/testnet_snapshot.json /var/lib/golosd/snapshot5392323.json
+ADD share/golosd/snapshot5392323.json /var/lib/golosd
 
 # rpc service:
 # http
@@ -124,8 +126,8 @@ RUN mkdir -p /etc/service/golosd
 ADD share/golosd/golosd.sh /etc/service/golosd/run
 RUN chmod +x /etc/service/golosd/run
 
-# the following adds lots of logging info to stdout
-ADD share/golosd/config/config_debug.ini /etc/golosd/config.ini
+# add seednodes from documentation to image
+ADD share/golosd/seednodes /etc/golosd/seednodes
 
-# put blockchain data into separate docker volume
-VOLUME /var/lib/golosd
+# the following adds lots of logging info to stdout
+ADD share/golosd/config/config.ini /etc/golosd/config.ini

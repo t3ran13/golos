@@ -1462,6 +1462,10 @@ namespace mongo_db {
         }
     }
 
+    auto state_writer::operator()(const transit_to_cyberway_operation& op) -> result_type {
+        format_account(op.owner);
+    }
+
     auto state_writer::operator()(const proposal_create_operation& op) -> result_type {
         try {
             auto& proposal = db_.get_proposal(op.author, op.title);
@@ -1924,6 +1928,10 @@ namespace mongo_db {
     }
 
     auto state_writer::operator()(const auction_window_reward_operation& op) -> result_type {
+
+    }
+
+    auto state_writer::operator()(const total_comment_reward_operation& op) -> result_type {
 
     }
 
