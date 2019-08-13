@@ -102,7 +102,6 @@ namespace golos { namespace chain {
         class vesting_delegation_object;
         class vesting_delegation_expiration_object;
         class account_metadata_object;
-        class proposal_object;
 
         typedef object_id<dynamic_global_property_object> dynamic_global_property_id_type;
         typedef object_id<account_object> account_id_type;
@@ -135,9 +134,10 @@ namespace golos { namespace chain {
         typedef object_id<required_approval_object> required_approval_object_id_type;
 
         enum bandwidth_type {
-            post,    ///< Rate limiting posting reward eligibility over time
-            forum,   ///< Rate limiting for all forum related actins
-            market   ///< Rate limiting for all other actions
+            post,         ///< Rate limiting posting reward eligibility over time
+            forum,        ///< Rate limiting for all forum related actins
+            market,       ///< Rate limiting for all market related actions
+            custom_json   ///< Rate limiting for all custom_json actions
         };
 
 } } //golos::chain
@@ -171,7 +171,7 @@ namespace fc {
         }
 
         template<typename Stream, typename T>
-        inline void unpack(Stream &s, chainbase::object_id<T> &id) {
+        inline void unpack(Stream &s, chainbase::object_id<T> &id, uint32_t = 0) {
             s.read((char *)&id._id, sizeof(id._id));
         }
     }
@@ -188,16 +188,16 @@ namespace fc {
         }
 
         template<typename T>
-        inline void unpack(const golos::chain::buffer_type &raw, T &v) {
+        inline void unpack(const golos::chain::buffer_type &raw, T &v, uint32_t depth = 0) {
             datastream<const char *> ds(raw.data(), raw.size());
-            unpack(ds, v);
+            unpack(ds, v, depth);
         }
 
         template<typename T>
-        inline T unpack(const golos::chain::buffer_type &raw) {
+        inline T unpack(const golos::chain::buffer_type &raw, uint32_t depth = 0) {
             T v;
             datastream<const char *> ds(raw.data(), raw.size());
-            unpack(ds, v);
+            unpack(ds, v, depth);
             return v;
         }
     }
@@ -238,4 +238,4 @@ FC_REFLECT_ENUM(golos::chain::object_type,
 FC_REFLECT_TYPENAME((golos::chain::shared_string))
 FC_REFLECT_TYPENAME((golos::chain::buffer_type))
 
-FC_REFLECT_ENUM(golos::chain::bandwidth_type, (post)(forum)(market))
+FC_REFLECT_ENUM(golos::chain::bandwidth_type, (post)(forum)(market)(custom_json))

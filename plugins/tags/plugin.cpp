@@ -51,11 +51,6 @@ namespace golos { namespace plugins { namespace tags {
             return database_;
         }
 
-        void select_active_votes(
-            std::vector<vote_state>& result, uint32_t& total_count,
-            const std::string& author, const std::string& permlink, uint32_t limit
-        ) const ;
-
         bool filter_tags(const tags::tag_type type, std::set<std::string>& select_tags) const;
 
         bool filter_authors(discussion_query& query) const;
@@ -87,16 +82,12 @@ namespace golos { namespace plugins { namespace tags {
 
         std::vector<std::pair<std::string, uint32_t>> get_tags_used_by_author(const std::string& author) const;
 
-        void set_pending_payout(discussion& d) const;
-
-        void set_url(discussion& d) const;
-
         std::vector<discussion> get_replies_by_last_update(
             account_name_type start_parent_author, std::string start_permlink,
             uint32_t limit, uint32_t vote_limit
         ) const;
 
-        discussion get_discussion(const comment_object& c, uint32_t vote_limit) const ;
+        discussion get_discussion(const comment_object& c, uint32_t vote_limit, uint32_t votes_offset) const ;
 
         discussion create_discussion(const comment_object& o) const;
         discussion create_discussion(const comment_object& o, const discussion_query& query) const;
@@ -114,15 +105,8 @@ namespace golos { namespace plugins { namespace tags {
         std::unique_ptr<discussion_helper> helper;
     };
 
-    void tags_plugin::impl::select_active_votes(
-        std::vector<vote_state>& result, uint32_t& total_count,
-        const std::string& author, const std::string& permlink, uint32_t limit
-    ) const {
-        helper->select_active_votes(result, total_count, author, permlink, limit);
-    }
-
-    discussion tags_plugin::impl::get_discussion(const comment_object& c, uint32_t vote_limit) const {
-        return helper->get_discussion(c, vote_limit);
+    discussion tags_plugin::impl::get_discussion(const comment_object& c, uint32_t vote_limit, uint32_t votes_offset) const {
+        return helper->get_discussion(c, vote_limit, votes_offset);
     }
 
     get_languages_result tags_plugin::impl::get_languages() {
@@ -143,9 +127,8 @@ namespace golos { namespace plugins { namespace tags {
     }
 
     void tags_plugin::impl::fill_discussion(discussion& d, const discussion_query& query) const {
-        set_url(d);
-        set_pending_payout(d);
-        select_active_votes(d.active_votes, d.active_votes_count, d.author, d.permlink, query.vote_limit);
+        helper->fill_discussion(d, database_.get_comment(d.author, d.permlink),  query.vote_limit, query.vote_offset);
+
         d.body_length = static_cast<uint32_t>(d.body.size());
         if (query.truncate_body) {
             if (d.body.size() > query.truncate_body) {
@@ -235,19 +218,11 @@ namespace golos { namespace plugins { namespace tags {
 
     tags_plugin::~tags_plugin() = default;
 
-    void tags_plugin::impl::set_url(discussion& d) const {
-        helper->set_url( d );
-    }
-
     boost::multiprecision::uint256_t to256(const fc::uint128_t& t) {
         boost::multiprecision::uint256_t result(t.high_bits());
         result <<= 65;
         result += t.low_bits();
         return result;
-    }
-
-    void tags_plugin::impl::set_pending_payout(discussion& d) const {
-        helper->set_pending_payout(d);
     }
 
     bool tags_plugin::impl::filter_tags(const tags::tag_type type, std::set<std::string>& select_tags) const {
@@ -897,6 +872,7 @@ namespace golos { namespace plugins { namespace tags {
             (time_point_sec, before_date)
             (uint32_t,       limit)
             (uint32_t,       vote_limit, DEFAULT_VOTE_LIMIT)
+            (uint32_t,       vote_offset, 0)
         );
         GOLOS_CHECK_LIMIT_PARAM(limit, 100);
 
@@ -932,7 +908,7 @@ namespace golos { namespace plugins { namespace tags {
 
                 for (; itr != clu_idx.end() && itr->author == author && count < limit; ++itr) {
                     if (itr->parent_author.size() == 0) {
-                        result.push_back(pimpl->get_discussion(db.get_comment(itr->comment), vote_limit));
+                        result.push_back(pimpl->get_discussion(db.get_comment(itr->comment), vote_limit, vote_offset));
                         ++count;
                     }
                 }

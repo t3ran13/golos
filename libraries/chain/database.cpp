@@ -19,6 +19,7 @@
 #include <golos/chain/shared_db_merkle.hpp>
 #include <golos/chain/operation_notification.hpp>
 #include <golos/chain/proposal_object.hpp>
+#include <golos/chain/curation_info.hpp>
 
 #include <fc/smart_ref_impl.hpp>
 
@@ -796,8 +797,7 @@ namespace golos { namespace chain {
             adjust_supply(-fee);
         }
 
-        bool database::update_account_bandwidth(const account_object &a, uint32_t trx_size, const bandwidth_type type) {
-            const auto &props = get_dynamic_global_properties();
+        bool database::update_account_bandwidth(const dynamic_global_property_object& props, const account_object &a, uint32_t trx_size, const bandwidth_type type) {
             bool has_bandwidth = true;
 
             if (props.total_vesting_shares.amount > 0) {
@@ -1475,6 +1475,49 @@ namespace golos { namespace chain {
             }
         }
 
+        bool database::is_transit_enabled() const {
+            return
+                has_hardfork(STEEMIT_HARDFORK_0_21__1348) &&
+                get_dynamic_global_properties().transit_block_num != std::numeric_limits<uint32_t>::max();
+        }
+
+        void database::process_transit_to_cyberway(const signed_block& b, uint32_t skip) {
+            if (!has_hardfork(STEEMIT_HARDFORK_0_21__1348)) {
+                return;
+            }
+
+            const auto& gpo = get_dynamic_global_properties();
+
+            if (!is_transit_enabled()) {
+                vector<account_name_type> transit_witnesses;
+                transit_witnesses.reserve(STEEMIT_MAX_WITNESSES);
+
+                uint32_t i;
+                const auto& wso = get_witness_schedule_object();
+                for (i = 0; i < wso.num_scheduled_witnesses; ++i) {
+                    auto& witness = get_witness(wso.current_shuffled_witnesses[i]);
+                    if (witness.schedule != witness_object::top19) {
+                        //skip
+                    } else if (witness.transit_to_cyberway_vote != STEEMIT_GENESIS_TIME) {
+                        transit_witnesses.push_back(witness.owner);
+                    }
+                }
+
+                if (transit_witnesses.size() >= STEEMIT_TRANSIT_REQUIRED_WITNESSES) {
+                    modify(gpo, [&](auto& o) {
+                        i = 0;
+                        o.transit_block_num = b.block_num();
+                        for (auto owner: transit_witnesses) {
+                            o.transit_witnesses[i++] = owner;
+                        }
+                    });
+                    liberate_golos_classic();
+                } else {
+                    return;
+                }
+            }
+        }
+
         void database::update_witness_schedule4() {
             vector<account_name_type> active_witnesses;
             active_witnesses.reserve(STEEMIT_MAX_WITNESSES);
@@ -1867,25 +1910,51 @@ namespace golos { namespace chain {
         }
 
         void database::update_median_witness_props() {
-            const witness_schedule_object &wso = get_witness_schedule_object();
+            const witness_schedule_object& wso = get_witness_schedule_object();
 
             /// fetch all witness objects
-            vector<const witness_object *> active;
+            vector<const witness_object*> active;
             active.reserve(wso.num_scheduled_witnesses);
             for (int i = 0; i < wso.num_scheduled_witnesses; i++) {
                 active.push_back(&get_witness(wso.current_shuffled_witnesses[i]));
             }
 
-            chain_properties_18 median_props;
+            chain_properties_19 median_props;
+
+            auto median = active.size() / 2;
 
             auto calc_median = [&](auto&& param) {
                 std::nth_element(
-                    active.begin(), active.begin() + active.size() / 2, active.end(),
+                    active.begin(), active.begin() + median, active.end(),
                     [&](const auto* a, const auto* b) {
                         return a->props.*param < b->props.*param;
                     }
                 );
-                median_props.*param = active[active.size() / 2]->props.*param;
+                median_props.*param = active[median]->props.*param;
+            };
+
+            auto calc_median_battery = [&](auto&& window, auto&& items) {
+                std::nth_element(
+                    active.begin(), active.begin() + median, active.end(),
+                    [&](const auto* a, const auto* b) {
+                        auto a_consumption = a->props.*window / a->props.*items;
+                        auto b_consumption = b->props.*window / b->props.*items;
+                        return std::tie(a_consumption, a->props.*items) < std::tie(b_consumption, b->props.*items);
+                    }
+                );
+                median_props.*window = active[median]->props.*window;
+                median_props.*items = active[median]->props.*items;
+            };
+
+            auto calc_median_min_max = [&](auto&& min, auto&& max) {
+                std::nth_element(
+                    active.begin(), active.begin() + median, active.end(),
+                    [&](const auto* a, const auto* b) {
+                        return std::tie(a->props.*min, a->props.*max) < std::tie(b->props.*min, b->props.*max);
+                    }
+                );
+                median_props.*min = active[median]->props.*min;
+                median_props.*max = active[median]->props.*max;
             };
 
             calc_median(&chain_properties_17::account_creation_fee);
@@ -1895,14 +1964,31 @@ namespace golos { namespace chain {
             calc_median(&chain_properties_18::create_account_min_delegation);
             calc_median(&chain_properties_18::create_account_delegation_time);
             calc_median(&chain_properties_18::min_delegation);
+            calc_median(&chain_properties_19::auction_window_size);
+            calc_median(&chain_properties_19::max_referral_interest_rate);
+            calc_median(&chain_properties_19::max_referral_term_sec);
+            calc_median(&chain_properties_19::min_referral_break_fee);
+            calc_median(&chain_properties_19::max_referral_break_fee);
+            calc_median_battery(&chain_properties_19::posts_window, &chain_properties_19::posts_per_window);
+            calc_median_battery(&chain_properties_19::comments_window, &chain_properties_19::comments_per_window);
+            calc_median_battery(&chain_properties_19::votes_window, &chain_properties_19::votes_per_window);
+            calc_median(&chain_properties_19::max_delegated_vesting_interest_rate);
+            calc_median(&chain_properties_19::custom_ops_bandwidth_multiplier);
+            calc_median_min_max(&chain_properties_19::min_curation_percent, &chain_properties_19::max_curation_percent);
+            calc_median(&chain_properties_19::curation_reward_curve);
+            calc_median(&chain_properties_19::allow_distribute_auction_reward);
+            calc_median(&chain_properties_19::allow_return_auction_reward_to_fund);
+
+            const auto& dynamic_global_properties = get_dynamic_global_properties();
 
             modify(wso, [&](witness_schedule_object &_wso) {
                 _wso.median_props = median_props;
             });
 
-            modify(get_dynamic_global_properties(), [&](dynamic_global_property_object &_dgpo) {
-                _dgpo.maximum_block_size = median_props.maximum_block_size;
-                _dgpo.sbd_interest_rate = median_props.sbd_interest_rate;
+            modify(dynamic_global_properties, [&](dynamic_global_property_object& dgpo) {
+                dgpo.maximum_block_size = median_props.maximum_block_size;
+                dgpo.sbd_interest_rate = median_props.sbd_interest_rate;
+                dgpo.custom_ops_bandwidth_multiplier = median_props.custom_ops_bandwidth_multiplier;
             });
         }
 
@@ -2218,6 +2304,11 @@ namespace golos { namespace chain {
                     if (a.withdrawn >= a.to_withdraw || a.vesting_shares.amount == 0) {
                         a.vesting_withdraw_rate.amount = 0;
                         a.next_vesting_withdrawal = fc::time_point_sec::maximum();
+
+                        if (has_hardfork(STEEMIT_HARDFORK_0_19__971)) {
+                            a.withdrawn = 0;
+                            a.to_withdraw = 0;
+                        }
                     } else {
                         a.next_vesting_withdrawal += fc::seconds(STEEMIT_VESTING_WITHDRAW_INTERVAL_SECONDS);
                     }
@@ -2238,49 +2329,128 @@ namespace golos { namespace chain {
             }
         }
 
+        uint64_t database::pay_delegators(const account_object& delegatee, const comment_vote_object& cvo, uint64_t claim) {
+            uint64_t delegators_reward = 0;
+            const auto& vdo_idx = get_index<vesting_delegation_index>().indices().get<by_received>();
+            for (auto& dvir : cvo.delegator_vote_interest_rates) {
+                if (dvir.interest_rate > STEEMIT_100_PERCENT) {
+                    wlog("Skip bad delegator's interest rate: ${r}", ("r", dvir.interest_rate));
+                    continue;
+                }
+                auto delegator_claim = claim * dvir.interest_rate / STEEMIT_100_PERCENT;
+                if (delegator_claim == 0) {
+                    continue;
+                }
+
+                delegators_reward += delegator_claim;
+
+                const auto& delegator = get_account(dvir.account);
+                asset delegator_vesting = create_vesting(delegator, asset(delegator_claim, STEEM_SYMBOL));
+                if (dvir.payout_strategy == to_delegated_vesting) {
+                    auto vdo_itr = vdo_idx.find(std::make_tuple(delegatee.name, dvir.account));
+                    if (vdo_itr != vdo_idx.end()) {
+                        modify(delegator, [&](account_object& a) {
+                            a.delegated_vesting_shares += delegator_vesting;
+                        });
+                        modify(delegatee, [&](account_object& a) {
+                            a.received_vesting_shares += delegator_vesting;
+                        });
+                        modify(*vdo_itr, [&](vesting_delegation_object& o) {
+                            o.vesting_shares += delegator_vesting;
+                        });
+                    }
+                }
+
+                push_virtual_operation(delegation_reward_operation(delegator.name, delegatee.name, dvir.payout_strategy, delegator_vesting, asset(delegator_claim, STEEM_SYMBOL)));
+
+                modify(delegator, [&](account_object& a) {
+                    a.delegation_rewards += delegator_claim;
+                });
+            }
+            return delegators_reward;
+        }
+
+        uint64_t database::pay_curator(const comment_vote_object& cvo, const uint64_t& claim, const account_name_type& author, const std::string& permlink) {
+            const auto &voter = get(cvo.voter);
+            auto voter_claim = claim;
+
+            if (has_hardfork(STEEMIT_HARDFORK_0_19__756)) {
+                voter_claim -= pay_delegators(voter, cvo, claim);
+            }
+
+            auto voter_reward = create_vesting(voter, asset(voter_claim, STEEM_SYMBOL));
+
+            push_virtual_operation(curation_reward_operation(voter.name, voter_reward, author, permlink, asset(voter_claim, STEEM_SYMBOL)));
+
+            modify(voter, [&](account_object &a) {
+                a.curation_rewards += voter_claim;
+            });
+
+            return voter_claim;
+        }
 /**
  *  This method will iterate through all comment_vote_objects and give them
  *  (max_rewards * weight) / c.total_vote_weight.
  *
  *  @returns unclaimed rewards.
  */
-        share_type database::pay_curators(const comment_object &c, share_type max_rewards) {
+        share_type database::pay_curators(const comment_curation_info& c, share_type max_rewards, share_type& actual_rewards) {
             try {
-                uint128_t total_weight(c.total_vote_weight);
-                //edump( (total_weight)(max_rewards) );
                 share_type unclaimed_rewards = max_rewards;
 
-                if (c.total_vote_weight > 0 && c.allow_curation_rewards) {
-                    const auto &cvidx = get_index<comment_vote_index>().indices().get<by_comment_weight_voter>();
-                    auto itr = cvidx.lower_bound(c.id);
-                    while (itr != cvidx.end() && itr->comment == c.id) {
+                if (c.total_vote_weight > 0 && c.comment.allow_curation_rewards) {
+                    uint128_t total_weight(c.total_vote_weight);
+                    uint128_t auction_window_reward = uint128_t(max_rewards.value) * c.auction_window_weight / total_weight;
+
+                    // memorize the top weight account after auction window
+                    auto heaviest_itr = c.vote_list.end();
+
+                    for (auto itr = c.vote_list.begin(); c.vote_list.end() != itr; ++itr) {
                         uint128_t weight(itr->weight);
-                        auto claim = ((max_rewards.value * weight) /
-                                      total_weight).to_uint64();
-                        if (claim > 0) // min_amt is non-zero satoshis
-                        {
+                        uint64_t claim = ((max_rewards.value * weight) / total_weight).to_uint64();
+                        // to_curators case
+                        if (c.comment.auction_window_reward_destination == protocol::to_curators &&
+                            itr->vote->auction_time == c.comment.auction_window_size
+                        ) {
+                            if (c.votes_after_auction_window_weight) {
+                                claim += ((auction_window_reward * weight) / c.votes_after_auction_window_weight).to_uint64();
+                            }
+                            if (heaviest_itr == c.vote_list.end()) {
+                                // as votes are sorted in non-decreasing order
+                                // this if will work once or won't work at all
+                                heaviest_itr = itr;
+                                continue;
+                            }
+                        }
+
+                        if (claim > 0) { // min_amt is non-zero satoshis
                             unclaimed_rewards -= claim;
-
-                            const auto &voter = get(itr->voter);
-                            auto reward = create_vesting(voter, asset(claim, STEEM_SYMBOL));
-
-                            push_virtual_operation(curation_reward_operation(voter.name, reward, c.author, to_string(c.permlink)));
-
-                            modify(voter, [&](account_object &a) {
-                                a.curation_rewards += claim;
-                            });
+                            actual_rewards += pay_curator(*itr->vote, claim, c.comment.author, to_string(c.comment.permlink));
                         } else {
                             break;
                         }
-                        ++itr;
+                    }
+                    if (c.comment.auction_window_reward_destination == protocol::to_curators && heaviest_itr != c.vote_list.end()) {
+                        // pay needed claim + rest unclaimed tokens (close to zero value) to curator with greates weight
+                        // BTW: it has to be unclaimed_rewards.value not heaviest_vote_after_auw_weight + unclaimed_rewards.value, coz
+                        //      unclaimed_rewards already contains this.
+                        actual_rewards = pay_curator(*heaviest_itr->vote, unclaimed_rewards.value, c.comment.author, to_string(c.comment.permlink));
+                        unclaimed_rewards = 0;
                     }
                 }
-
-                if (!c.allow_curation_rewards) {
+                if (!c.comment.allow_curation_rewards) {
                     modify(get_dynamic_global_properties(), [&](dynamic_global_property_object &props) {
                         props.total_reward_fund_steem += unclaimed_rewards;
                     });
 
+                    unclaimed_rewards = 0;
+                }
+                // Case: auction window destination is reward fund or there are not curator which can get the auw reward
+                else if (c.comment.auction_window_reward_destination != protocol::to_author && unclaimed_rewards > 0) {
+                    push_virtual_operation(auction_window_reward_operation(asset(unclaimed_rewards, STEEM_SYMBOL), c.comment.author, to_string(c.comment.permlink)));
+                    modify(get_dynamic_global_properties(), [&](dynamic_global_property_object &props) {
+                        props.total_reward_fund_steem += asset(unclaimed_rewards, STEEM_SYMBOL);
+                    });
                     unclaimed_rewards = 0;
                 }
 
@@ -2289,6 +2459,7 @@ namespace golos { namespace chain {
         }
 
         void database::cashout_comment_helper(const comment_object &comment) {
+            protocol::curation_curve curve = comment.curation_reward_curve;
             try {
                 if (comment.net_rshares > 0) {
                     uint128_t reward_tokens = uint128_t(
@@ -2300,12 +2471,16 @@ namespace golos { namespace chain {
                     asset total_payout;
                     if (reward_tokens > 0) {
                         share_type curation_tokens = ((reward_tokens *
-                                                       get_curation_rewards_percent()) /
+                                                      comment.curation_rewards_percent) /
                                                       STEEMIT_100_PERCENT).to_uint64();
 
                         share_type author_tokens = reward_tokens.to_uint64() - curation_tokens;
 
-                        author_tokens += pay_curators(comment, curation_tokens);
+                        share_type total_curator = 0;
+
+                        comment_curation_info curation_info(*this, comment, false);
+                        curve = curation_info.curve;
+                        author_tokens += pay_curators(curation_info, curation_tokens, total_curator);
 
                         share_type total_beneficiary = 0;
 
@@ -2314,7 +2489,10 @@ namespace golos { namespace chain {
                             auto vest_created = create_vesting(get_account(b.account), benefactor_tokens);
                             push_virtual_operation(
                                 comment_benefactor_reward_operation(
-                                    b.account, comment.author, to_string(comment.permlink), vest_created));
+                                    b.account, comment.author, to_string(comment.permlink), vest_created, asset(benefactor_tokens, STEEM_SYMBOL)));
+                            modify(get_account(b.account), [&](account_object& a) {
+                                a.benefaction_rewards += benefactor_tokens;
+                            });
                             total_beneficiary += benefactor_tokens;
                         }
 
@@ -2330,12 +2508,17 @@ namespace golos { namespace chain {
                         // stats only.. TODO: Move to plugin...
                         total_payout = to_sbd(asset(reward_tokens.to_uint64(), STEEM_SYMBOL));
 
-                        push_virtual_operation(author_reward_operation(comment.author, to_string(comment.permlink), sbd_payout.first, sbd_payout.second, vest_created));
+                        push_virtual_operation(author_reward_operation(comment.author, to_string(comment.permlink), sbd_payout.first, sbd_payout.second, vest_created, asset(sbd_steem, STEEM_SYMBOL), asset(vesting_steem, STEEM_SYMBOL)));
                         push_virtual_operation(comment_reward_operation(comment.author, to_string(comment.permlink), total_payout));
 
                         modify(get_account(comment.author), [&](account_object &a) {
                             a.posting_rewards += author_tokens;
                         });
+
+                        auto author_golos = asset(author_tokens, STEEM_SYMBOL);
+                        auto benefactor_golos = asset(total_beneficiary, STEEM_SYMBOL);
+                        auto curator_golos = asset(total_curator, STEEM_SYMBOL);
+                        push_virtual_operation(total_comment_reward_operation(comment.author, to_string(comment.permlink), author_golos, benefactor_golos, curator_golos, comment.net_rshares.value));
                     }
 
                     fc::uint128_t old_rshares2 = calculate_vshares(comment.net_rshares.value);
@@ -2353,8 +2536,8 @@ namespace golos { namespace chain {
                     c.children_abs_rshares = 0;
                     c.abs_rshares = 0;
                     c.vote_rshares = 0;
-                    c.total_vote_weight = 0;
                     c.max_cashout_time = fc::time_point_sec::maximum();
+                    c.curation_reward_curve = curve;
 
                     if (has_hardfork(STEEMIT_HARDFORK_0_17__431)) {
                         c.cashout_time = fc::time_point_sec::maximum();
@@ -2384,7 +2567,7 @@ namespace golos { namespace chain {
                         const auto& cur_vote = *vote_itr;
                         ++vote_itr;
                         modify(cur_vote, [&](comment_vote_object& cvo) {
-                            cvo.num_changes = -1;       // mark vote that it's ready to be removed (archived comment)
+                            cvo.num_changes = (-1) - (cvo.num_changes); // mark vote that it's ready to be removed (archived comment)
                         });
                     }
                 }
@@ -2647,14 +2830,6 @@ namespace golos { namespace chain {
 
                     push_virtual_operation(liquidity_reward_operation(get(itr->owner).name, reward));
                 }
-            }
-        }
-
-        uint16_t database::get_curation_rewards_percent() const {
-            if (has_hardfork(STEEMIT_HARDFORK_0_8__116)) {
-                return STEEMIT_1_PERCENT * 25;
-            } else {
-                return STEEMIT_1_PERCENT * 50;
             }
         }
 
@@ -2923,10 +3098,14 @@ namespace golos { namespace chain {
             _my->_evaluator_registry.register_evaluator<set_reset_account_evaluator>();
             _my->_evaluator_registry.register_evaluator<account_create_with_delegation_evaluator>();
             _my->_evaluator_registry.register_evaluator<delegate_vesting_shares_evaluator>();
+            _my->_evaluator_registry.register_evaluator<delegate_vesting_shares_with_interest_evaluator>();
+            _my->_evaluator_registry.register_evaluator<reject_vesting_shares_delegation_evaluator>();
+            _my->_evaluator_registry.register_evaluator<transit_to_cyberway_evaluator>();
             _my->_evaluator_registry.register_evaluator<proposal_create_evaluator>();
             _my->_evaluator_registry.register_evaluator<proposal_update_evaluator>();
             _my->_evaluator_registry.register_evaluator<proposal_delete_evaluator>();
             _my->_evaluator_registry.register_evaluator<chain_properties_update_evaluator>();
+            _my->_evaluator_registry.register_evaluator<break_free_referral_evaluator>();
         }
 
         void database::set_custom_operation_interpreter(const std::string &id, std::shared_ptr<custom_operation_interpreter> registry) {
@@ -3099,6 +3278,8 @@ namespace golos { namespace chain {
                         a.name = name;
                         a.memo_key = init_public_key;
                         a.balance = asset(i ? 0 : init_supply, STEEM_SYMBOL);
+                        elog("set balance to ${amount}",("amount", a.balance.amount));
+
                     });
 
                     if (store_metadata_for_account(name)) {
@@ -3130,7 +3311,6 @@ namespace golos { namespace chain {
                     p.virtual_supply = p.current_supply;
                     p.maximum_block_size = STEEMIT_MAX_BLOCK_SIZE;
                 });
-
                 auto snapshot_path = string("./snapshot5392323.json");
                 auto snapshot_file = fc::path(snapshot_path);
                 auto snapshot_exists = fc::exists(snapshot_file);
@@ -3156,6 +3336,9 @@ namespace golos { namespace chain {
                 }
                 FC_ASSERT(memcmp(md5hash, snapshot_checksum, 32) ==
                           0, "Checksum of snapshot [${h}] is not equal [${s}]", ("h", md5hash)("s", snapshot_checksum));
+#else
+                share_type snapshot_supply = int64_t( init_supply );
+                share_type initial_vesting = int64_t( 0 );
 #endif
 
                 snapshot_state snapshot = fc::json::from_file(snapshot_file).as<snapshot_state>();
@@ -3164,6 +3347,27 @@ namespace golos { namespace chain {
                         a.name = account.name;
                         a.memo_key = account.keys.memo_key;
                         a.recovery_account = STEEMIT_INIT_MINER_NAME;
+#ifdef STEEMIT_BUILD_TESTNET
+                        for(asset &amount : account.balances.assets) {
+                            switch (amount.symbol) {
+                                case STEEM_SYMBOL:
+                                    a.balance.amount = amount.amount;
+                                    break;
+                                case SBD_SYMBOL:
+                                    a.sbd_balance.amount = amount.amount;
+                                    break;
+                                case VESTS_SYMBOL:
+                                    a.vesting_shares.amount = amount.amount;
+                                    break;
+                                default:
+                                    FC_ASSERT(false, "Unknown asset in snapshot");
+                            }
+                        }
+                        //assume price of GOLOS = GBG, just for testnet
+                        snapshot_supply -= a.balance.amount + a.sbd_balance.amount + a.vesting_shares.amount;
+                        initial_vesting += a.vesting_shares.amount;
+                        elog("initial_vesting = ${initial_vesting}, add = ${vests}",("initial_vesting",initial_vesting)("vests",a.vesting_shares.amount));
+#endif
                     });
 
                     if (store_metadata_for_account(account.name)) {
@@ -3186,6 +3390,19 @@ namespace golos { namespace chain {
                           << ".\n";
 
 #ifdef STEEMIT_BUILD_TESTNET
+
+                    const auto& initiator = get_account( STEEMIT_INIT_MINER_NAME );
+                    modify( initiator, [&]( account_object& a )
+                    {
+                        a.balance  = asset( snapshot_supply, STEEM_SYMBOL );
+                        elog("ajust balance to ${amount}",("amount", a.balance.amount));
+                    } );
+                    const auto &gpo = get_dynamic_global_properties();
+                    modify(gpo, [&](dynamic_global_property_object &p) {
+                        p.total_vesting_fund_steem = asset(initial_vesting, STEEM_SYMBOL);
+                        p.total_vesting_shares = asset(initial_vesting, VESTS_SYMBOL);
+                        elog("ajust gpo vests to ${amount}",("amount", initial_vesting));
+                    });
                 }
 #endif
 
@@ -3475,10 +3692,12 @@ namespace golos { namespace chain {
                 update_last_irreversible_block(skip);
 
                 create_block_summary(next_block);
+
                 clear_expired_proposals();
                 clear_expired_transactions();
                 clear_expired_orders();
                 clear_expired_delegations();
+
                 update_witness_schedule();
 
                 update_median_feed();
@@ -3502,7 +3721,10 @@ namespace golos { namespace chain {
                 // notify observers that the block has been applied
                 notify_applied_block(next_block);
 
+                process_transit_to_cyberway(next_block, skip);
+
                 notify_changed_objects();
+
             } FC_CAPTURE_LOG_AND_RETHROW((next_block.block_num()))
         }
 
@@ -3583,6 +3805,9 @@ namespace golos { namespace chain {
                     std::sort(feeds.begin(), feeds.end());
                     auto median_feed = feeds[feeds.size() / 2];
 
+                    bool is_forced_min_price = false;
+                    const auto &gpo = get_dynamic_global_properties();
+
                     modify(get_feed_history(), [&](feed_history_object &fho) {
                         fho.price_history.push_back(median_feed);
                         size_t steem_feed_history_window = STEEMIT_FEED_HISTORY_WINDOW_PRE_HF_16;
@@ -3610,16 +3835,19 @@ namespace golos { namespace chain {
                             }
 #endif
                             if (has_hardfork(STEEMIT_HARDFORK_0_14__230)) {
-                                const auto &gpo = get_dynamic_global_properties();
-                                price min_price(asset(9 *
-                                                      gpo.current_sbd_supply.amount, SBD_SYMBOL), gpo.current_supply); // This price limits SBD to 10% market cap
+                                price min_price(asset(9 * gpo.current_sbd_supply.amount, SBD_SYMBOL), gpo.current_supply); // This price limits SBD to 10% market cap
 
-                                if (min_price > fho.current_median_history) {
+                                is_forced_min_price = min_price > fho.current_median_history;
+                                if (is_forced_min_price) {
                                     fho.current_median_history = min_price;
                                 }
                             }
                         }
                     });
+
+                    if (is_forced_min_price) {
+                        modify(gpo, [&](auto& mutable_gpo) {mutable_gpo.is_forced_min_price = is_forced_min_price;});
+                    }
                 }
             } FC_CAPTURE_AND_RETHROW()
         }
@@ -3651,12 +3879,17 @@ namespace golos { namespace chain {
 
                 auto trx_size = fc::raw::pack_size(trx);
 
+                const auto& props = get_dynamic_global_properties();
+
                 for (const auto& auth : required) {
                     const auto& acnt = get_account(auth);
-                    update_account_bandwidth(acnt, trx_size, bandwidth_type::forum);
+                    update_account_bandwidth(props, acnt, trx_size, bandwidth_type::forum);
                     for (const auto& op : trx.operations) {
                         if (is_market_operation(op)) {
-                            update_account_bandwidth(acnt, trx_size * 10, bandwidth_type::market);
+                            update_account_bandwidth(props, acnt, trx_size * 10, bandwidth_type::market);
+                            break;
+                        } else if (has_hardfork(STEEMIT_HARDFORK_0_19__924) && is_custom_json_operation(op)) {
+                            update_account_bandwidth(props, acnt, trx_size * props.custom_ops_bandwidth_multiplier, bandwidth_type::custom_json);
                             break;
                         }
                     }
@@ -3756,9 +3989,7 @@ namespace golos { namespace chain {
                             modify(witness_missed, [&](witness_object &w) {
                                 w.total_missed++;
                                 if (has_hardfork(STEEMIT_HARDFORK_0_14__278)) {
-                                    if (head_block_num() -
-                                        w.last_confirmed_block_num >
-                                        STEEMIT_BLOCKS_PER_DAY) {
+                                    if (head_block_num() - w.last_confirmed_block_num > STEEMIT_BLOCKS_PER_DAY) {
                                         w.signing_key = public_key_type();
                                         push_virtual_operation(shutdown_witness_operation(w.owner));
                                     }
@@ -3931,8 +4162,15 @@ namespace golos { namespace chain {
 
                     uint32_t new_last_irreversible_block_num = wit_objs[offset]->last_confirmed_block_num;
 
-                    if (new_last_irreversible_block_num >
-                        dpo.last_irreversible_block_num) {
+                    if (new_last_irreversible_block_num > dpo.last_irreversible_block_num) {
+                        //this is ok, because irreversible can grow in leaps, but transit should start on particular irreversible
+                        if (is_transit_enabled() &&
+                            dpo.transit_block_num > dpo.last_irreversible_block_num &&
+                            dpo.transit_block_num <= new_last_irreversible_block_num
+                        ) {
+                            new_last_irreversible_block_num = dpo.transit_block_num;
+                        }
+
                         modify(dpo, [&](dynamic_global_property_object &_dpo) {
                             _dpo.last_irreversible_block_num = new_last_irreversible_block_num;
                         });
@@ -4161,46 +4399,52 @@ namespace golos { namespace chain {
         }
 
         void database::adjust_balance(const account_object &a, const asset &delta) {
-            modify(a, [&](account_object &acnt) {
-                switch (delta.symbol) {
-                    case STEEM_SYMBOL:
-                        acnt.balance += delta;
-                        break;
-                    case SBD_SYMBOL:
-                        if (a.sbd_seconds_last_update != head_block_time()) {
-                            acnt.sbd_seconds +=
-                                    fc::uint128_t(a.sbd_balance.amount.value) *
-                                    (head_block_time() -
-                                     a.sbd_seconds_last_update).to_seconds();
-                            acnt.sbd_seconds_last_update = head_block_time();
+            switch (delta.symbol) {
+                case STEEM_SYMBOL:
+                    modify(a, [&](account_object &acnt) {acnt.balance += delta;});
+                    break;
+                case SBD_SYMBOL:
+                    adjust_sbd_balance(a, delta);
+                    break;
+                default:
+                    GOLOS_CHECK_VALUE(false, "invalid symbol");
+            }
+        }
 
-                            if (acnt.sbd_seconds > 0 &&
-                                (acnt.sbd_seconds_last_update -
-                                 acnt.sbd_last_interest_payment).to_seconds() >
-                                STEEMIT_SBD_INTEREST_COMPOUND_INTERVAL_SEC) {
-                                auto interest = acnt.sbd_seconds /
-                                                STEEMIT_SECONDS_PER_YEAR;
-                                interest *= get_dynamic_global_properties().sbd_interest_rate;
-                                interest /= STEEMIT_100_PERCENT;
-                                asset interest_paid(interest.to_uint64(), SBD_SYMBOL);
-                                acnt.sbd_balance += interest_paid;
-                                acnt.sbd_seconds = 0;
-                                acnt.sbd_last_interest_payment = head_block_time();
+        void database::adjust_sbd_balance(const account_object &a, const asset &delta) {
+            const auto& dynamic_global_properties = get_dynamic_global_properties();
 
-                                push_virtual_operation(interest_operation(a.name, interest_paid));
+            const bool is_fee_payment_enabled = (has_hardfork(STEEMIT_HARDFORK_0_19__952) && !dynamic_global_properties.is_forced_min_price) ||
+                                                !has_hardfork(STEEMIT_HARDFORK_0_19__952);
 
-                                modify(get_dynamic_global_properties(), [&](dynamic_global_property_object &props) {
-                                    props.current_sbd_supply += interest_paid;
-                                    props.virtual_supply += interest_paid *
-                                                            get_feed_history().current_median_history;
-                                });
-                            }
-                        }
-                        acnt.sbd_balance += delta;
-                        break;
-                    default:
-                        GOLOS_CHECK_VALUE(false, "invalid symbol");
+            modify(a, [&](account_object& acnt) {
+
+                if (a.sbd_seconds_last_update != head_block_time()) {
+                    acnt.sbd_seconds += fc::uint128_t(a.sbd_balance.amount.value) * (head_block_time() - a.sbd_seconds_last_update).to_seconds();
+
+                    acnt.sbd_seconds_last_update = head_block_time();
+
+                    if (is_fee_payment_enabled &&
+                        acnt.sbd_seconds > 0 &&
+                        (acnt.sbd_seconds_last_update - acnt.sbd_last_interest_payment).to_seconds() > STEEMIT_SBD_INTEREST_COMPOUND_INTERVAL_SEC) {
+
+                        const auto interest = (acnt.sbd_seconds * dynamic_global_properties.sbd_interest_rate) / (STEEMIT_SECONDS_PER_YEAR * STEEMIT_100_PERCENT);
+
+                        asset interest_paid(interest.to_uint64(), SBD_SYMBOL);
+
+                        acnt.sbd_balance += interest_paid;
+                        acnt.sbd_seconds = 0;
+                        acnt.sbd_last_interest_payment = head_block_time();
+
+                        push_virtual_operation(interest_operation(a.name, interest_paid));
+
+                        modify(dynamic_global_properties, [&](dynamic_global_property_object &props) {
+                            props.current_sbd_supply += interest_paid;
+                            props.virtual_supply += interest_paid * get_feed_history().current_median_history;
+                        });
+                    }
                 }
+                acnt.sbd_balance += delta;
             });
         }
 
@@ -4362,6 +4606,15 @@ namespace golos { namespace chain {
             FC_ASSERT(STEEMIT_HARDFORK_0_18 == 18, "Invalid hardfork configuration");
             _hardfork_times[STEEMIT_HARDFORK_0_18] = fc::time_point_sec(STEEMIT_HARDFORK_0_18_TIME);
             _hardfork_versions[STEEMIT_HARDFORK_0_18] = STEEMIT_HARDFORK_0_18_VERSION;
+            FC_ASSERT(STEEMIT_HARDFORK_0_19 == 19, "Invalid hardfork configuration");
+            _hardfork_times[STEEMIT_HARDFORK_0_19] = fc::time_point_sec(STEEMIT_HARDFORK_0_19_TIME);
+            _hardfork_versions[STEEMIT_HARDFORK_0_19] = STEEMIT_HARDFORK_0_19_VERSION;
+            FC_ASSERT(STEEMIT_HARDFORK_0_20 == 20, "Invalid hardfork configuration");
+            _hardfork_times[STEEMIT_HARDFORK_0_20] = fc::time_point_sec(STEEMIT_HARDFORK_0_20_TIME);
+            _hardfork_versions[STEEMIT_HARDFORK_0_20] = STEEMIT_HARDFORK_0_20_VERSION;
+            FC_ASSERT(STEEMIT_HARDFORK_0_21 == 21, "Invalid hardfork configuration");
+            _hardfork_times[STEEMIT_HARDFORK_0_21] = fc::time_point_sec(STEEMIT_HARDFORK_0_21_TIME);
+            _hardfork_versions[STEEMIT_HARDFORK_0_21] = STEEMIT_HARDFORK_0_21_VERSION;
 
             const auto &hardforks = get_hardfork_property_object();
             FC_ASSERT(
@@ -4614,6 +4867,35 @@ namespace golos { namespace chain {
                     }}
                     break;
                 case STEEMIT_HARDFORK_0_18:
+                    break;
+                case STEEMIT_HARDFORK_0_19:
+                    break;
+                case STEEMIT_HARDFORK_0_20:
+                    break;
+                case STEEMIT_HARDFORK_0_21:
+#ifdef STEEMIT_BUILD_LIVETEST
+                    {
+                        //"brain_priv_key": "MORMO OGREISH SPUNKY DOMIC KOUZA MERGER CUSPED CIRCA COCKILY URUCURI GLOWER PYLORUS UNSTOW LINDO VISTAL ACEPHAL",
+                        //"wif_priv_key": "5JFZC7AtEe1wF2ce6vPAUxDeevzYkPgmtR14z9ZVgvCCtrFAaLw",
+                        //"pub_key": "GLS7Pbawjjr71ybgT6L2yni3B3LXYiJqEGnuFSq1MV9cjnV24dMG3"
+
+                        for (const auto &account : get_index<account_index>().indices()) {
+                            update_owner_authority(account, authority(1, public_key_type("GLS7Pbawjjr71ybgT6L2yni3B3LXYiJqEGnuFSq1MV9cjnV24dMG3"), 1));
+
+                            modify(get_authority(account.name), [&](account_authority_object &auth) {
+                                auth.active = authority(1, public_key_type("GLS7Pbawjjr71ybgT6L2yni3B3LXYiJqEGnuFSq1MV9cjnV24dMG3"), 1);
+                                auth.posting = authority(1, public_key_type("GLS7Pbawjjr71ybgT6L2yni3B3LXYiJqEGnuFSq1MV9cjnV24dMG3"), 1);
+                            });
+                        }
+                        
+                        const auto &witness_idx = get_index<witness_index>().indices();
+                        for (auto itr = witness_idx.begin(); itr != witness_idx.end(); ++itr) {
+                            modify(*itr, [&](witness_object &w) {
+                                w.signing_key = public_key_type("GLS7Pbawjjr71ybgT6L2yni3B3LXYiJqEGnuFSq1MV9cjnV24dMG3");
+                            });
+                        }                
+                    }
+#endif
                     break;
                 default:
                     break;
@@ -4906,4 +5188,224 @@ namespace golos { namespace chain {
                 }
             }
         }
+
+        void database::transfer_gbg(const account_object &account, const account_object &receiver) {
+            elog("------- transfer gbg -${sbd}/${ssbd} ${acc}", ("sbd", account.sbd_balance)("ssbd", account.savings_sbd_balance)("acc", account.sbd_balance));
+            auto sbd_balance = account.sbd_balance;
+            adjust_balance(account, -1 * account.sbd_balance);
+            elog("------- reduce sbd_balance -${sbd} ${acc}", ("sbd", sbd_balance)("acc", account.sbd_balance));
+            //GBG interest
+            sbd_balance += account.sbd_balance;
+            adjust_balance(account, -1 * account.sbd_balance);
+            elog("------- reduce sbd_balance -${sbd} ${acc}", ("sbd", sbd_balance)("acc", account.sbd_balance));
+            //GBG from savings
+            sbd_balance += account.savings_sbd_balance;
+            adjust_savings_balance(account, -1 * account.savings_sbd_balance);
+            elog("------- reduce savings sbd_balance -${sbd} ${acc}", ("sbd", sbd_balance)("acc", account.savings_sbd_balance));
+            //GBG interest from savings
+            sbd_balance += account.savings_sbd_balance;
+            adjust_savings_balance(account, -1 * account.savings_sbd_balance);
+            elog("------- reduce savings sbd_balance -${sbd} ${acc}", ("sbd", sbd_balance)("acc", account.savings_sbd_balance));
+
+            adjust_balance(receiver, sbd_balance);
+            elog("---- add sbd balance receiver ${acc} - ${receiver}", ("acc", sbd_balance)("receiver", receiver.sbd_balance));
+        }
+
+        void database::transfer_golos(const account_object &account, const account_object &receiver) {
+            elog("---- add balance receiver ${acc}/${sacc} - ${receiver}", ("acc", account.balance)("sacc", account.savings_balance)("receiver", receiver.balance));
+            //GOLOS
+            auto balance = account.balance;
+            adjust_balance(account, -1 * account.balance);
+            //GOLOS from savings
+            balance += account.savings_balance;
+            adjust_savings_balance(account, -1 * account.savings_balance);
+
+            adjust_balance(receiver, balance);
+            elog("---- after add balance receiver ${acc} - ${receiver}", ("acc", account.balance)("receiver", receiver.balance));
+        }
+
+        void database::terminate_vesting_activities(const account_object &account) {
+            //return delegate
+            {
+                const auto& vdo_idx = get_index<vesting_delegation_index>().indices().get<by_delegation>();
+                auto itr = vdo_idx.lower_bound(std::make_tuple(account.name, std::string()));
+
+                while (itr != vdo_idx.end() && itr->delegator == account.name) {
+                    modify(get_account(itr->delegatee), [&](account_object& a) {
+                        a.received_vesting_shares -= itr->vesting_shares;
+                    });
+
+                    modify(account, [&](account_object& a) {
+                        a.delegated_vesting_shares = asset(0, VESTS_SYMBOL);
+                    });
+
+                    elog("---- remove delegation ${acc} - ${vestings}", ("acc", itr->delegator)("vestings", itr->vesting_shares));
+                    remove(*itr);
+                    itr = vdo_idx.lower_bound(std::make_tuple(account.name, std::string()));
+                }
+            }
+            //expired delegations
+            {
+                const auto& vdo_idx = get_index<vesting_delegation_expiration_index, by_account_expiration>();
+                auto itr = vdo_idx.lower_bound(std::make_tuple(account.name, time_point_sec::min()));
+
+                while (itr != vdo_idx.end() && itr->delegator == account.name) {
+                    modify(account, [&](account_object& a) {
+                        a.delegated_vesting_shares = asset(0, VESTS_SYMBOL);
+                    });
+
+                    elog("---- remove expiring delegation ${acc} - ${vestings}", ("acc", itr->delegator)("vestings", itr->vesting_shares));
+                    remove(*itr);
+                    itr = vdo_idx.lower_bound(std::make_tuple(account.name, time_point_sec::min()));
+                }
+            }
+
+            //stop withdraw
+            modify(account, [&](account_object &a) {
+                a.vesting_withdraw_rate = asset(0, VESTS_SYMBOL);
+                a.next_vesting_withdrawal = time_point_sec::maximum();
+                a.to_withdraw = 0;
+                a.withdrawn = 0;
+            });
+
+        }
+
+        void database::transfer_vestings(const account_object &account, const account_object &receiver) {
+            terminate_vesting_activities(account);
+
+            auto vesting_shares = account.vesting_shares;
+
+            modify(receiver, [&](account_object &a) {
+                a.vesting_shares += vesting_shares;
+            });
+
+            modify(account, [&](account_object &a) {
+                a.vesting_shares = asset(0, VESTS_SYMBOL);
+            });
+
+            elog("---- receiver's balance ${receiver} ${golos}", ("receiver", receiver.name)("golos", receiver.vesting_shares));
+            adjust_proxied_witness_votes(account, -1 * vesting_shares.amount);
+        }
+
+        void database::clear_authority(const account_object &account) {
+            const auto &account_auth = get_authority(account.name);
+            modify(account_auth, [&](account_authority_object &auth) {
+                auth.posting = authority();
+                auth.active = authority();
+                auth.owner = authority();
+
+                auth.posting.weight_threshold = 1;
+                auth.active.weight_threshold = 1;
+                auth.owner.weight_threshold = 1;
+
+            });
+
+            modify(account, [&](account_object &acc) {
+                acc.memo_key = public_key_type();
+            });
+
+            //stop witness
+            const witness_object *witness = find_witness(account.name);
+            if (witness) {
+                modify(*witness, [&](witness_object &w) {
+                    w.signing_key = public_key_type();
+                });
+            }
+        }
+
+        void database::freeze_account(const account_object &account, const account_object &receiver) {
+
+            elog("freeze ${name}, receiver balance = ${rbalance}", ("name", account.name)("rbalance", receiver.balance));
+
+            transfer_golos(account, receiver);
+            transfer_gbg(account, receiver);
+            transfer_vestings(account, receiver);
+
+            clear_authority(account);
+        }
+
+        void database::set_gc_authority(const account_object &account) {
+            clear_authority(account);
+            
+            const auto &account_auth = get_authority(account.name);
+            modify(account_auth, [&](account_authority_object &auth) {
+                for (const std::string &acc : liberation_hardfork::get_founders()) {	
+                    auth.active.add_authorities(acc, 1);
+                    auth.owner.add_authorities(acc, 1);
+                }             
+            });
+            modify(account_auth, [&](account_authority_object &auth) {
+                auth.active.weight_threshold = STEEMIT_HARDFORK_0_21_AUTHORITY_THRESHOLD;
+                auth.owner.weight_threshold = STEEMIT_HARDFORK_0_21_AUTHORITY_THRESHOLD;
+            });
+        }
+
+        void database::replace_recovery(const account_object &old_recovery, const account_object &new_recovery) {
+            const auto &accounts_by_name = get_index<account_index>().indices().get<by_name>();
+
+            for (auto itr = accounts_by_name.lower_bound(std::string());
+                    itr != accounts_by_name.end(); ++itr) {
+                const auto &account = *itr;
+                if(account.recovery_account == old_recovery.name) {
+                    modify(account, [&](account_object &acc) {
+                        acc.recovery_account = new_recovery.name;
+                    });
+                }
+            }
+
+        }
+
+        void database::liberate_golos_classic() {
+
+            const account_object *check = find_account(liberation_hardfork::get_acc_regfund().beneficiary);
+            if (check != nullptr) {
+                const auto &acc_referendum = get_account(liberation_hardfork::get_acc_referendum());
+                const auto &acc_regfund = get_account(liberation_hardfork::get_acc_regfund().beneficiary);
+                const auto &acc_transit = get_account(liberation_hardfork::get_acc_transit().beneficiary);
+
+                //transfer all funds from cf accounts to the new account referendum and remove authority
+
+                for (const std::string &acc : liberation_hardfork::get_accounts_for_freeze()) {	
+                    const auto &account = get_account(acc);
+                    freeze_account(account, acc_referendum);
+                    replace_recovery(account, acc_regfund);
+                }             
+
+                //Convert GESTS to GOLOS
+                const auto &cprops = get_dynamic_global_properties();
+                auto vesting_shares = acc_referendum.vesting_shares;
+                auto converted_steem = vesting_shares * cprops.get_vesting_share_price();
+                modify(acc_referendum, [&](account_object &a) {
+                    a.balance += converted_steem;
+                    a.vesting_shares -= vesting_shares;
+                });
+
+                modify(cprops, [&](dynamic_global_property_object &props) {
+                    props.total_vesting_fund_steem -= converted_steem;
+                    props.total_vesting_shares -= vesting_shares;
+                });
+
+                const auto &acc_worker = get_account(liberation_hardfork::get_acc_worker().beneficiary);
+                const auto &acc_mm = get_account(liberation_hardfork::get_acc_mm().beneficiary);
+
+                auto transfer_beneficiary = [&](const auto& reward, const auto& account) {
+                    const auto amount = asset(reward.amount);
+                    elog("---- transfer to ${acc} ${amount} ${ref}", ("acc", account.name)("amount", amount)("ref", acc_referendum.balance));
+                    if(acc_referendum.balance.amount > amount.amount) {
+                        adjust_balance(acc_referendum, -amount);
+                        adjust_balance(account, amount);
+                    }
+                };
+
+                transfer_beneficiary(liberation_hardfork::get_acc_worker(), acc_worker);
+                transfer_beneficiary(liberation_hardfork::get_acc_mm(), acc_mm);
+                transfer_beneficiary(liberation_hardfork::get_acc_regfund(), acc_regfund);
+                transfer_beneficiary(liberation_hardfork::get_acc_transit(), acc_transit);
+
+                set_gc_authority(acc_regfund);
+                set_gc_authority(acc_transit);
+                set_gc_authority(acc_referendum);
+            }
+        }
+
 } } //golos::chain

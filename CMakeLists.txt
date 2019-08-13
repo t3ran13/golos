@@ -63,6 +63,17 @@ if(BUILD_GOLOS_TESTNET)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSTEEMIT_BUILD_TESTNET")
 endif()
 
+option(BUILD_GOLOS_LIVETEST "Build source for test network (ON OR OFF)" OFF)
+message(STATUS "BUILD_GOLOS_LIVETEST: ${BUILD_GOLOS_LIVETEST}")
+if(BUILD_GOLOS_LIVETEST)
+    message(STATUS "     ")
+    message(STATUS "             CONFIGURING FOR LIVE TEST             ")
+    message(STATUS "     ")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DSTEEMIT_BUILD_LIVETEST")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSTEEMIT_BUILD_LIVETEST")
+endif()
+
+
 option(MAX_19_VOTED_WITNESSES "Build source with 19 voted witnesses (ON OR OFF)" OFF)
 message(STATUS "MAX_19_VOTED_WITNESSES: ${MAX_19_VOTED_WITNESSES}")
 if(MAX_19_VOTED_WITNESSES AND BUILD_GOLOS_TESTNET)
@@ -170,7 +181,7 @@ else(WIN32) # Apple AND Linux
     else(APPLE)
         # Linux Specific Options Here
         message(STATUS "Configuring Golos on Linux")
-        set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -std=c++14 -Wall")
+        set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -std=c++14 -Wall -Wno-deprecated-declarations")
         set(rt_library rt)
         set(pthread_library pthread)
         if(NOT DEFINED crypto_library)

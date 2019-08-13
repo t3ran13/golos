@@ -13,6 +13,7 @@
 #include <golos/plugins/test_api/test_api_plugin.hpp>
 #include <golos/plugins/social_network/social_network.hpp>
 #include <golos/plugins/account_history/plugin.hpp>
+#include <golos/plugins/account_notes/account_notes_plugin.hpp>
 #include <golos/plugins/statsd/plugin.hpp>
 #include <golos/plugins/account_by_key/account_by_key_plugin.hpp>
 #include <golos/plugins/private_message/private_message_plugin.hpp>
@@ -23,6 +24,7 @@
 #include <golos/plugins/tags/plugin.hpp>
 #include <golos/plugins/witness_api/plugin.hpp>
 #include <golos/plugins/follow/plugin.hpp>
+#include <golos/plugins/operation_dump/operation_dump_plugin.hpp>
 #ifdef MONGODB_PLUGIN_BUILT
     #include <golos/plugins/mongo_db/mongo_db_plugin.hpp>
 #endif
@@ -70,6 +72,7 @@ namespace golos {
             appbase::app().register_plugin<golos::plugins::test_api::test_api_plugin>();
             appbase::app().register_plugin<golos::plugins::market_history::market_history_plugin>();
             appbase::app().register_plugin<golos::plugins::account_history::plugin>();
+            appbase::app().register_plugin<golos::plugins::account_notes::account_notes_plugin>();
             appbase::app().register_plugin<golos::plugins::statsd::plugin>();
             appbase::app().register_plugin<golos::plugins::account_by_key::account_by_key_plugin>();
             appbase::app().register_plugin<golos::plugins::private_message::private_message_plugin>();
@@ -79,6 +82,7 @@ namespace golos {
             appbase::app().register_plugin<golos::plugins::debug_node::plugin>();
             appbase::app().register_plugin<golos::plugins::tags::tags_plugin>();
             appbase::app().register_plugin<golos::plugins::follow::plugin>();
+            appbase::app().register_plugin<golos::plugins::operation_dump::operation_dump_plugin>();
             #ifdef MONGODB_PLUGIN_BUILT
                 appbase::app().register_plugin<golos::plugins::mongo_db::mongo_db_plugin>();
             #endif
@@ -100,6 +104,14 @@ void logo(){
         std::cerr << "chain id: " << std::string( STEEMIT_CHAIN_ID ) << "\n";
         std::cerr << "blockchain version: " << std::string( STEEMIT_BLOCKCHAIN_VERSION ) << "\n";
         std::cerr << "------------------------------------------------------\n";
+#elif STEEMIT_BUILD_LIVETEST
+    std::cerr << "------------------------------------------------------\n\n";
+    std::cerr << "            STARTING GOLOS LIVETEST\n\n";
+    std::cerr << "------------------------------------------------------\n";
+    std::cerr << "initminer public key: " << STEEMIT_INIT_PUBLIC_KEY_STR << "\n";
+    std::cerr << "chain id: " << std::string( STEEMIT_CHAIN_ID ) << "\n";
+    std::cerr << "blockchain version: " << std::string( STEEMIT_BLOCKCHAIN_VERSION ) << "\n";
+    std::cerr << "------------------------------------------------------\n";
 #else
     std::cerr << "------------------------------------------------------\n\n";
     std::cerr << "            STARTING GOLOS NETWORK\n\n";

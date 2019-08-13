@@ -12,9 +12,9 @@ namespace golos { namespace protocol {
             author_reward_operation() {
             }
 
-            author_reward_operation(const account_name_type &a, const string &p, const asset &s, const asset &st, const asset &v)
+            author_reward_operation(const account_name_type &a, const string &p, const asset &s, const asset &st, const asset &v, const asset &sst, const asset &vg)
                     : author(a), permlink(p), sbd_payout(s), steem_payout(st),
-                      vesting_payout(v) {
+                      vesting_payout(v), sbd_and_steem_in_golos(sst), vesting_payout_in_golos(vg) {
             }
 
             account_name_type author;
@@ -22,6 +22,8 @@ namespace golos { namespace protocol {
             asset sbd_payout;
             asset steem_payout;
             asset vesting_payout;
+            asset sbd_and_steem_in_golos; // not reflected
+            asset vesting_payout_in_golos; // not reflected
         };
 
 
@@ -29,12 +31,26 @@ namespace golos { namespace protocol {
             curation_reward_operation() {
             }
 
-            curation_reward_operation(const string &c, const asset &r, const string &a, const string &p)
+            curation_reward_operation(const string &c, const asset &r, const string &a, const string &p, const asset &rg)
                     : curator(c), reward(r), comment_author(a),
-                      comment_permlink(p) {
+                      comment_permlink(p), reward_in_golos(rg) {
             }
 
             account_name_type curator;
+            asset reward;
+            account_name_type comment_author;
+            string comment_permlink;
+            asset reward_in_golos; // not reflected
+        };
+
+        struct auction_window_reward_operation : public virtual_operation {
+            auction_window_reward_operation() {
+            }
+
+            auction_window_reward_operation(const asset &r, const string &a, const string &p)
+                    : reward(r), comment_author(a), comment_permlink(p) {
+            }
+
             asset reward;
             account_name_type comment_author;
             string comment_permlink;
@@ -177,14 +193,15 @@ namespace golos { namespace protocol {
             comment_benefactor_reward_operation() {
             }
 
-            comment_benefactor_reward_operation(const account_name_type &b, const account_name_type &a, const string &p, const asset &r)
-                    : benefactor(b), author(a), permlink(p), reward(r) {
+            comment_benefactor_reward_operation(const account_name_type &b, const account_name_type &a, const string &p, const asset &r, const asset& rig)
+                    : benefactor(b), author(a), permlink(p), reward(r), reward_in_golos(rig) {
             }
 
             account_name_type benefactor;
             account_name_type author;
             string permlink;
             asset reward;
+            asset reward_in_golos; // not reflected
         };
 
         struct producer_reward_operation : public virtual_operation {
@@ -193,6 +210,21 @@ namespace golos { namespace protocol {
 
             account_name_type producer;
             asset             vesting_shares;
+        };
+
+        struct delegation_reward_operation : public virtual_operation {
+            delegation_reward_operation() {
+            }
+
+            delegation_reward_operation(const account_name_type& dr, const account_name_type& de, const delegator_payout_strategy& ps, const asset& vs, const asset& vsg)
+                    : delegator(dr), delegatee(de), payout_strategy(ps), vesting_shares(vs), vesting_shares_in_golos(vsg) {
+            }
+
+            account_name_type delegator;
+            account_name_type delegatee;
+            delegator_payout_strategy payout_strategy;
+            asset vesting_shares;
+            asset vesting_shares_in_golos; // not reflected
         };
 
         struct return_vesting_delegation_operation: public virtual_operation {
@@ -205,10 +237,27 @@ namespace golos { namespace protocol {
             account_name_type account;
             asset vesting_shares;
         };
+
+        struct total_comment_reward_operation : public virtual_operation {
+            total_comment_reward_operation() {
+            }
+
+            total_comment_reward_operation(const account_name_type& a, const string &p, const asset& ar, const asset& br, const asset& cr, int64_t nr)
+                    : author(a), permlink(p), author_reward(ar), benefactor_reward(br), curator_reward(cr), net_rshares(nr) {
+            }
+
+            account_name_type author;
+            string permlink;
+            asset author_reward;
+            asset benefactor_reward;
+            asset curator_reward;
+            int64_t net_rshares;
+        };
 } } //golos::protocol
 
 FC_REFLECT((golos::protocol::author_reward_operation), (author)(permlink)(sbd_payout)(steem_payout)(vesting_payout))
 FC_REFLECT((golos::protocol::curation_reward_operation), (curator)(reward)(comment_author)(comment_permlink))
+FC_REFLECT((golos::protocol::auction_window_reward_operation), (reward)(comment_author)(comment_permlink))
 FC_REFLECT((golos::protocol::comment_reward_operation), (author)(permlink)(payout))
 FC_REFLECT((golos::protocol::fill_convert_request_operation), (owner)(requestid)(amount_in)(amount_out))
 FC_REFLECT((golos::protocol::liquidity_reward_operation), (owner)(payout))
@@ -222,3 +271,5 @@ FC_REFLECT((golos::protocol::comment_payout_update_operation), (author)(permlink
 FC_REFLECT((golos::protocol::comment_benefactor_reward_operation), (benefactor)(author)(permlink)(reward))
 FC_REFLECT((golos::protocol::return_vesting_delegation_operation), (account)(vesting_shares))
 FC_REFLECT((golos::protocol::producer_reward_operation), (producer)(vesting_shares))
+FC_REFLECT((golos::protocol::delegation_reward_operation), (delegator)(delegatee)(payout_strategy)(vesting_shares))
+FC_REFLECT((golos::protocol::total_comment_reward_operation), (author)(permlink)(author_reward)(benefactor_reward)(curator_reward)(net_rshares))

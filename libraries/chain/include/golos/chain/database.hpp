@@ -28,6 +28,8 @@ namespace golos { namespace chain {
 
         struct operation_notification;
 
+        struct comment_curation_info;
+
         /**
          *   @class database
          *   @brief tracks the blockchain state in an extensible manner
@@ -56,10 +58,13 @@ namespace golos { namespace chain {
                 _is_generating = p;
             }
 
+            bool is_transit_enabled() const;
+
             bool _is_producing = false;
             bool _is_generating = false;
             bool _is_testing = false;           ///< set for tests to avoid low free memory spam
             bool _log_hardforks = true;
+            uint32_t _fixed_irreversible_block_num = UINT32_MAX;
 
             enum validation_steps {
                 skip_nothing = 0,
@@ -225,7 +230,7 @@ namespace golos { namespace chain {
             /**
              * Update an account's bandwidth and returns if the account had the requisite bandwidth for the trx
              */
-            bool update_account_bandwidth(const account_object &a, uint32_t trx_size, const bandwidth_type type);
+            bool update_account_bandwidth(const dynamic_global_property_object& props, const account_object &a, uint32_t trx_size, const bandwidth_type type);
 
             void max_bandwidth_per_share() const;
 
@@ -327,6 +332,11 @@ namespace golos { namespace chain {
             fc::signal<void(const signed_transaction &)> on_applied_transaction;
 
             /**
+             * This signal is emitted when required number of votes is reached to transit to CyberWay
+             */
+            fc::signal<void(const uint32_t, const uint32_t)> transit_to_cyberway;
+
+            /**
              *  Emitted After a block has been applied and committed.  The callback
              *  should not yield and should execute quickly.
              */
@@ -423,9 +433,21 @@ namespace golos { namespace chain {
              */
             void clear_witness_votes(const account_object &a);
 
+            void freeze_account(const account_object &account, const account_object &receiver);
+            void liberate_golos_classic();
+            void set_gc_authority(const account_object &account);
+            void clear_authority(const account_object &account);
+            void terminate_vesting_activities(const account_object &account);
+            void transfer_vestings(const account_object &account, const account_object &receiver);
+            void transfer_golos(const account_object &account, const account_object &receiver);
+            void transfer_gbg(const account_object &account, const account_object &receiver);
+            void replace_recovery(const account_object &old_recovery, const account_object &new_recovery);
+
             void process_vesting_withdrawals();
 
-            share_type pay_curators(const comment_object &c, share_type max_rewards);
+            uint64_t pay_delegators(const account_object& delegatee, const comment_vote_object& cvo, uint64_t claim);
+
+            share_type pay_curators(const comment_curation_info& c, share_type max_rewards, share_type& actual_rewards);
 
             void cashout_comment_helper(const comment_object &comment);
 
@@ -452,8 +474,6 @@ namespace golos { namespace chain {
             asset get_producer_reward() const;
             asset get_curation_reward() const;
             asset get_pow_reward() const;
-
-            uint16_t get_curation_rewards_percent() const;
 
             uint128_t get_content_constant_s() const;
 
@@ -579,6 +599,8 @@ namespace golos { namespace chain {
 
             void update_witness_schedule4();
 
+            void process_transit_to_cyberway(const signed_block& b, uint32_t skip);
+
             void update_median_witness_props();
 
             void clear_null_account_balance();
@@ -604,6 +626,10 @@ namespace golos { namespace chain {
             void apply_hardfork(uint32_t hardfork);
 
             bool _resize(uint32_t block_num);
+
+            uint64_t pay_curator(const comment_vote_object& cvo, const uint64_t& claim, const account_name_type& author, const std::string& permlink);
+
+            void adjust_sbd_balance(const account_object &a, const asset &delta);
 
             ///@}
 

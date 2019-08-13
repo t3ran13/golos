@@ -3,8 +3,12 @@
  */
 #pragma once
 
-#define STEEMIT_BLOCKCHAIN_VERSION              (version(0, 18, 5))
+
+#define STEEMIT_BLOCKCHAIN_VERSION              (version(0, 21, 0))
 #define STEEMIT_BLOCKCHAIN_HARDFORK_VERSION     (hardfork_version(STEEMIT_BLOCKCHAIN_VERSION))
+
+
+#define GOLOS_BUG1074_BLOCK 23569125
 
 #ifdef STEEMIT_BUILD_TESTNET
 #define BLOCKCHAIN_NAME "GOLOSTEST"
@@ -45,7 +49,7 @@
 #define STEEMIT_BLOCKS_PER_YEAR                 (365*24*60*60/STEEMIT_BLOCK_INTERVAL)
 #define STEEMIT_BLOCKS_PER_DAY                  (24*60*60/STEEMIT_BLOCK_INTERVAL)
 #define STEEMIT_START_VESTING_BLOCK             (STEEMIT_BLOCKS_PER_DAY / 512)
-#define STEEMIT_START_MINER_VOTING_BLOCK        (60*10/STEEMIT_BLOCK_INTERVAL)
+#define STEEMIT_START_MINER_VOTING_BLOCK        (60/STEEMIT_BLOCK_INTERVAL)
 #define STEEMIT_FIRST_CASHOUT_TIME              (fc::time_point_sec(1476788400 + STEEMIT_BLOCK_INTERVAL))
 
 #define STEEMIT_INIT_MINER_NAME                 "cyberfounder"
@@ -57,6 +61,7 @@
 #define STEEMIT_MAX_MINER_WITNESSES             1
 #define STEEMIT_MAX_RUNNER_WITNESSES            1
 #define STEEMIT_MAX_WITNESSES                   (STEEMIT_MAX_VOTED_WITNESSES+STEEMIT_MAX_MINER_WITNESSES+STEEMIT_MAX_RUNNER_WITNESSES) /// 21 is more than enough
+#define STEEMIT_TRANSIT_REQUIRED_WITNESSES      1 // 16 from top19 -> This guarantees 75% participation on all subsequent rounds.
 #define STEEMIT_HARDFORK_REQUIRED_WITNESSES     1 // 17 of the 20 dpos witnesses (19 elected and 1 virtual time) required for hardfork. This guarantees 75% participation on all subsequent rounds.
 #define STEEMIT_MAX_TIME_UNTIL_EXPIRATION       (60*60) // seconds,  aka: 1 hour
 #define STEEMIT_MAX_MEMO_SIZE                   2048
@@ -71,6 +76,7 @@
 #define STEEMIT_MAX_VOTE_CHANGES                5
 #define STEEMIT_UPVOTE_LOCKOUT                  (fc::minutes(1))
 #define STEEMIT_REVERSE_AUCTION_WINDOW_SECONDS  (60*30) /// 30 minutes
+#define STEEMIT_MAX_AUCTION_WINDOW_SIZE_SECONDS (24 * 60 * 60) /// 24 hours
 #define STEEMIT_MIN_VOTE_INTERVAL_SEC           3
 #define STEEMIT_MAX_COMMENT_BENEFICIARIES       8
 
@@ -79,6 +85,15 @@
 #define STEEMIT_POST_AVERAGE_WINDOW             (60*60*24u) // 1 day
 #define STEEMIT_POST_MAX_BANDWIDTH              (4*STEEMIT_100_PERCENT) // 2 posts per 1 days, average 1 every 12 hours
 #define STEEMIT_POST_WEIGHT_CONSTANT            (uint64_t(STEEMIT_POST_MAX_BANDWIDTH) * STEEMIT_POST_MAX_BANDWIDTH)
+
+#define STEEMIT_COMMENTS_WINDOW                 200    // 200 seconds
+#define STEEMIT_COMMENTS_PER_WINDOW             10
+#define STEEMIT_VOTES_WINDOW                    200
+#define STEEMIT_VOTES_PER_WINDOW                10
+#define STEEMIT_POSTS_WINDOW                    60
+#define STEEMIT_POSTS_PER_WINDOW                1
+
+#define STEEMIT_CUSTOM_OPS_BANDWIDTH_MULTIPLIER 100
 
 #define STEEMIT_MAX_ACCOUNT_WITNESS_VOTES       30
 
@@ -112,8 +127,18 @@
 #define GOLOS_CREATE_ACCOUNT_DELEGATION_TIME        (fc::days(1))
 #define GOLOS_MIN_DELEGATION_MULTIPLIER             10
 
-#define STEEMIT_MINING_REWARD                   asset( 666, STEEM_SYMBOL )
-#define STEEMIT_MINING_REWARD_PRE_HF_16         asset( 1000, STEEM_SYMBOL )
+#define STEEMIT_DEFAULT_DELEGATED_VESTING_INTEREST_RATE (25*STEEMIT_1_PERCENT) // 25%
+#define STEEMIT_MAX_DELEGATED_VESTING_INTEREST_RATE     (80*STEEMIT_1_PERCENT) // 80%
+
+#define GOLOS_DEFAULT_REFERRAL_INTEREST_RATE    (10*STEEMIT_1_PERCENT) // 10%
+#define GOLOS_MAX_REFERRAL_INTEREST_RATE        STEEMIT_100_PERCENT
+#define GOLOS_DEFAULT_REFERRAL_TERM_SEC         (60*60*24*30*6)
+#define GOLOS_MAX_REFERRAL_TERM_SEC             (60*60*24*30*12)
+#define GOLOS_MIN_REFERRAL_BREAK_FEE            asset(1, STEEM_SYMBOL)
+#define GOLOS_MAX_REFERRAL_BREAK_FEE            asset(100000, STEEM_SYMBOL)
+
+#define STEEMIT_MINING_REWARD                   asset(666, STEEM_SYMBOL)
+#define STEEMIT_MINING_REWARD_PRE_HF_16         asset(1000, STEEM_SYMBOL)
 #define STEEMIT_EQUIHASH_N                      140
 #define STEEMIT_EQUIHASH_K                      6
 
@@ -121,16 +146,20 @@
 #define STEEMIT_MIN_LIQUIDITY_REWARD_PERIOD_SEC (fc::seconds(60)) // 1 minute required on books to receive volume
 #define STEEMIT_LIQUIDITY_REWARD_PERIOD_SEC     (60*60)
 #define STEEMIT_LIQUIDITY_REWARD_BLOCKS         (STEEMIT_LIQUIDITY_REWARD_PERIOD_SEC/STEEMIT_BLOCK_INTERVAL)
-#define STEEMIT_MIN_LIQUIDITY_REWARD            (asset( 1000*STEEMIT_LIQUIDITY_REWARD_BLOCKS, STEEM_SYMBOL )) // Minumum reward to be paid out to liquidity providers
-#define STEEMIT_MIN_CONTENT_REWARD              asset( 1500, STEEM_SYMBOL )
-#define STEEMIT_MIN_CURATE_REWARD               asset( 500, STEEM_SYMBOL )
+#define STEEMIT_MIN_LIQUIDITY_REWARD            (asset(1000*STEEMIT_LIQUIDITY_REWARD_BLOCKS, STEEM_SYMBOL)) // Minumum reward to be paid out to liquidity providers
+#define STEEMIT_MIN_CONTENT_REWARD              asset(1500, STEEM_SYMBOL)
+#define STEEMIT_MIN_CURATE_REWARD               asset(500, STEEM_SYMBOL)
 #define STEEMIT_MIN_PRODUCER_REWARD             STEEMIT_MINING_REWARD
 #define STEEMIT_MIN_PRODUCER_REWARD_PRE_HF_16   STEEMIT_MINING_REWARD_PRE_HF_16
 #define STEEMIT_MIN_POW_REWARD                  STEEMIT_MINING_REWARD
 #define STEEMIT_MIN_POW_REWARD_PRE_HF_16        STEEMIT_MINING_REWARD_PRE_HF_16
 
-#define STEEMIT_ACTIVE_CHALLENGE_FEE            asset( 2000, STEEM_SYMBOL )
-#define STEEMIT_OWNER_CHALLENGE_FEE             asset( 30000, STEEM_SYMBOL )
+#define STEEMIT_MIN_CURATION_PERCENT            (25*STEEMIT_1_PERCENT) // 25%
+#define STEEMIT_DEF_CURATION_PERCENT            (25*STEEMIT_1_PERCENT) // 25%
+#define STEEMIT_MAX_CURATION_PERCENT            STEEMIT_100_PERCENT
+
+#define STEEMIT_ACTIVE_CHALLENGE_FEE            asset(2000, STEEM_SYMBOL)
+#define STEEMIT_OWNER_CHALLENGE_FEE             asset(30000, STEEM_SYMBOL)
 #define STEEMIT_ACTIVE_CHALLENGE_COOLDOWN       fc::days(1)
 #define STEEMIT_OWNER_CHALLENGE_COOLDOWN        fc::days(1)
 
@@ -169,7 +198,7 @@
 #define STEEMIT_PRODUCER_APR_PERCENT             750
 #define STEEMIT_POW_APR_PERCENT                  750
 
-#define STEEMIT_MIN_PAYOUT_SBD                  (asset(20,SBD_SYMBOL))
+#define STEEMIT_MIN_PAYOUT_SBD                  (asset(20, SBD_SYMBOL))
 
 #define STEEMIT_SBD_STOP_PERCENT                (5*STEEMIT_1_PERCENT ) // Stop printing SBD at 5% Market Cap
 #define STEEMIT_SBD_START_PERCENT               (2*STEEMIT_1_PERCENT) // Start reducing printing of SBD at 2% Market Cap
@@ -181,7 +210,7 @@
 #define STEEMIT_MAX_PERMLINK_LENGTH             256
 #define STEEMIT_MAX_WITNESS_URL_LENGTH          2048
 
-#define STEEMIT_INIT_SUPPLY                     int64_t(43306176000)
+#define STEEMIT_INIT_SUPPLY                     int64_t(40000000000000)
 #define STEEMIT_MAX_SHARE_SUPPLY                int64_t(1000000000000000ll)
 #define STEEMIT_MAX_SIG_CHECK_DEPTH             2
 
@@ -205,7 +234,7 @@
 #define STEEMIT_MAX_UNDO_HISTORY                10000
 
 #define STEEMIT_MIN_TRANSACTION_EXPIRATION_LIMIT (STEEMIT_BLOCK_INTERVAL * 5) // 5 transactions per block
-#define STEEMIT_BLOCKCHAIN_PRECISION            uint64_t( 1000 )
+#define STEEMIT_BLOCKCHAIN_PRECISION            uint64_t(1000)
 
 #define STEEMIT_BLOCKCHAIN_PRECISION_DIGITS     3
 #define STEEMIT_MAX_INSTANCE_ID                 (uint64_t(-1)>>16)
@@ -265,6 +294,7 @@
 #define STEEMIT_MAX_MINER_WITNESSES             1
 #define STEEMIT_MAX_RUNNER_WITNESSES            1
 #define STEEMIT_MAX_WITNESSES                   (STEEMIT_MAX_VOTED_WITNESSES+STEEMIT_MAX_MINER_WITNESSES+STEEMIT_MAX_RUNNER_WITNESSES) /// 21 is more than enough
+#define STEEMIT_TRANSIT_REQUIRED_WITNESSES      16 // 16 from top19 -> This guarantees 75% participation on all subsequent rounds.
 #define STEEMIT_HARDFORK_REQUIRED_WITNESSES     17 // 17 of the 20 dpos witnesses (19 elected and 1 virtual time) required for hardfork. This guarantees 75% participation on all subsequent rounds.
 #define STEEMIT_MAX_TIME_UNTIL_EXPIRATION       (60*60) // seconds,  aka: 1 hour
 #define STEEMIT_MAX_MEMO_SIZE                   2048
@@ -279,6 +309,7 @@
 #define STEEMIT_MAX_VOTE_CHANGES                5
 #define STEEMIT_UPVOTE_LOCKOUT                  (fc::minutes(1))
 #define STEEMIT_REVERSE_AUCTION_WINDOW_SECONDS  (60*30) /// 30 minutes
+#define STEEMIT_MAX_AUCTION_WINDOW_SIZE_SECONDS (3 * 60 * 60) /// 3 hours
 #define STEEMIT_MIN_VOTE_INTERVAL_SEC           3
 #define STEEMIT_MAX_COMMENT_BENEFICIARIES       64
 
@@ -287,6 +318,15 @@
 #define STEEMIT_POST_AVERAGE_WINDOW             (60*60*24u) // 1 day
 #define STEEMIT_POST_MAX_BANDWIDTH              (4*STEEMIT_100_PERCENT) // 2 posts per 1 days, average 1 every 12 hours
 #define STEEMIT_POST_WEIGHT_CONSTANT            (uint64_t(STEEMIT_POST_MAX_BANDWIDTH) * STEEMIT_POST_MAX_BANDWIDTH)
+
+#define STEEMIT_COMMENTS_WINDOW                 200
+#define STEEMIT_COMMENTS_PER_WINDOW             10
+#define STEEMIT_VOTES_WINDOW                    15
+#define STEEMIT_VOTES_PER_WINDOW                5
+#define STEEMIT_POSTS_WINDOW                    3
+#define STEEMIT_POSTS_PER_WINDOW                1
+
+#define STEEMIT_CUSTOM_OPS_BANDWIDTH_MULTIPLIER 100
 
 #define STEEMIT_MAX_ACCOUNT_WITNESS_VOTES       30
 
@@ -321,8 +361,18 @@
 #define GOLOS_CREATE_ACCOUNT_DELEGATION_TIME        (fc::days(30))
 #define GOLOS_MIN_DELEGATION_MULTIPLIER             10
 
-#define STEEMIT_MINING_REWARD                   asset( 666, STEEM_SYMBOL )
-#define STEEMIT_MINING_REWARD_PRE_HF_16         asset( 1000, STEEM_SYMBOL )
+#define STEEMIT_DEFAULT_DELEGATED_VESTING_INTEREST_RATE (25*STEEMIT_1_PERCENT) // 25%
+#define STEEMIT_MAX_DELEGATED_VESTING_INTEREST_RATE     (80*STEEMIT_1_PERCENT) // 80%
+
+#define GOLOS_DEFAULT_REFERRAL_INTEREST_RATE    (10*STEEMIT_1_PERCENT) // 10%
+#define GOLOS_MAX_REFERRAL_INTEREST_RATE        STEEMIT_100_PERCENT
+#define GOLOS_DEFAULT_REFERRAL_TERM_SEC         (60*60*24*30*6)
+#define GOLOS_MAX_REFERRAL_TERM_SEC             (60*60*24*30*12)
+#define GOLOS_MIN_REFERRAL_BREAK_FEE            asset(1, STEEM_SYMBOL)
+#define GOLOS_MAX_REFERRAL_BREAK_FEE            asset(100000, STEEM_SYMBOL)
+
+#define STEEMIT_MINING_REWARD                   asset(666, STEEM_SYMBOL)
+#define STEEMIT_MINING_REWARD_PRE_HF_16         asset(1000, STEEM_SYMBOL)
 #define STEEMIT_EQUIHASH_N                      140
 #define STEEMIT_EQUIHASH_K                      6
 
@@ -330,16 +380,20 @@
 #define STEEMIT_MIN_LIQUIDITY_REWARD_PERIOD_SEC (fc::seconds(60)) // 1 minute required on books to receive volume
 #define STEEMIT_LIQUIDITY_REWARD_PERIOD_SEC     (60*60)
 #define STEEMIT_LIQUIDITY_REWARD_BLOCKS         (STEEMIT_LIQUIDITY_REWARD_PERIOD_SEC/STEEMIT_BLOCK_INTERVAL)
-#define STEEMIT_MIN_LIQUIDITY_REWARD            (asset( 1000*STEEMIT_LIQUIDITY_REWARD_BLOCKS, STEEM_SYMBOL )) // Minumum reward to be paid out to liquidity providers
-#define STEEMIT_MIN_CONTENT_REWARD              asset( 1500, STEEM_SYMBOL )
-#define STEEMIT_MIN_CURATE_REWARD               asset( 500, STEEM_SYMBOL )
+#define STEEMIT_MIN_LIQUIDITY_REWARD            (asset(1000*STEEMIT_LIQUIDITY_REWARD_BLOCKS, STEEM_SYMBOL)) // Minumum reward to be paid out to liquidity providers
+#define STEEMIT_MIN_CONTENT_REWARD              asset(1500, STEEM_SYMBOL)
+#define STEEMIT_MIN_CURATE_REWARD               asset(500, STEEM_SYMBOL)
 #define STEEMIT_MIN_PRODUCER_REWARD             STEEMIT_MINING_REWARD
 #define STEEMIT_MIN_PRODUCER_REWARD_PRE_HF_16   STEEMIT_MINING_REWARD_PRE_HF_16
 #define STEEMIT_MIN_POW_REWARD                  STEEMIT_MINING_REWARD
 #define STEEMIT_MIN_POW_REWARD_PRE_HF_16        STEEMIT_MINING_REWARD_PRE_HF_16
 
-#define STEEMIT_ACTIVE_CHALLENGE_FEE            asset( 2000, STEEM_SYMBOL )
-#define STEEMIT_OWNER_CHALLENGE_FEE             asset( 30000, STEEM_SYMBOL )
+#define STEEMIT_MIN_CURATION_PERCENT            (25*STEEMIT_1_PERCENT) // 25%
+#define STEEMIT_DEF_CURATION_PERCENT            (25*STEEMIT_1_PERCENT) // 25%
+#define STEEMIT_MAX_CURATION_PERCENT            STEEMIT_100_PERCENT
+
+#define STEEMIT_ACTIVE_CHALLENGE_FEE            asset(2000, STEEM_SYMBOL)
+#define STEEMIT_OWNER_CHALLENGE_FEE             asset(30000, STEEM_SYMBOL)
 #define STEEMIT_ACTIVE_CHALLENGE_COOLDOWN       fc::days(1)
 #define STEEMIT_OWNER_CHALLENGE_COOLDOWN        fc::days(1)
 
@@ -414,7 +468,7 @@
 #define STEEMIT_MAX_UNDO_HISTORY                10000
 
 #define STEEMIT_MIN_TRANSACTION_EXPIRATION_LIMIT (STEEMIT_BLOCK_INTERVAL * 5) // 5 transactions per block
-#define STEEMIT_BLOCKCHAIN_PRECISION            uint64_t( 1000 )
+#define STEEMIT_BLOCKCHAIN_PRECISION            uint64_t(1000)
 
 #define STEEMIT_BLOCKCHAIN_PRECISION_DIGITS     3
 #define STEEMIT_MAX_INSTANCE_ID                 (uint64_t(-1)>>16)

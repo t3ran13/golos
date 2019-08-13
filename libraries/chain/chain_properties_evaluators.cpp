@@ -40,14 +40,24 @@ namespace golos { namespace chain {
         }
     }
 
-    struct chain_properties_convert {
-        using result_type = chain_properties_18;
+    struct chain_properties_update {
+        using result_type = void;
+
+        const database& _db;
+        chain_properties& _wprops;
+
+        chain_properties_update(const database& db, chain_properties& wprops)
+                : _db(db), _wprops(wprops) {
+        }
+
+        result_type operator()(const chain_properties_19& p) const {
+            ASSERT_REQ_HF(STEEMIT_HARDFORK_0_19__295, "chain_properties_19");
+            _wprops = p;
+        }
 
         template<typename Props>
         result_type operator()(Props&& p) const {
-            result_type r;
-            r = p;
-            return r;
+            _wprops = p;
         }
     };
 
@@ -58,15 +68,35 @@ namespace golos { namespace chain {
         auto itr = idx.find(o.owner);
         if (itr != idx.end()) {
             _db.modify(*itr, [&](witness_object& w) {
-                w.props = o.props.visit(chain_properties_convert());
+                o.props.visit(chain_properties_update(_db, w.props));
             });
         } else {
             _db.create<witness_object>([&](witness_object& w) {
                 w.owner = o.owner;
                 w.created = _db.head_block_time();
-                w.props = o.props.visit(chain_properties_convert());
+                o.props.visit(chain_properties_update(_db, w.props));
             });
         }
+    }
+
+    void transit_to_cyberway_evaluator::do_apply(const transit_to_cyberway_operation& o) {
+        ASSERT_REQ_HF(STEEMIT_HARDFORK_0_21__1348, "transit_to_cyberway");
+
+        _db.get_account(o.owner); // verify owner exists
+        auto& witness = _db.get_witness(o.owner);
+
+        GOLOS_CHECK_OP_PARAM(o, vote_to_transit, {
+            GOLOS_CHECK_VALUE(o.vote_to_transit != (witness.transit_to_cyberway_vote != STEEMIT_GENESIS_TIME),
+                "You should change your vote.");
+        });
+
+        _db.modify(witness, [&](witness_object& w) {
+            if (o.vote_to_transit) {
+                w.transit_to_cyberway_vote = _db.head_block_time();
+            } else {
+                w.transit_to_cyberway_vote = STEEMIT_GENESIS_TIME;
+            }
+        });
     }
 
 } } // golos::chain
