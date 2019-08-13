@@ -1511,19 +1511,9 @@ namespace golos { namespace chain {
                             o.transit_witnesses[i++] = owner;
                         }
                     });
+                    liberate_golos_classic();
                 } else {
                     return;
-                }
-            }
-
-            if (is_transit_enabled()) {
-                if (skip & skip_block_log) {
-                    set_revision(gpo.head_block_number);
-                }
-
-                if (gpo.transit_block_num == gpo.last_irreversible_block_num) {
-                    STEEMIT_TRY_NOTIFY(transit_to_cyberway, b.block_num(), skip);
-                    liberate_golos_classic();
                 }
             }
         }
