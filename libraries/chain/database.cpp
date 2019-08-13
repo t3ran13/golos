@@ -4163,14 +4163,6 @@ namespace golos { namespace chain {
                     uint32_t new_last_irreversible_block_num = wit_objs[offset]->last_confirmed_block_num;
 
                     if (new_last_irreversible_block_num > dpo.last_irreversible_block_num) {
-                        //this is ok, because irreversible can grow in leaps, but transit should start on particular irreversible
-                        if (is_transit_enabled() &&
-                            dpo.transit_block_num > dpo.last_irreversible_block_num &&
-                            dpo.transit_block_num <= new_last_irreversible_block_num
-                        ) {
-                            new_last_irreversible_block_num = dpo.transit_block_num;
-                        }
-
                         modify(dpo, [&](dynamic_global_property_object &_dpo) {
                             _dpo.last_irreversible_block_num = new_last_irreversible_block_num;
                         });
