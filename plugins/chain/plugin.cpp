@@ -29,8 +29,6 @@ namespace golos { namespace plugins { namespace chain {
         bool check_locks = false;
         bool validate_invariants = false;
 
-        bool serialize_state = false;
-        bfs::path serialize_state_path;
         long serialize_delay_sec = 0;
 
         uint32_t flush_interval = 0;
