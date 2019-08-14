@@ -63,9 +63,7 @@ namespace golos { namespace plugins { namespace chain {
         std::vector<std::string> accounts_to_store_metadata;
         bool store_memo_in_savings_withdraws = true;
 
-        boost::asio::deadline_timer transit_timer;
-
-        impl() : transit_timer(appbase::app().get_io_service()) {
+        impl() {
             // get default settings
             read_wait_micro = db.read_wait_micro();
             max_read_wait_retries = db.max_read_wait_retries();
@@ -74,12 +72,6 @@ namespace golos { namespace plugins { namespace chain {
             max_write_wait_retries = db.max_write_wait_retries();
         }
 
-        ~impl() {
-            if (transit_timer.cancel()) {
-                //transit_to_cyberway(); // it doesn't throw any exception
-            }
-        }
-        
         // HELPERS
         boost::asio::io_service& io_service() {
             return appbase::app().get_io_service();
@@ -92,8 +84,6 @@ namespace golos { namespace plugins { namespace chain {
         void replay_db(const bfs::path& data_dir, bool force_replay);
 
         void on_block (const protocol::signed_block& b);
-        void transit_to_cyberway();
-        void start_transit_to_cyberway(uint32_t, uint32_t);
     };
 
 
@@ -110,14 +100,6 @@ namespace golos { namespace plugins { namespace chain {
             ++itr;
             db.remove(vote);
         }
-    }
-
-    void plugin::impl::start_transit_to_cyberway(uint32_t n, uint32_t skip) {
-        //bad CyberFund code
-    }
-
-    void plugin::impl::transit_to_cyberway() {
-        //bad CyberFund code
     }
 
     void plugin::impl::check_time_in_block(const protocol::signed_block& block) {
@@ -317,10 +299,6 @@ namespace golos { namespace plugins { namespace chain {
             my->on_block(b);
         });
 
-        my->db.transit_to_cyberway.connect([&](const uint32_t n, uint32_t skip) {
-            my->start_transit_to_cyberway(n, skip);
-        });
-
         auto sfd = options.at("shared-file-dir").as<bfs::path>();
         if (sfd.is_relative()) {
             my->shared_memory_dir = appbase::app().data_dir() / sfd;
@@ -365,22 +343,6 @@ namespace golos { namespace plugins { namespace chain {
         my->resync = options.at("resync-blockchain").as<bool>();
         my->check_locks = options.at("check-locks").as<bool>();
         my->validate_invariants = options.at("validate-database-invariants").as<bool>();
-
-        bool serialize = options.count("serialize-state") > 0;
-        if (serialize) {
-            auto s = options.at("serialize-state").as<std::string>();
-            serialize = s.size() > 0;
-            if (serialize) {
-                auto p = bfs::path(s);
-                my->serialize_state_path = p.is_relative() ? appbase::app().data_dir() / p : p;
-            }
-        }
-        my->serialize_state = serialize;
-
-        if (options.count("serialize-delay-sec")) {
-            my->serialize_delay_sec = options.at("serialize-delay-sec").as<long>();
-        }
-
         if (options.count("flush-state-interval")) {
             my->flush_interval = options.at("flush-state-interval").as<uint32_t>();
         } else {
