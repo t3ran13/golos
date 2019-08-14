@@ -50,12 +50,11 @@ RUN \
         -DBUILD_SHARED_LIBRARIES=FALSE \
         -DCHAINBASE_CHECK_LOCKING=FALSE \
         -DENABLE_MONGO_PLUGIN=FALSE \
-        ..
-
-RUN \
-    cd /usr/local/src/golos/build && \
-    make install && \
-    rm -rf /usr/local/src/golos
+        .. \
+        && \
+        make -j$(nproc) && \
+        make install && \
+        rm -rf /usr/local/src/golos
 
 RUN \
     apt-get remove -y \
