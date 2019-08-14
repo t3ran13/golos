@@ -65,6 +65,21 @@ namespace golos { namespace plugins { namespace chain {
 
         boost::asio::deadline_timer transit_timer;
 
+        impl() : transit_timer(appbase::app().get_io_service()) {
+            // get default settings
+            read_wait_micro = db.read_wait_micro();
+            max_read_wait_retries = db.max_read_wait_retries();
+
+            write_wait_micro = db.write_wait_micro();
+            max_write_wait_retries = db.max_write_wait_retries();
+        }
+
+        ~impl() {
+            if (transit_timer.cancel()) {
+                //transit_to_cyberway(); // it doesn't throw any exception
+            }
+        }
+        
         // HELPERS
         boost::asio::io_service& io_service() {
             return appbase::app().get_io_service();

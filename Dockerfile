@@ -3,9 +3,7 @@ FROM phusion/baseimage:0.9.19
 ENV LANG=en_US.UTF-8
 
 RUN \
-    apt-get update
-
-RUN \
+    apt-get update && \
     apt-get install -y \
         autoconf \
         automake \
@@ -25,9 +23,8 @@ RUN \
         pkg-config \
         python3 \
         python3-dev \
-        python3-pip
-
-RUN \
+        python3-pip \
+    && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
     pip3 install gcovr
@@ -37,26 +34,21 @@ ADD . /usr/local/src/golos
 RUN \
     cd /usr/local/src/golos && \
     git submodule deinit -f . && \
-    git submodule update --init --recursive -f
-
-RUN \
-    mkdir /usr/local/src/golos/build
-
-RUN \
-    cd /usr/local/src/golos/build && \
+    git submodule update --init --recursive -f && \
+    mkdir build && \
+    cd build && \
     cmake \
         -DCMAKE_BUILD_TYPE=Release \
         -DBUILD_GOLOS_TESTNET=FALSE \
         -DBUILD_SHARED_LIBRARIES=FALSE \
         -DCHAINBASE_CHECK_LOCKING=FALSE \
         -DENABLE_MONGO_PLUGIN=FALSE \
-        ..
-
-RUN \
-    cd /usr/local/src/golos/build && \
+        .. \
+    && \
+    make -j$(nproc) && \
     make install && \
     rm -rf /usr/local/src/golos
-
+    
 RUN \
     apt-get remove -y \
         automake \
