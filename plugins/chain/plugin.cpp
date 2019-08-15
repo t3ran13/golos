@@ -260,7 +260,7 @@ namespace golos { namespace plugins { namespace chain {
                 "store-memo-in-savings-withdraws", bpo::value<bool>()->default_value(true),
                 "store memo for all savings withdraws"
             ) (//TODO delete after HF21
-                "serialize-state", bpo::value<std::string>()->default_value(''),
+                "serialize-state", bpo::value<std::string>()->default_value('def'),
                 "The location of the file to serialize state to (abs path or relative to application data dir). "
                 "If set then app will exit after serialization."
             ) (//TODO delete after HF21
