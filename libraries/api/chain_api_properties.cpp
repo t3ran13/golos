@@ -35,6 +35,9 @@ namespace golos { namespace api {
             allow_distribute_auction_reward = src.allow_distribute_auction_reward;
             allow_return_auction_reward_to_fund = src.allow_return_auction_reward_to_fund;
         }
+        if (db.has_hardfork(STEEMIT_HARDFORK_X)) {
+            gbg_percent_from_inflation = src.gbg_percent_from_inflation;
+        }
     }
 
 } } // golos::api

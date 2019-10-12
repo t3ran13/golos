@@ -50,8 +50,8 @@ namespace golos { namespace chain {
                 : _db(db), _wprops(wprops) {
         }
 
-        result_type operator()(const chain_properties_19& p) const {
-            ASSERT_REQ_HF(STEEMIT_HARDFORK_0_19__295, "chain_properties_19");
+        result_type operator()(const chain_properties_X& p) const {
+            ASSERT_REQ_HF(STEEMIT_HARDFORK_X, "chain_properties_X");
             _wprops = p;
         }
 

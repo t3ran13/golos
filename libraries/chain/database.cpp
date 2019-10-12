@@ -1919,7 +1919,7 @@ namespace golos { namespace chain {
                 active.push_back(&get_witness(wso.current_shuffled_witnesses[i]));
             }
 
-            chain_properties_19 median_props;
+            chain_properties_X median_props;
 
             auto median = active.size() / 2;
 
@@ -1978,6 +1978,7 @@ namespace golos { namespace chain {
             calc_median(&chain_properties_19::curation_reward_curve);
             calc_median(&chain_properties_19::allow_distribute_auction_reward);
             calc_median(&chain_properties_19::allow_return_auction_reward_to_fund);
+            calc_median(&chain_properties_X::gbg_percent_from_inflation);
 
             const auto& dynamic_global_properties = get_dynamic_global_properties();
 
@@ -3834,7 +3835,7 @@ namespace golos { namespace chain {
                                 return;
                             }
 #endif
-                            if (has_hardfork(STEEMIT_HARDFORK_0_14__230)) {
+                            if (!has_hardfork(STEEMIT_HARDFORK_X) && has_hardfork(STEEMIT_HARDFORK_0_14__230)) {
                                 price min_price(asset(9 * gpo.current_sbd_supply.amount, SBD_SYMBOL), gpo.current_supply); // This price limits SBD to 10% market cap
 
                                 is_forced_min_price = min_price > fho.current_median_history;
@@ -4072,6 +4073,7 @@ namespace golos { namespace chain {
         void database::update_virtual_supply() {
             try {
                 modify(get_dynamic_global_properties(), [&](dynamic_global_property_object &dgp) {
+                auto median_props = get_chain_properties();
                     dgp.virtual_supply = dgp.current_supply
                                          +
                                          (get_feed_history().current_median_history.is_null()
@@ -4081,24 +4083,27 @@ namespace golos { namespace chain {
 
                     auto median_price = get_feed_history().current_median_history;
 
-                    if (!median_price.is_null() &&
-                        has_hardfork(STEEMIT_HARDFORK_0_14__230)) {
-                        auto percent_sbd = uint16_t((
-                                (fc::uint128_t((dgp.current_sbd_supply *
-                                                get_feed_history().current_median_history).amount.value) *
-                                 STEEMIT_100_PERCENT)
-                                / dgp.virtual_supply.amount.value).to_uint64());
+                    if (!median_price.is_null()) {
+                        if (has_hardfork(STEEMIT_HARDFORK_X)) {
+                            dgp.sbd_print_rate = median_props.gbg_percent_from_inflation;
+                        } else if (has_hardfork(STEEMIT_HARDFORK_0_14__230)) {
+                            auto percent_sbd = uint16_t((
+                                    (fc::uint128_t((dgp.current_sbd_supply *
+                                                    get_feed_history().current_median_history).amount.value) *
+                                     STEEMIT_100_PERCENT)
+                                    / dgp.virtual_supply.amount.value).to_uint64());
 
-                        if (percent_sbd <= STEEMIT_SBD_START_PERCENT) {
-                            dgp.sbd_print_rate = STEEMIT_100_PERCENT;
-                        } else if (percent_sbd >= STEEMIT_SBD_STOP_PERCENT) {
-                            dgp.sbd_print_rate = 0;
-                        } else {
-                            dgp.sbd_print_rate =
-                                    ((STEEMIT_SBD_STOP_PERCENT - percent_sbd) *
-                                     STEEMIT_100_PERCENT) /
-                                    (STEEMIT_SBD_STOP_PERCENT -
-                                     STEEMIT_SBD_START_PERCENT);
+                            if (percent_sbd <= STEEMIT_SBD_START_PERCENT) {
+                                dgp.sbd_print_rate = STEEMIT_100_PERCENT;
+                            } else if (percent_sbd >= STEEMIT_SBD_STOP_PERCENT) {
+                                dgp.sbd_print_rate = 0;
+                            } else {
+                                dgp.sbd_print_rate =
+                                        ((STEEMIT_SBD_STOP_PERCENT - percent_sbd) *
+                                         STEEMIT_100_PERCENT) /
+                                        (STEEMIT_SBD_STOP_PERCENT -
+                                         STEEMIT_SBD_START_PERCENT);
+                            }
                         }
                     }
                 });

@@ -71,6 +71,8 @@ namespace golos { namespace wallet {
 
             fc::optional<bool> allow_distribute_auction_reward;
             fc::optional<bool> allow_return_auction_reward_to_fund;
+
+            fc::optional<uint16_t> gbg_percent_from_inflation;
         };
 
         struct optional_private_box_query {
@@ -1559,7 +1561,7 @@ FC_REFLECT((golos::wallet::optional_chain_props),
     (max_referral_interest_rate)(max_referral_term_sec)(min_referral_break_fee)(max_referral_break_fee)
     (posts_window)(posts_per_window)(comments_window)(comments_per_window)(votes_window)(votes_per_window)(auction_window_size)
     (max_delegated_vesting_interest_rate)(custom_ops_bandwidth_multiplier)(min_curation_percent)(max_curation_percent)
-    (curation_reward_curve)(allow_distribute_auction_reward)(allow_return_auction_reward_to_fund))
+    (curation_reward_curve)(allow_distribute_auction_reward)(allow_return_auction_reward_to_fund)(gbg_percent_from_inflation))
 
 FC_REFLECT(
     (golos::wallet::message_body),

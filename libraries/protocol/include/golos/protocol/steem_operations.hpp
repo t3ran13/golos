@@ -471,6 +471,7 @@ namespace golos { namespace protocol {
 
         struct chain_properties_18;
         struct chain_properties_19;
+        struct chain_properties_X;
 
         /**
          * Witnesses must vote on how to set certain chain properties to ensure a smooth
@@ -660,6 +661,33 @@ namespace golos { namespace protocol {
             chain_properties_19& operator=(const chain_properties_19&) = default;
         };
 
+        struct chain_properties_X: public chain_properties_19 {
+
+            /**
+             * Maximum interest rate for delegated vesting shares
+             */
+            uint16_t gbg_percent_from_inflation = GOLOS_DEFAULT_GBG_PERCENT_FROM_INFLATION;
+
+            void validate() const;
+
+            chain_properties_X& operator=(const chain_properties_17& src) {
+                chain_properties_18::operator=(src);
+                return *this;
+            }
+
+            chain_properties_X& operator=(const chain_properties_18& src) {
+                chain_properties_18::operator=(src);
+                return *this;
+            }
+
+            chain_properties_X& operator=(const chain_properties_19& src) {
+                chain_properties_19::operator=(src);
+                return *this;
+            }
+
+            chain_properties_X& operator=(const chain_properties_X&) = default;
+        };
+
         inline chain_properties_17& chain_properties_17::operator=(const chain_properties_18& src) {
             account_creation_fee = src.account_creation_fee;
             maximum_block_size = src.maximum_block_size;
@@ -670,7 +698,8 @@ namespace golos { namespace protocol {
         using versioned_chain_properties = fc::static_variant<
             chain_properties_17,
             chain_properties_18,
-            chain_properties_19
+            chain_properties_19,
+            chain_properties_X
         >;
 
         /**
@@ -1371,6 +1400,9 @@ FC_REFLECT_DERIVED(
     (posts_window)(posts_per_window)(comments_window)(comments_per_window)(votes_window)(votes_per_window)(auction_window_size)
     (max_delegated_vesting_interest_rate)(custom_ops_bandwidth_multiplier)(min_curation_percent)(max_curation_percent)
     (curation_reward_curve)(allow_distribute_auction_reward)(allow_return_auction_reward_to_fund))
+FC_REFLECT_DERIVED(
+    (golos::protocol::chain_properties_X), ((golos::protocol::chain_properties_19)),
+    (gbg_percent_from_inflation))
 
 FC_REFLECT_TYPENAME((golos::protocol::versioned_chain_properties))
 

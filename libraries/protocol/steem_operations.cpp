@@ -306,6 +306,7 @@ namespace golos { namespace protocol {
             GOLOS_CHECK_VALUE_GE(custom_ops_bandwidth_multiplier, 1);
             GOLOS_CHECK_VALUE_LEGE(min_curation_percent, STEEMIT_MIN_CURATION_PERCENT, max_curation_percent);
             GOLOS_CHECK_VALUE_LEGE(max_curation_percent, min_curation_percent, STEEMIT_MAX_CURATION_PERCENT);
+            GOLOS_CHECK_VALUE_LE(gbg_percent_from_inflation, GOLOS_MAX_GBG_PERCENT_FROM_INFLATION);
 
             GOLOS_CHECK_PARAM(curation_reward_curve, {
                 GOLOS_CHECK_VALUE(
@@ -320,6 +321,12 @@ namespace golos { namespace protocol {
                     allow_return_auction_reward_to_fund || allow_distribute_auction_reward,
                     "One or both options should be enabled: allow_return_auction_reward_to_fund and allow_distribute_auction_reward");
             });
+        }
+
+        void chain_properties_X::validate() const {
+            chain_properties_19::validate();
+
+            GOLOS_CHECK_VALUE_LE(gbg_percent_from_inflation, GOLOS_MAX_GBG_PERCENT_FROM_INFLATION);
         }
 
         void witness_update_operation::validate() const {
