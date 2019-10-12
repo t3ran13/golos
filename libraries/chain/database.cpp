@@ -2649,39 +2649,22 @@ namespace golos { namespace chain {
                 auto vesting_reward =
                         (new_steem * STEEMIT_VESTING_FUND_PERCENT) /
                         STEEMIT_100_PERCENT; /// 26.67% to vesting fund
+                auto witness_reward = new_steem - content_reward - vesting_reward; /// Remaining 6.66% to witness pay
+                witness_reward *= STEEMIT_MAX_WITNESSES;
 
                 if (cwit.schedule == witness_object::timeshare) {
-                    auto witness_reward_weight = wso.timeshare_weight;
+                    witness_reward *= wso.timeshare_weight;
                 } else if (cwit.schedule == witness_object::miner) {
-                    auto witness_reward_weight = wso.miner_weight;
+                    witness_reward *= wso.miner_weight;
                 } else if (cwit.schedule == witness_object::top19) {
-                    auto witness_reward_weight = wso.top19_weight;
+                    witness_reward *= wso.top19_weight;
                 } else {
                     wlog("Encountered unknown witness type for witness: ${w}", ("w", cwit.owner));
                 }
 
-                auto witness_reward = new_steem - content_reward - vesting_reward; /// Remaining 6.66% to witness pay
-                witness_reward *= witness_reward_weight * STEEMIT_MAX_WITNESSES / wso.witness_pay_normalization_factor;
+                witness_reward /= wso.witness_pay_normalization_factor;
 
-                auto committee_reward = 0;
-                if(has_hardfork(CHAIN_HARDFORK_X)){
-                    //total reward percent can't be more then 100%,
-                    //but params have median values and can give in total more then 100%
-                    //FIXME TODO add content_reward_percent_from_inflation vesting_reward_percent_from_inflation committee_percent_from_inflation witness_reward_percent_from_inflation  to dynamic_global_property_object
-                    auto total_reward_percent = props.content_reward_percent_from_inflation + props.vesting_reward_percent_from_inflation
-                     + props.committee_percent_from_inflation + props.witness_reward_percent_from_inflation;
-
-                    content_reward = (new_steem * props.content_reward_percent_from_inflation) / total_reward_percent;
-                    vesting_reward = (new_steem * props.vesting_reward_percent_from_inflation) / total_reward_percent;
-                    committee_reward = (new_steem * props.committee_percent_from_inflation) / total_reward_percent;
-                    witness_reward = (new_steem * props.witness_reward_percent_from_inflation) / total_reward_percent;;
-
-                    modify(props, [&](dynamic_global_property_object &p) {
-                        p.committee_fund += asset( committee_reward, STEEM_SYMBOL ); // FIXME TODO add committee_fund to dynamic_global_property_object
-                    });
-                }
-
-                new_steem = content_reward + vesting_reward + witness_reward + committee_reward;
+                new_steem = content_reward + vesting_reward + witness_reward;
 
                 modify(props, [&](dynamic_global_property_object &p) {
                     p.total_vesting_fund_steem += asset(vesting_reward, STEEM_SYMBOL);
