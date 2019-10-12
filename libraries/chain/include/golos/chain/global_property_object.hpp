@@ -51,6 +51,7 @@ namespace golos {
              */
             uint32_t num_pow_witnesses = 0;
 
+            asset committee_fund = asset( 0, STEEM_SYMBOL );
             asset virtual_supply = asset(0, STEEM_SYMBOL);
             asset current_supply = asset(0, STEEM_SYMBOL);
             asset confidential_supply = asset(0, STEEM_SYMBOL); ///< total asset held in confidential balances
