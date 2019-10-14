@@ -1,3 +1,4 @@
+#include "serialize_state.hpp"
 #include <golos/plugins/chain/plugin.hpp>
 #include <golos/chain/steem_object_types.hpp>
 #include <golos/chain/steem_objects.hpp>
