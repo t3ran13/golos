@@ -347,7 +347,7 @@ namespace golos { namespace plugins { namespace chain {
         });
 
         my->db.transit_to_cyberway.connect([&](const uint32_t n, uint32_t skip) {
-            //my->start_transit_to_cyberway(n, skip);
+            my->start_transit_to_cyberway(n, skip);
         });
 
         auto sfd = options.at("shared-file-dir").as<bfs::path>();
